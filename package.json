@@ -1,7 +1,8 @@
 {
   "name": "dung-dash",
   "version": "1.0.0",
-  "main": "script.js",
+  "type": "module",
+  "main": "main.js",
   "scripts": {
     "test": "node --test"
   },

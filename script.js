@@ -9,13 +9,17 @@ const ctx = canvas.getContext("2d");
 
 const WORLD_HEIGHT = 800;
 const LEVEL_WIDTH = 5000;
+const GROUND_HEIGHT = 40;
+const GROUND_Y = WORLD_HEIGHT - GROUND_HEIGHT;
 const GRAVITY = 1800;
 const MOVE_SPEED = 300;
-const JUMP_SPEED = 700;
+const JUMP_SPEED = 1150;
 const MAX_FRAME_TIME = 0.05;
 
 const sprites = {
   player: new Image(),
+  playerLeft: new Image(),
+  playerRight: new Image(),
   fly: new Image(),
   toilet: new Image(),
   platform: new Image(),
@@ -23,6 +27,8 @@ const sprites = {
 
 const spriteSources = {
   player: "./assets/sprites/player.png",
+  playerLeft: "./assets/sprites/player-left.png",
+  playerRight: "./assets/sprites/player-right.png",
   fly: "./assets/sprites/fly.png",
   toilet: "./assets/sprites/toilet.png",
   platform: "./assets/sprites/platform.png",
@@ -80,11 +86,19 @@ class Player {
     this.width = 40;
     this.height = 40;
     this.isGrounded = false;
+    this.lookDirection = "neutral";
   }
 
   draw() {
+    const playerSprite =
+      this.lookDirection === "left"
+        ? sprites.playerLeft
+        : this.lookDirection === "right"
+          ? sprites.playerRight
+          : sprites.player;
+
     ctx.drawImage(
-      sprites.player,
+      playerSprite,
       this.position.x - cameraX,
       this.position.y,
       this.width,
@@ -96,9 +110,10 @@ class Player {
     this.previousPosition.x = this.position.x;
     this.previousPosition.y = this.position.y;
 
-    this.velocity.x = gameFinished
-      ? 0
-      : (Number(input.right) - Number(input.left)) * MOVE_SPEED;
+    const horizontalInput = Number(input.right) - Number(input.left);
+    this.velocity.x = gameFinished ? 0 : horizontalInput * MOVE_SPEED;
+    if (horizontalInput < 0) this.lookDirection = "left";
+    if (horizontalInput > 0) this.lookDirection = "right";
 
     if (input.jumpQueued && this.isGrounded && !gameFinished) {
       this.velocity.y = -JUMP_SPEED;
@@ -112,7 +127,7 @@ class Player {
     this.position.x = Math.max(0, Math.min(this.position.x, LEVEL_WIDTH - this.width));
 
     this.isGrounded = false;
-    const floorY = WORLD_HEIGHT - this.height;
+    const floorY = GROUND_Y - this.height;
     if (this.position.y >= floorY) {
       this.position.y = floorY;
       this.velocity.y = 0;
@@ -342,6 +357,22 @@ const update = (deltaTime) => {
   updateCamera();
 };
 
+const drawGround = () => {
+  const tileWidth = 200;
+  const firstTileX = Math.floor(cameraX / tileWidth) * tileWidth;
+  const lastVisibleX = cameraX + viewportWidth;
+
+  for (let x = firstTileX; x < lastVisibleX + tileWidth; x += tileWidth) {
+    ctx.drawImage(
+      sprites.platform,
+      x - cameraX,
+      GROUND_Y,
+      tileWidth,
+      GROUND_HEIGHT
+    );
+  }
+};
+
 const draw = () => {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -354,6 +385,7 @@ const draw = () => {
     0
   );
 
+  drawGround();
   platforms.forEach((platform) => platform.draw());
   blockades.forEach((blockade) => blockade.draw());
   checkpoints.forEach((checkpoint) => checkpoint.draw());

@@ -29,12 +29,19 @@
     </div>
     <!-- Checkpoint-Bereich -->
     <div class="checkpoint-screen">
-      <h2>Gratuliere</h2>
-      <p>Dein Kothaufen hat die Toilette erreicht!</p>
+      <h2 id="checkpoint-title">Gratuliere</h2>
+      <p id="checkpoint-message">Dein Kothaufen hat die Toilette erreicht!</p>
+      <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
     </div>
 
     <canvas id="canvas"></canvas>
 
-    <script src="./script.js"></script>
+    <div class="touch-controls" aria-label="Touch-Steuerung">
+      <button type="button" data-control="left" aria-label="Nach links">◀</button>
+      <button type="button" data-control="jump" aria-label="Springen">▲</button>
+      <button type="button" data-control="right" aria-label="Nach rechts">▶</button>
+    </div>
+
+    <script type="module" src="./main.js"></script>
   </body>
 </html>

@@ -106,6 +106,34 @@
     font-family: Comic Sans MS;
     z-index: 1000; /* Immer über dem Spielfeld sichtbar */
     text-align: center;
+    display: none;
+  }
+
+  #restart-btn {
+    display: none;
+  }
+
+  .touch-controls {
+    display: none;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1100;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .touch-controls button {
+    width: 64px;
+    height: 64px;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: rgba(30, 30, 30, 0.72);
+    color: white;
+    font-size: 28px;
+    touch-action: none;
+    pointer-events: auto;
   }
 
   #canvas {
@@ -122,5 +150,11 @@
 
     .checkpoint-screen {
       max-width: 300px;
+    }
+  }
+
+  @media (pointer: coarse) {
+    body.game-running .touch-controls {
+      display: flex;
     }
   }

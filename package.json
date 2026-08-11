@@ -4,13 +4,15 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "test": "node --test"
+    "build": "node build.mjs",
+    "test": "npm run build && node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "jsdoc": "^4.0.5"
   }
 }

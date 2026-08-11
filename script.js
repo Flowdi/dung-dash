@@ -2,546 +2,431 @@ const startBtn = document.getElementById("start-btn");
 const startScreen = document.querySelector(".start-screen");
 const checkpointScreen = document.querySelector(".checkpoint-screen");
 const checkpointMessage = document.querySelector(".checkpoint-screen > p");
+const fliesCollectedElement = document.getElementById("flies-collected");
+const totalFliesElement = document.getElementById("total-flies");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
-const gravity = 0.5;
-let isCheckpointCollisionDetectionActive = true;
-// Variablen für den Score
-let fliesCollected = 0; // Anzahl eingesammelter Fliegen
-const totalFlies = 20;    // Gesamtzahl der Fliegen im Spiel
+const WORLD_HEIGHT = 800;
+const LEVEL_WIDTH = 5000;
+const GRAVITY = 1800;
+const MOVE_SPEED = 300;
+const JUMP_SPEED = 700;
+const MAX_FRAME_TIME = 0.05;
 
-const proportionalSize = (size) => {
-  return innerHeight < 500 ? Math.ceil((size / 500) * innerHeight) : size;
-}
-  // Player Frame
-  class Player {
-    constructor() {
-      this.position = {
-        x: proportionalSize(100),
-        y: proportionalSize(400),
-      };
-      this.velocity = {
-        x: 0,
-        y: 0,
-      };
-      this.width = proportionalSize(40); // Größe bleibt gleich
-      this.height = proportionalSize(40); // Größe bleibt gleich
+const sprites = {
+  player: new Image(),
+  fly: new Image(),
+  toilet: new Image(),
+  platform: new Image(),
+};
+
+const spriteSources = {
+  player: "./assets/sprites/player.png",
+  fly: "./assets/sprites/fly.png",
+  toilet: "./assets/sprites/toilet.png",
+  platform: "./assets/sprites/platform.png",
+};
+
+const spritesReady = Promise.all(
+  Object.entries(spriteSources).map(([name, source]) =>
+    new Promise((resolve, reject) => {
+      sprites[name].addEventListener("load", resolve, { once: true });
+      sprites[name].addEventListener(
+        "error",
+        () => reject(new Error(`Sprite konnte nicht geladen werden: ${source}`)),
+        { once: true }
+      );
+      sprites[name].src = source;
+    })
+  )
+);
+
+let devicePixelRatioValue = 1;
+let renderScale = 1;
+let viewportWidth = innerWidth;
+let viewportHeight = innerHeight;
+let cameraX = 0;
+let animationFrameId = null;
+let previousFrameTime = null;
+let gameFinished = false;
+let fliesCollected = 0;
+
+const input = {
+  left: false,
+  right: false,
+  jumpQueued: false,
+};
+
+const resizeCanvas = () => {
+  devicePixelRatioValue = Math.min(window.devicePixelRatio || 1, 2);
+  renderScale = Math.min(1, innerHeight / WORLD_HEIGHT);
+  viewportWidth = innerWidth / renderScale;
+  viewportHeight = innerHeight / renderScale;
+
+  canvas.width = Math.round(innerWidth * devicePixelRatioValue);
+  canvas.height = Math.round(innerHeight * devicePixelRatioValue);
+  canvas.style.width = `${innerWidth}px`;
+  canvas.style.height = `${innerHeight}px`;
+
+  cameraX = Math.min(cameraX, Math.max(0, LEVEL_WIDTH - viewportWidth));
+};
+
+class Player {
+  constructor() {
+    this.position = { x: 100, y: 400 };
+    this.previousPosition = { ...this.position };
+    this.velocity = { x: 0, y: 0 };
+    this.width = 40;
+    this.height = 40;
+    this.isGrounded = false;
+  }
+
+  draw() {
+    ctx.drawImage(
+      sprites.player,
+      this.position.x - cameraX,
+      this.position.y,
+      this.width,
+      this.height
+    );
+  }
+
+  update(deltaTime) {
+    this.previousPosition.x = this.position.x;
+    this.previousPosition.y = this.position.y;
+
+    this.velocity.x = gameFinished
+      ? 0
+      : (Number(input.right) - Number(input.left)) * MOVE_SPEED;
+
+    if (input.jumpQueued && this.isGrounded && !gameFinished) {
+      this.velocity.y = -JUMP_SPEED;
+      this.isGrounded = false;
     }
-    
-    // Funktion zum Zeichnen des Kothaufens
-    drawPoopLayer(x, y, radiusX, radiusY, color) {
-      ctx.beginPath();
-      ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.stroke();
+    input.jumpQueued = false;
+
+    this.velocity.y += GRAVITY * deltaTime;
+    this.position.x += this.velocity.x * deltaTime;
+    this.position.y += this.velocity.y * deltaTime;
+    this.position.x = Math.max(0, Math.min(this.position.x, LEVEL_WIDTH - this.width));
+
+    this.isGrounded = false;
+    const floorY = WORLD_HEIGHT - this.height;
+    if (this.position.y >= floorY) {
+      this.position.y = floorY;
+      this.velocity.y = 0;
+      this.isGrounded = true;
     }
-  
-    // Spieler-Rendering
-    draw() {
-      const x = this.position.x + this.width / 2;
-      const y = this.position.y + this.height / 2;
-  
-      // Kothaufen in mehreren Schichten
-      this.drawPoopLayer(x, y + 20, 20, 10, "#8B4513"); // Unterste Schicht (größte)
-      this.drawPoopLayer(x, y + 10, 15, 8, "#8B4513"); // Mittlere Schicht
-      this.drawPoopLayer(x, y, 10, 6, "#8B4513");       // Obere Schicht
-      this.drawPoopLayer(x, y - 5, 5, 3, "#8B4513");   // Kleinste Spitze
-    }
-  
-    update() {
-      this.draw(); // Zeichnet den Kothaufen
-      this.position.x += this.velocity.x;
-      this.position.y += this.velocity.y;
-  
-      if (this.position.y + this.height + this.velocity.y <= canvas.height) {
-        if (this.position.y < 0) {
-          this.position.y = 0;
-          this.velocity.y = gravity;
-        }
-        this.velocity.y += gravity;
-      } else {
-        this.velocity.y = 0;
-      }
-  
-      if (this.position.x < this.width) {
-        this.position.x = this.width;
-      }
-  
-      if (this.position.x >= canvas.width - this.width * 2) {
-        this.position.x = canvas.width - this.width * 2;
-      }
-      
+
+    if (this.position.y < 0) {
+      this.position.y = 0;
+      this.velocity.y = Math.max(0, this.velocity.y);
     }
   }
-  
-// Plattformen
+}
+
 class Platform {
   constructor(x, y) {
-    this.position = {
-      x,
-      y,
-    };
+    this.position = { x, y };
     this.width = 200;
-    this.height = proportionalSize(40);
+    this.height = 40;
   }
+
   draw() {
-    ctx.fillStyle = "#58FAF4";
-    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
-  }
-}
-// Horizontale Plattform neu
-class Blockade {
-  constructor(x, y) {
-    this.position = {
-      x,
-      y,
-    };
-    this.width = proportionalSize(40);
-    this.height = 200;
-  }
-  
-  draw() {
-    ctx.fillStyle = "#58FAF4"; // Hier die Farbe als String setzen
-    ctx.fillRect(this.position.x, this.position.y, this.width, this.height); // Tippfehler behoben: thi.position.y -> this.position.y
+    ctx.drawImage(
+      sprites.platform,
+      this.position.x - cameraX,
+      this.position.y,
+      this.width,
+      this.height
+    );
   }
 }
 
-//Checkpointdesign
+class Blockade {
+  constructor(x, y) {
+    this.position = { x, y };
+    this.width = 40;
+    this.height = 200;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.position.x - cameraX + this.width, this.position.y);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(sprites.platform, 0, 0, this.height, this.width);
+    ctx.restore();
+  }
+}
+
 class CheckPoint {
-  constructor(x, y, z) {
-    this.position = {
-      x,
-      y,
-    };
-    this.width = proportionalSize(40);
-    this.height = proportionalSize(70);
+  constructor(x, y, order) {
+    this.position = { x, y };
+    this.width = 40;
+    this.height = 70;
+    this.order = order;
     this.claimed = false;
   }
 
-  // Funktion zum Zeichnen der Toilette
-  drawToiletTopView() {
-    const { x, y } = this.position;
-    const toiletWidth = this.width;
-    const toiletHeight = this.height;
-
-    // Toilettensitz (große Ellipse oben)
-    ctx.beginPath();
-    ctx.ellipse(x + toiletWidth / 2, y + toiletHeight / 2, toiletWidth / 2, toiletHeight / 3, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#FFFFFF"; // Farbe für die Toilette
-    ctx.fill();
-    ctx.strokeStyle = "#000000"; // Rand
-    ctx.stroke();
-
-    // Innerer Rand der Toilette (kleinere Ellipse)
-    ctx.beginPath();
-    ctx.ellipse(x + toiletWidth / 2, y + toiletHeight / 2, toiletWidth / 3, toiletHeight / 4, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Abfluss
-    ctx.beginPath();
-    ctx.arc(x + toiletWidth / 2, y + toiletHeight / 2, 5, 0, Math.PI * 2);
-    ctx.fillStyle = "#000000"; // Farbe für den Abfluss
-    ctx.fill();
-
-    // Toilettentank 
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(x, y - toiletHeight * 0.2, toiletWidth, toiletHeight * 0.2);
-    ctx.strokeRect(x, y - toiletHeight * 0.2, toiletWidth, toiletHeight * 0.2);
-
-    // Toilettenspülknopf
-    ctx.beginPath();
-    ctx.arc(x + toiletWidth / 2, y - toiletHeight * 0.1, 4, 0, Math.PI * 2); // Spülknopf
-    ctx.fillStyle = "grey"; // Farbe für den Knopf
-    ctx.fill();
-  }
-
-  draw() { 
+  draw() {
     if (!this.claimed) {
-      this.drawToiletTopView(); // Toilette von Oben
+      ctx.drawImage(
+        sprites.toilet,
+        this.position.x - cameraX,
+        this.position.y,
+        this.width,
+        this.height
+      );
     }
   }
 
   claim() {
-    this.width = 0;
-    this.height = 0;
-    this.position.y = Infinity;
     this.claimed = true;
   }
 }
 
-//Fliege erstellt
 class Fly {
   constructor(x, y) {
-    this.position = {
-      x,
-      y,
-    };
-    this.bodySize = proportionalSize(10);  // Größe des Körpers
-    this.wingSize = proportionalSize(6); // Größe der Flügel
-    this.collected = false; // Status, ob die Fliege eingesammelt wurde
+    this.position = { x, y };
+    this.bodySize = 10;
+    this.collected = false;
   }
 
   draw() {
     if (!this.collected) {
-      // Körper der Fliege
-      ctx.fillStyle = "black"; // Körperfarbe
-      ctx.beginPath();
-      ctx.arc(this.position.x, this.position.y, this.bodySize, 0, Math.PI * 2); // Körper zeichnen
-      ctx.fill();
-
-      // Flügel zeichnen
-      ctx.fillStyle = "grey"; // Flügelfarbe
-      ctx.beginPath();
-      ctx.arc(this.position.x - this.bodySize, this.position.y - this.wingSize / 2, this.wingSize, 0, Math.PI * 2); // Linker Flügel
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(this.position.x + this.bodySize, this.position.y - this.wingSize / 2, this.wingSize, 0, Math.PI * 2); // Rechter Flügel
-      ctx.fill();
-      ctx.closePath();
+      const spriteSize = this.bodySize * 4;
+      ctx.drawImage(
+        sprites.fly,
+        this.position.x - cameraX - spriteSize / 2,
+        this.position.y - spriteSize / 2,
+        spriteSize,
+        spriteSize
+      );
     }
   }
-// Kollisionsprüfung für die Fliege
+
   checkCollision(player) {
+    if (this.collected) return false;
+
     const distX = player.position.x + player.width / 2 - this.position.x;
     const distY = player.position.y + player.height / 2 - this.position.y;
-    const distance = Math.sqrt(distX * distX + distY * distY);
-
-    if (distance < player.width / 2 + this.bodySize) {  // Kollisionsprüfung korrigiert
-        this.collected = true;  // Fliege verschwindet nach Einsammeln
+    if (Math.hypot(distX, distY) < player.width / 2 + this.bodySize) {
+      this.collected = true;
+      return true;
+    }
+    return false;
   }
-}
 }
 
 const player = new Player();
 
-// Positionen der einzelnen Plattformen
-const platformPositions = [
-  { x: 500, y: proportionalSize(450) },
-  { x: 700, y: proportionalSize(400) },
-  { x: 850, y: proportionalSize(350) },
-  { x: 900, y: proportionalSize(350) },
-  { x: 1050, y: proportionalSize(150) },
-  { x: 2500, y: proportionalSize(450) },
-  { x: 2900, y: proportionalSize(400) },
-  { x: 3150, y: proportionalSize(350) },
-  { x: 3900, y: proportionalSize(450) },
-  { x: 4200, y: proportionalSize(400) },
-  { x: 4400, y: proportionalSize(200) },
-  { x: 4550, y: proportionalSize(200) },
-  { x: 4700, y: proportionalSize(150) },
-];
+const platforms = [
+  [500, 450], [700, 400], [850, 350], [900, 350], [1050, 150],
+  [2500, 450], [2900, 400], [3150, 350], [3900, 450], [4200, 400],
+  [4400, 200], [4550, 200], [4700, 150],
+].map(([x, y]) => new Platform(x, y));
 
-const platforms = platformPositions.map(
-  (platform) => new Platform(platform.x, platform.y)
-);
+const blockades = [
+  [1210, -10], [2860, 240], [2860, 0], [4860, -10],
+].map(([x, y]) => new Blockade(x, y));
 
-//Positionen der horizontalen Plattformen
-const blockadePositions = [
-  { x: 1210, y: proportionalSize(-10) },
-  { x: 2860, y: proportionalSize(240) },
-  { x: 2860, y: proportionalSize(0) },
-  { x: 4860, y: proportionalSize(-10) },
-];
+const flies = [
+  [550, 350], [700, 250], [1100, 450], [1450, 350], [1800, 250],
+  [2000, 450], [2300, 350], [2500, 150], [2875, 220], [3000, 450],
+  [3250, 250], [3400, 450], [3600, 250], [3780, 750], [3900, 550],
+  [4050, 600], [4300, 250], [4500, 100], [4700, 20], [4800, 500],
+].map(([x, y]) => new Fly(x, y));
 
-const blockade = blockadePositions.map(
-  (block) => new Blockade(block.x, block.y)
-);
+const checkpoints = [
+  [1170, 80, 1], [2900, 330, 2], [4800, 80, 3],
+].map(([x, y, order]) => new CheckPoint(x, y, order));
 
+totalFliesElement.textContent = flies.length;
 
-// Position der Fliegen
-const flyPositions = [
-  { x: 550, y: proportionalSize(350) },
-  { x: 700, y: proportionalSize(250) },
-  { x: 1100, y: proportionalSize(450) },
-  { x: 1450, y: proportionalSize(350) },
-  { x: 1800, y: proportionalSize(250) },
-  { x: 2000, y: proportionalSize(450) },
-  { x: 2300, y: proportionalSize(350) },
-  { x: 2500, y: proportionalSize(150) },
-  { x: 2875, y: proportionalSize(220) },
-  { x: 3000, y: proportionalSize(450) }, //10
-  { x: 3250, y: proportionalSize(250) }, 
-  { x: 3400, y: proportionalSize(450) },
-  { x: 3600, y: proportionalSize(250) },
-  { x: 3780, y: proportionalSize(750) },
-  { x: 3900, y: proportionalSize(550) },
-  { x: 4050, y: proportionalSize(600) },
-  { x: 4300, y: proportionalSize(250) },
-  { x: 4500, y: proportionalSize(100) },
-  { x: 4700, y: proportionalSize(20) },
-  { x: 4800, y: proportionalSize(500) }, //20
-];
+const overlaps = (first, second) =>
+  first.position.x < second.position.x + second.width &&
+  first.position.x + first.width > second.position.x &&
+  first.position.y < second.position.y + second.height &&
+  first.position.y + first.height > second.position.y;
 
-// Erstelle die Fliegen
-const flies = flyPositions.map(
-  (fly) => new Fly(fly.x, fly.y)
-);
+const resolvePlatformCollisions = () => {
+  for (const platform of platforms) {
+    const previousBottom = player.previousPosition.y + player.height;
+    const currentBottom = player.position.y + player.height;
+    const horizontallyOverlapping =
+      player.position.x + player.width > platform.position.x &&
+      player.position.x < platform.position.x + platform.width;
 
-// Positionen der einzelnen Checkpoints
-const checkpointPositions = [
-  { x: 1170, y: proportionalSize(80), z: 1 },
-  { x: 2900, y: proportionalSize(330), z: 2 },
-  { x: 4800, y: proportionalSize(80), z: 3 },
-];
-
-const checkpoints = checkpointPositions.map(
-  (checkpoint) => new CheckPoint(checkpoint.x, checkpoint.y, checkpoint.z)
-);
-
-// ANIMATE 
-const animate = () => {
-  requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-// Zeichne Plattformen, horizontale Plattformen und Checkpoints
-  platforms.forEach((platform) => {
-    platform.draw();
-  });
-
-  blockade.forEach((block) => {
-    block.draw();
-  });
-
-  checkpoints.forEach(checkpoint => {
-    checkpoint.draw();
-  });
-
-  // Update den Spieler
-  player.update();
-
-  // Zeichne und prüfe Kollision mit allen Fliegen
-  flies.forEach((fly, index) => {
-    if (!fly.collected) {
-        fly.draw();
-        fly.checkCollision(player);  // Kollisionsprüfung
-
-        if (fly.collected) {
-        fliesCollected +=1; // Erhöhe den Punktestand
-        updateScoreBoard();
-        console.log("Fliege eingesammelt! Aktueller Punktestand: " + fliesCollected);
-        }
+    if (
+      player.velocity.y >= 0 &&
+      previousBottom <= platform.position.y &&
+      currentBottom >= platform.position.y &&
+      horizontallyOverlapping
+    ) {
+      player.position.y = platform.position.y - player.height;
+      player.velocity.y = 0;
+      player.isGrounded = true;
     }
-});
-
-function updateScoreBoard() {
-  document.getElementById("flies-collected").textContent = fliesCollected;
-}
-
- // Bewegungserkennung -> Mapmovement
-if (keys.rightKey.pressed && player.position.x < proportionalSize(400)) {
-  player.velocity.x = 5;
-} else if (keys.leftKey.pressed && player.position.x > proportionalSize(100)) {
-  player.velocity.x = -5;
-} else {
-  player.velocity.x = 0;
-
-  // Überprüfen, ob die Karte noch verschoben werden kann
-  if (keys.rightKey.pressed && isCheckpointCollisionDetectionActive && platforms[platforms.length - 1].position.x > canvas.width - proportionalSize(1250)) {
-    // Nur bewegen, wenn die Karte noch Platz hat
-    platforms.forEach((platform) => {
-      platform.position.x -= 5;
-    });
-
-    blockade.forEach((block) => {
-      block.position.x -= 5;
-    });
-
-    flies.forEach((fly) => {
-      fly.position.x -= 5;
-    });
-
-    checkpoints.forEach((checkpoint) => {
-      checkpoint.position.x -= 5;
-    });
-
-  } else if (keys.leftKey.pressed && isCheckpointCollisionDetectionActive && platforms[0].position.x < proportionalSize(10)) {
-    // Nur bewegen, wenn die Karte nach links noch Platz hat
-    platforms.forEach((platform) => {
-      platform.position.x += 5;
-    });
-
-    blockade.forEach((block) => {
-      block.position.x += 5;
-    });
-
-    flies.forEach((fly) => {
-      fly.position.x += 5;
-    });
-
-    checkpoints.forEach((checkpoint) => {
-      checkpoint.position.x += 5;
-    });
-  }
-}
-
- //Plattformkollisionsregeln
- platforms.forEach((platform) => {
-  const collisionDetectionRules = [
-    player.position.y + player.height <= platform.position.y,
-    player.position.y + player.height + player.velocity.y >= platform.position.y,
-    player.position.x >= platform.position.x - player.width / 2,
-    player.position.x <=
-      platform.position.x + platform.width - player.width / 3,
-  ];
-
-  if (collisionDetectionRules.every((rule) => rule)) {
-    player.velocity.y = 0;
-    return;
-  }
-
-  const platformDetectionRules = [
-    player.position.x >= platform.position.x - player.width / 2,
-    player.position.x <=
-      platform.position.x + platform.width - player.width / 3,
-    player.position.y + player.height >= platform.position.y,
-    player.position.y <= platform.position.y + platform.height,
-  ];
-
-  if (platformDetectionRules.every(rule => rule)) {
-    player.position.y = platform.position.y + player.height;
-    player.velocity.y = gravity;
-  };
-});
-
-// Kollisionsregeln für horizontale Plattform
-
-blockade.forEach((block) => {
-  // Kollision von oben
-  const collisionFromAbove = [
-    player.position.y + player.height <= block.position.y, 
-    player.position.y + player.height + player.velocity.y >= block.position.y,
-    player.position.x + player.width >= block.position.x, 
-    player.position.x <= block.position.x + block.width 
-  ];
-
-  // Kollision von unten
-  const collisionFromBelow = [
-    player.position.y >= block.position.y + block.height, 
-    player.position.y + player.velocity.y <= block.position.y + block.height, 
-    player.position.x + player.width >= block.position.x, 
-    player.position.x <= block.position.x + block.width 
-  ];
-
-  // Kollision von links
-  const collisionFromLeft = [
-    player.position.x + player.width <= block.position.x, 
-    player.position.x + player.width + player.velocity.x >= block.position.x,
-    player.position.y + player.height >= block.position.y, 
-    player.position.y <= block.position.y + block.height 
-  ];
-
-  // Kollision von rechts
-  const collisionFromRight = [
-    player.position.x >= block.position.x + block.width, 
-    player.position.x + player.velocity.x <= block.position.x + block.width, 
-    player.position.y + player.height >= block.position.y,
-    player.position.y <= block.position.y + block.height 
-  ];
-
-  // Kollisionsreaktionen
-  if (collisionFromAbove.every((rule) => rule)) {
-    player.velocity.y = 0;
-    player.position.y = block.position.y - player.height;
-  } else if (collisionFromBelow.every((rule) => rule)) {
-    player.velocity.y = gravity; 
-    player.position.y = block.position.y + block.height;
-  } else if (collisionFromLeft.every((rule) => rule)) {
-    player.velocity.x = 0; 
-    player.position.x = block.position.x - player.width;
-  } else if (collisionFromRight.every((rule) => rule)) {
-    player.velocity.x = 0;
-    player.position.x = block.position.x + block.width;
-  }
-});
-
-//Checkpointkollisionsregeln
-checkpoints.forEach((checkpoint, index, checkpoints) => {
-  const checkpointDetectionRules = [
-    player.position.x >= checkpoint.position.x,
-    player.position.y >= checkpoint.position.y,
-    player.position.y + player.height <=
-      checkpoint.position.y + checkpoint.height,
-    isCheckpointCollisionDetectionActive,
-    player.position.x - player.width <=
-      checkpoint.position.x - checkpoint.width + player.width * 0.9,
-    index === 0 || checkpoints[index - 1].claimed === true,
-  ];
-
-  if (checkpointDetectionRules.every((rule) => rule)) {
-    checkpoint.claim();
-
-    if (index === checkpoints.length - 1) {
-      isCheckpointCollisionDetectionActive = false;
-      showCheckpointScreen("Du hast die letzte Toilette erreicht!");
-      movePlayer("ArrowRight", 0, false);
-    } else if (player.position.x >= checkpoint.position.x && player.position.x <= checkpoint.position.x + 40) {
-      showCheckpointScreen("Du hast eine Toilette erreicht!")
-    }
-  };
-});
-}
-
-const keys = {
-  rightKey: {
-    pressed: false
-  },
-  leftKey: {
-    pressed: false
   }
 };
 
-const movePlayer = (key, xVelocity, isPressed) => {
-  if (!isCheckpointCollisionDetectionActive) {
-    player.velocity.x = 0;
-    player.velocity.y = 0;
-    return;
+const resolveBlockadeCollisions = () => {
+  for (const block of blockades) {
+    if (!overlaps(player, block)) continue;
+
+    const previousRight = player.previousPosition.x + player.width;
+    const previousLeft = player.previousPosition.x;
+    const previousBottom = player.previousPosition.y + player.height;
+    const previousTop = player.previousPosition.y;
+
+    if (previousBottom <= block.position.y) {
+      player.position.y = block.position.y - player.height;
+      player.velocity.y = 0;
+      player.isGrounded = true;
+    } else if (previousTop >= block.position.y + block.height) {
+      player.position.y = block.position.y + block.height;
+      player.velocity.y = Math.max(0, player.velocity.y);
+    } else if (previousRight <= block.position.x) {
+      player.position.x = block.position.x - player.width;
+      player.velocity.x = 0;
+    } else if (previousLeft >= block.position.x + block.width) {
+      player.position.x = block.position.x + block.width;
+      player.velocity.x = 0;
+    }
   }
+};
 
-  switch (key) {
-    case "ArrowLeft":
-      keys.leftKey.pressed = isPressed;
-      if (xVelocity === 0) {
-        player.velocity.x = xVelocity;
-      }
-      player.velocity.x -= xVelocity;
-      break;
-    case "ArrowUp":
-    case " ":
-    case "Spacebar":
-      player.velocity.y -= 8;
-      break;
-    case "ArrowRight":
-      keys.rightKey.pressed = isPressed;
-      if (xVelocity === 0) {
-        player.velocity.x = xVelocity;
-      }
-      player.velocity.x += xVelocity;
+const collectFlies = () => {
+  for (const fly of flies) {
+    if (fly.checkCollision(player)) {
+      fliesCollected += 1;
+      fliesCollectedElement.textContent = fliesCollected;
+    }
   }
-}
+};
 
-const startGame = () => {
-  canvas.style.display = "block";
-  startScreen.style.display = "none";
-  animate();
-}
+const checkCheckpoints = () => {
+  checkpoints.forEach((checkpoint, index) => {
+    const previousCheckpointClaimed = index === 0 || checkpoints[index - 1].claimed;
+    if (
+      !checkpoint.claimed &&
+      previousCheckpointClaimed &&
+      overlaps(player, checkpoint)
+    ) {
+      checkpoint.claim();
 
-const showCheckpointScreen = (msg) => {
+      if (index === checkpoints.length - 1) {
+        gameFinished = true;
+        input.left = false;
+        input.right = false;
+        showCheckpointScreen("Du hast die letzte Toilette erreicht!");
+      } else {
+        showCheckpointScreen("Du hast eine Toilette erreicht!");
+      }
+    }
+  });
+};
+
+const updateCamera = () => {
+  const targetX = player.position.x - viewportWidth * 0.4;
+  cameraX = Math.max(0, Math.min(targetX, LEVEL_WIDTH - viewportWidth));
+};
+
+const update = (deltaTime) => {
+  player.update(deltaTime);
+  resolvePlatformCollisions();
+  resolveBlockadeCollisions();
+  collectFlies();
+  checkCheckpoints();
+  updateCamera();
+};
+
+const draw = () => {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(
+    devicePixelRatioValue * renderScale,
+    0,
+    0,
+    devicePixelRatioValue * renderScale,
+    0,
+    0
+  );
+
+  platforms.forEach((platform) => platform.draw());
+  blockades.forEach((blockade) => blockade.draw());
+  checkpoints.forEach((checkpoint) => checkpoint.draw());
+  flies.forEach((fly) => fly.draw());
+  player.draw();
+};
+
+const animate = (timestamp) => {
+  if (previousFrameTime === null) previousFrameTime = timestamp;
+  const deltaTime = Math.min((timestamp - previousFrameTime) / 1000, MAX_FRAME_TIME);
+  previousFrameTime = timestamp;
+
+  update(deltaTime);
+  draw();
+  animationFrameId = requestAnimationFrame(animate);
+};
+
+const startGame = async () => {
+  if (animationFrameId !== null) return;
+
+  startBtn.disabled = true;
+  try {
+    await spritesReady;
+    startScreen.style.display = "none";
+    previousFrameTime = null;
+    animationFrameId = requestAnimationFrame(animate);
+  } catch (error) {
+    startBtn.disabled = false;
+    checkpointScreen.style.display = "block";
+    checkpointMessage.textContent = error.message;
+  }
+};
+
+const showCheckpointScreen = (message) => {
   checkpointScreen.style.display = "block";
-  checkpointMessage.textContent = msg;
-  if (isCheckpointCollisionDetectionActive) {
-    setTimeout(() => (checkpointScreen.style.display = "none"), 2000);
+  checkpointMessage.textContent = message;
+  if (!gameFinished) {
+    setTimeout(() => {
+      checkpointScreen.style.display = "none";
+    }, 2000);
   }
+};
+
+const setMovementKey = (key, isPressed) => {
+  if (key === "ArrowLeft") input.left = isPressed;
+  if (key === "ArrowRight") input.right = isPressed;
 };
 
 startBtn.addEventListener("click", startGame);
 
-window.addEventListener("keydown", ({ key }) => {
-  movePlayer(key, 8, true);
+window.addEventListener("keydown", (event) => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(event.key)) {
+    event.preventDefault();
+  }
+
+  setMovementKey(event.key, true);
+  if (
+    !event.repeat &&
+    (event.key === "ArrowUp" || event.key === " " || event.code === "Space")
+  ) {
+    input.jumpQueued = true;
+  }
 });
 
-window.addEventListener("keyup", ({ key }) => {
-  movePlayer(key, 0, false);
+window.addEventListener("keyup", (event) => {
+  setMovementKey(event.key, false);
 });
+
+window.addEventListener("blur", () => {
+  input.left = false;
+  input.right = false;
+  input.jumpQueued = false;
+});
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();

@@ -1,0 +1,15 @@
+{
+  "name": "dung-dash",
+  "version": "1.0.0",
+  "main": "script.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "jsdoc": "^4.0.5"
+  }
+}

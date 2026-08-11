@@ -76,25 +76,27 @@ test("a jump starts only while the player is grounded", () => {
 
   game.player.isGrounded = false;
   game.player.velocity.y = 100;
-  game.input.jumpQueued = true;
+  game.input.jumpBufferRemaining = 0.12;
   game.player.update(1 / 60);
   assert.ok(game.player.velocity.y > 100);
 
   game.player.isGrounded = true;
   game.player.position.y = 700;
   game.player.velocity.y = 0;
-  game.input.jumpQueued = true;
+  game.input.jumpBufferRemaining = 0.12;
   game.player.update(1 / 60);
   assert.ok(game.player.velocity.y < 0);
 });
 
-test("jump strength reaches the first high platform", () => {
+test("jump strength reaches the highest platform route", () => {
   const { game } = createGame();
-  const firstPlatform = game.platforms[0];
+  const highestPlatform = game.platforms.reduce((highest, platform) =>
+    platform.position.y < highest.position.y ? platform : highest
+  );
 
   game.player.position.y = 720;
   game.player.isGrounded = true;
-  game.input.jumpQueued = true;
+  game.input.jumpBufferRemaining = 0.12;
 
   let highestPosition = game.player.position.y;
   for (let frame = 0; frame < 120; frame += 1) {
@@ -103,7 +105,33 @@ test("jump strength reaches the first high platform", () => {
     if (game.player.velocity.y >= 0) break;
   }
 
-  assert.ok(highestPosition + game.player.height <= firstPlatform.position.y);
+  assert.ok(highestPosition + game.player.height <= highestPlatform.position.y);
+});
+
+test("coyote time accepts a jump shortly after leaving a platform", () => {
+  const { game } = createGame();
+
+  game.player.isGrounded = true;
+  game.player.update(1 / 60);
+  game.player.isGrounded = false;
+  game.input.jumpBufferRemaining = 0.12;
+  game.player.update(1 / 60);
+
+  assert.ok(game.player.velocity.y < 0);
+});
+
+test("jump buffering triggers a jump immediately after landing", () => {
+  const { game } = createGame();
+
+  game.player.isGrounded = false;
+  game.player.coyoteTimeRemaining = 0;
+  game.input.jumpBufferRemaining = 0.12;
+  game.player.update(1 / 60);
+  assert.ok(game.player.velocity.y >= 0);
+
+  game.player.isGrounded = true;
+  game.player.update(1 / 60);
+  assert.ok(game.player.velocity.y < 0);
 });
 
 test("the player keeps the gaze direction of horizontal movement", () => {

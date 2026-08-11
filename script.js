@@ -11,9 +11,11 @@ const WORLD_HEIGHT = 800;
 const LEVEL_WIDTH = 5000;
 const GROUND_HEIGHT = 40;
 const GROUND_Y = WORLD_HEIGHT - GROUND_HEIGHT;
-const GRAVITY = 1800;
+const GRAVITY = 2200;
 const MOVE_SPEED = 300;
-const JUMP_SPEED = 1150;
+const JUMP_SPEED = 1650;
+const COYOTE_TIME = 0.12;
+const JUMP_BUFFER_TIME = 0.12;
 const MAX_FRAME_TIME = 0.05;
 
 const sprites = {
@@ -61,7 +63,7 @@ let fliesCollected = 0;
 const input = {
   left: false,
   right: false,
-  jumpQueued: false,
+  jumpBufferRemaining: 0,
 };
 
 const resizeCanvas = () => {
@@ -86,6 +88,7 @@ class Player {
     this.width = 40;
     this.height = 40;
     this.isGrounded = false;
+    this.coyoteTimeRemaining = 0;
     this.lookDirection = "neutral";
   }
 
@@ -115,11 +118,29 @@ class Player {
     if (horizontalInput < 0) this.lookDirection = "left";
     if (horizontalInput > 0) this.lookDirection = "right";
 
-    if (input.jumpQueued && this.isGrounded && !gameFinished) {
+    if (this.isGrounded) {
+      this.coyoteTimeRemaining = COYOTE_TIME;
+    } else {
+      this.coyoteTimeRemaining = Math.max(
+        0,
+        this.coyoteTimeRemaining - deltaTime
+      );
+    }
+    input.jumpBufferRemaining = Math.max(
+      0,
+      input.jumpBufferRemaining - deltaTime
+    );
+
+    if (
+      input.jumpBufferRemaining > 0 &&
+      this.coyoteTimeRemaining > 0 &&
+      !gameFinished
+    ) {
       this.velocity.y = -JUMP_SPEED;
       this.isGrounded = false;
+      this.coyoteTimeRemaining = 0;
+      input.jumpBufferRemaining = 0;
     }
-    input.jumpQueued = false;
 
     this.velocity.y += GRAVITY * deltaTime;
     this.position.x += this.velocity.x * deltaTime;
@@ -446,7 +467,7 @@ window.addEventListener("keydown", (event) => {
     !event.repeat &&
     (event.key === "ArrowUp" || event.key === " " || event.code === "Space")
   ) {
-    input.jumpQueued = true;
+    input.jumpBufferRemaining = JUMP_BUFFER_TIME;
   }
 });
 
@@ -457,7 +478,7 @@ window.addEventListener("keyup", (event) => {
 window.addEventListener("blur", () => {
   input.left = false;
   input.right = false;
-  input.jumpQueued = false;
+  input.jumpBufferRemaining = 0;
 });
 
 window.addEventListener("resize", resizeCanvas);

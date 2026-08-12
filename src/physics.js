@@ -50,9 +50,11 @@ export const resolveBlockadeCollisions = (player, blockades) => {
   }
 };
 
-export const findReachedCheckpoint = (player, checkpoints) =>
-  checkpoints.find((checkpoint, index) =>
+export const findReachedCheckpoint = (player, checkpoints) => {
+  const nextOrder = checkpoints.filter((checkpoint) => checkpoint.claimed).length + 1;
+  return checkpoints.find((checkpoint) =>
     !checkpoint.claimed &&
-    (index === 0 || checkpoints[index - 1].claimed) &&
+    checkpoint.order === nextOrder &&
     overlaps(player, checkpoint)
   );
+};

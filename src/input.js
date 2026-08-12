@@ -29,11 +29,16 @@ export class InputController {
     this.jumpBufferRemaining = 0;
   }
 
-  bind(windowObject, touchControls = []) {
+  bind(windowObject, touchControls = [], { onPause = () => {} } = {}) {
     windowObject.addEventListener("keydown", (event) => {
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(event.key)) event.preventDefault();
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key)) {
+        event.preventDefault();
+      }
       if (event.key === "ArrowLeft") this.left = true;
       if (event.key === "ArrowRight") this.right = true;
+      if (!event.repeat && (event.key === "Escape" || event.key.toLowerCase() === "p")) {
+        onPause();
+      }
       if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
         this.queueJump();
       }
@@ -49,6 +54,7 @@ export class InputController {
       const control = button.dataset.control;
       const press = (event) => {
         event.preventDefault();
+        button.setPointerCapture?.(event.pointerId);
         if (control === "left") this.left = true;
         if (control === "right") this.right = true;
         if (control === "jump") this.queueJump();

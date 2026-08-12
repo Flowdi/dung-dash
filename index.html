@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="start-screen">
-      <h1 class="main-title">Dung Dash</h1>
+    <main class="start-screen" aria-labelledby="game-title">
+      <h1 class="main-title" id="game-title">Dung Dash</h1>
       <p class="instructions">
         Der Kothaufen muss zur Toilette gebracht werden!<br>
         Sammle auf dem Weg so viele Fliegen wie möglich ein
@@ -17,30 +17,35 @@
       <p class="instructions">
         Mit den Pfeiltasten bewegen.
       </p>
-      <p class="instructions">Mit der Leertaste springen.</p>
+      <p class="instructions">Mit der Leertaste springen. Mit P oder Escape pausieren.</p>
 
       <div class="btn-container">
-        <button class="btn" id="start-btn">Start</button>
+        <button class="btn" id="start-btn" type="button">Spiel starten</button>
       </div>
-    </div>
+    </main>
     <!-- Score-Bereich -->
-    <div class="score">
+    <div class="score" role="status" aria-live="polite">
       <p>Fliegen eingesammelt: <span id="flies-collected">0</span>/<span id="total-flies">20</span></p>
+      <button class="hud-button" id="pause-btn" type="button" aria-pressed="false" hidden>Pause</button>
     </div>
     <!-- Checkpoint-Bereich -->
-    <div class="checkpoint-screen">
+    <section class="checkpoint-screen" role="status" aria-live="assertive" aria-atomic="true">
       <h2 id="checkpoint-title">Gratuliere</h2>
       <p id="checkpoint-message">Dein Kothaufen hat die Toilette erreicht!</p>
       <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
-    </div>
+    </section>
 
-    <canvas id="canvas"></canvas>
+    <canvas id="canvas" role="img" aria-label="Spielfeld von Dung Dash">
+      Dein Browser unterstützt das Canvas-Spielfeld nicht.
+    </canvas>
 
     <div class="touch-controls" aria-label="Touch-Steuerung">
       <button type="button" data-control="left" aria-label="Nach links">◀</button>
       <button type="button" data-control="jump" aria-label="Springen">▲</button>
       <button type="button" data-control="right" aria-label="Nach rechts">▶</button>
     </div>
+
+    <noscript>Für Dung Dash muss JavaScript aktiviert sein.</noscript>
 
     <script defer src="./game.bundle.js"></script>
   </body>

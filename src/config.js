@@ -12,6 +12,7 @@ export const MAX_FRAME_TIME = 0.05;
 export const GameState = Object.freeze({
   READY: "ready",
   PLAYING: "playing",
+  PAUSED: "paused",
   FINISHED: "finished",
   ERROR: "error",
 });

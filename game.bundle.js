@@ -13,6 +13,7 @@
   var GameState = Object.freeze({
     READY: "ready",
     PLAYING: "playing",
+    PAUSED: "paused",
     FINISHED: "finished",
     ERROR: "error"
   });
@@ -79,11 +80,17 @@
       this.right = false;
       this.jumpBufferRemaining = 0;
     }
-    bind(windowObject, touchControls = []) {
+    bind(windowObject, touchControls = [], { onPause = () => {
+    } } = {}) {
       windowObject.addEventListener("keydown", (event) => {
-        if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(event.key)) event.preventDefault();
+        if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key)) {
+          event.preventDefault();
+        }
         if (event.key === "ArrowLeft") this.left = true;
         if (event.key === "ArrowRight") this.right = true;
+        if (!event.repeat && (event.key === "Escape" || event.key.toLowerCase() === "p")) {
+          onPause();
+        }
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
           this.queueJump();
         }
@@ -96,7 +103,9 @@
       touchControls.forEach((button) => {
         const control = button.dataset.control;
         const press = (event) => {
+          var _a;
           event.preventDefault();
+          (_a = button.setPointerCapture) == null ? void 0 : _a.call(button, event.pointerId);
           if (control === "left") this.left = true;
           if (control === "right") this.right = true;
           if (control === "jump") this.queueJump();
@@ -312,9 +321,12 @@
       }
     }
   };
-  var findReachedCheckpoint = (player, checkpoints) => checkpoints.find(
-    (checkpoint, index) => !checkpoint.claimed && (index === 0 || checkpoints[index - 1].claimed) && overlaps(player, checkpoint)
-  );
+  var findReachedCheckpoint = (player, checkpoints) => {
+    const nextOrder = checkpoints.filter((checkpoint) => checkpoint.claimed).length + 1;
+    return checkpoints.find(
+      (checkpoint) => !checkpoint.claimed && checkpoint.order === nextOrder && overlaps(player, checkpoint)
+    );
+  };
 
   // src/game.js
   var Game = class {
@@ -330,6 +342,7 @@
       this.score = documentObject.querySelector(".score");
       this.startButton = documentObject.getElementById("start-btn");
       this.restartButton = documentObject.getElementById("restart-btn");
+      this.pauseButton = documentObject.getElementById("pause-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
       this.input = new InputController();
@@ -343,9 +356,14 @@
       this.viewport = calculateViewport(windowObject.innerWidth, windowObject.innerHeight, windowObject.devicePixelRatio);
     }
     initialize() {
-      this.input.bind(this.window, [...this.document.querySelectorAll("[data-control]")]);
+      this.input.bind(
+        this.window,
+        [...this.document.querySelectorAll("[data-control]")],
+        { onPause: () => this.togglePause() }
+      );
       this.startButton.addEventListener("click", () => this.start());
       this.restartButton.addEventListener("click", () => this.reset());
+      this.pauseButton.addEventListener("click", () => this.togglePause());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
     }
@@ -375,6 +393,9 @@
       this.totalFliesElement.textContent = String(this.level.flies.length);
       this.checkpointScreen.style.display = "none";
       this.restartButton.style.display = "none";
+      this.pauseButton.hidden = false;
+      this.pauseButton.textContent = "Pause";
+      this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
       this.state = GameState.PLAYING;
       this.animationFrameId = this.window.requestAnimationFrame((time) => this.animate(time));
@@ -416,6 +437,24 @@
       this.input.reset();
       this.showMessage("Geschafft!", "Du hast die letzte Toilette erreicht!", false);
       this.restartButton.style.display = "inline-block";
+      this.pauseButton.hidden = true;
+      this.restartButton.focus();
+    }
+    togglePause() {
+      if (this.state === GameState.PLAYING) {
+        this.state = GameState.PAUSED;
+        this.input.reset();
+        this.pauseButton.textContent = "Fortsetzen";
+        this.pauseButton.setAttribute("aria-pressed", "true");
+        this.showMessage("Pause", "Dr\xFCcke P, Escape oder Fortsetzen.", false);
+      } else if (this.state === GameState.PAUSED) {
+        this.state = GameState.PLAYING;
+        this.previousFrameTime = null;
+        this.pauseButton.textContent = "Pause";
+        this.pauseButton.setAttribute("aria-pressed", "false");
+        this.checkpointScreen.style.display = "none";
+        this.pauseButton.focus();
+      }
     }
     showMessage(title, message, autoHide = true) {
       if (this.messageTimeout !== null) this.window.clearTimeout(this.messageTimeout);

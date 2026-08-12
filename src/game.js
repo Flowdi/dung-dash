@@ -28,6 +28,7 @@ export class Game {
     this.score = documentObject.querySelector(".score");
     this.startButton = documentObject.getElementById("start-btn");
     this.restartButton = documentObject.getElementById("restart-btn");
+    this.pauseButton = documentObject.getElementById("pause-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
     this.input = new InputController();
@@ -42,9 +43,14 @@ export class Game {
   }
 
   initialize() {
-    this.input.bind(this.window, [...this.document.querySelectorAll("[data-control]")]);
+    this.input.bind(
+      this.window,
+      [...this.document.querySelectorAll("[data-control]")],
+      { onPause: () => this.togglePause() }
+    );
     this.startButton.addEventListener("click", () => this.start());
     this.restartButton.addEventListener("click", () => this.reset());
+    this.pauseButton.addEventListener("click", () => this.togglePause());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
   }
@@ -76,6 +82,9 @@ export class Game {
     this.totalFliesElement.textContent = String(this.level.flies.length);
     this.checkpointScreen.style.display = "none";
     this.restartButton.style.display = "none";
+    this.pauseButton.hidden = false;
+    this.pauseButton.textContent = "Pause";
+    this.pauseButton.setAttribute("aria-pressed", "false");
     this.previousFrameTime = null;
     this.state = GameState.PLAYING;
     this.animationFrameId = this.window.requestAnimationFrame((time) => this.animate(time));
@@ -123,6 +132,25 @@ export class Game {
     this.input.reset();
     this.showMessage("Geschafft!", "Du hast die letzte Toilette erreicht!", false);
     this.restartButton.style.display = "inline-block";
+    this.pauseButton.hidden = true;
+    this.restartButton.focus();
+  }
+
+  togglePause() {
+    if (this.state === GameState.PLAYING) {
+      this.state = GameState.PAUSED;
+      this.input.reset();
+      this.pauseButton.textContent = "Fortsetzen";
+      this.pauseButton.setAttribute("aria-pressed", "true");
+      this.showMessage("Pause", "Drücke P, Escape oder Fortsetzen.", false);
+    } else if (this.state === GameState.PAUSED) {
+      this.state = GameState.PLAYING;
+      this.previousFrameTime = null;
+      this.pauseButton.textContent = "Pause";
+      this.pauseButton.setAttribute("aria-pressed", "false");
+      this.checkpointScreen.style.display = "none";
+      this.pauseButton.focus();
+    }
   }
 
   showMessage(title, message, autoHide = true) {

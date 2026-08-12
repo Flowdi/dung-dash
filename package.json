@@ -5,14 +5,14 @@
   "main": "main.js",
   "scripts": {
     "build": "node build.mjs",
-    "test": "npm run build && node --test"
+    "check": "npm run build && node scripts/check.mjs",
+    "test": "npm run check && node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "esbuild": "^0.28.2",
-    "jsdoc": "^4.0.5"
+    "esbuild": "^0.28.2"
   }
 }

@@ -11,4 +11,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /<script defer src="\.\/game\.bundle\.js"><\/script>/);
   assert.doesNotMatch(html, /<script[^>]+type="module"/);
   assert.doesNotMatch(bundle, /^\s*(?:import|export)\s/m);
+  assert.match(html, /aria-label="Spielfeld von Dung Dash"/);
+  assert.match(html, /id="pause-btn"/);
+  assert.doesNotMatch(html, /fonts\.googleapis\.com/);
 });

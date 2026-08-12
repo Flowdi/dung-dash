@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { calculateViewport } from "../src/config.js";
+import { GameState } from "../src/config.js";
 import { Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
@@ -107,4 +108,31 @@ test("creating a new level resets all collectible state", () => {
   const restartedLevel = createLevel();
   assert.equal(restartedLevel.flies.every((fly) => !fly.collected), true);
   assert.equal(restartedLevel.checkpoints.every((checkpoint) => !checkpoint.claimed), true);
+});
+
+test("the game exposes a dedicated paused state", () => {
+  assert.equal(GameState.PAUSED, "paused");
+});
+
+test("P and Escape invoke the pause callback without repeating", () => {
+  const listeners = new Map();
+  const windowObject = {
+    addEventListener(type, listener) {
+      listeners.set(type, listener);
+    },
+  };
+  const input = new InputController();
+  let pauseCalls = 0;
+  input.bind(windowObject, [], { onPause: () => pauseCalls += 1 });
+
+  const event = (key, repeat = false) => ({
+    code: key,
+    key,
+    preventDefault() {},
+    repeat,
+  });
+  listeners.get("keydown")(event("p"));
+  listeners.get("keydown")(event("Escape"));
+  listeners.get("keydown")(event("p", true));
+  assert.equal(pauseCalls, 2);
 });

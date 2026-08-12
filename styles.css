@@ -1,160 +1,165 @@
-/* Grundstil */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+:root {
+  --background: #494747;
+  --panel: #1e1e1e;
+  --panel-text: #f5f5f5;
+  --accent: #e53e3e;
+  --accent-hover: #f89808;
+  --focus: #ffdf70;
+}
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  :root {
-    --main-bg-color: #817676;
-    --section-bg-color: #1e1e1e;
-    --golden-yellow: #feac32;
-  }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Verhindert Scrollen */
-    width: 100%;
-    height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
-  body {
-    margin: 0;
-    height: 100%;
-    width: 100%;
-    background-color: #494747; /* Dezentes Braun für den Hintergrund */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  color: var(--panel-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.start-screen,
+.checkpoint-screen {
+  position: absolute;
+  z-index: 1200;
+  width: min(92%, 700px);
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.main-title {
+  font-size: clamp(2rem, 7vw, 4rem);
+}
+
+.instructions {
+  margin: 14px 0;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.btn-container {
+  display: flex;
+  justify-content: center;
+}
+
+.btn,
+.hud-button {
+  min-width: 112px;
+  min-height: 44px;
+  margin: 10px;
+  padding: 8px 14px;
+  border: 2px solid #7b2828;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:hover,
+.hud-button:hover {
+  background: var(--accent-hover);
+}
+
+button:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.checkpoint-screen {
+  display: none;
+  width: min(92%, 360px);
+}
+
+.checkpoint-screen p {
+  margin-top: 10px;
+}
+
+.score {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 1000;
+  display: none;
+  min-width: 230px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.hud-button {
+  min-width: 84px;
+  min-height: 34px;
+  margin: 8px 0 0;
+  padding: 4px 10px;
+  font-size: 0.9rem;
+}
+
+#restart-btn {
+  display: none;
+}
+
+#canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+.touch-controls {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: max(20px, env(safe-area-inset-left));
+  z-index: 1100;
+  display: none;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.touch-controls button {
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  background: rgba(30, 30, 30, 0.82);
+  color: #fff;
+  font-size: 28px;
+  touch-action: none;
+  pointer-events: auto;
+  user-select: none;
+}
+
+@media (pointer: coarse) {
+  body.game-running .touch-controls {
     display: flex;
-    justify-content: center;
-    align-items: center;
   }
+}
 
+@media (max-height: 520px) {
   .start-screen {
-    background-color: var(--section-bg-color);
-    width: 100%;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgb(168, 69, 69);
-    padding: 20px;
-    padding-bottom: 5px;
-    font-family: 'Poppins', sans-serif;
-    color: rgb(196, 196, 196);
-  }
-
-  .main-title {
-    text-align: center;
+    padding: 12px 20px;
   }
 
   .instructions {
-    text-align: center;
-    font-size: 1.2rem;
-    margin: 15px;
-    line-height: 2rem;
+    margin: 6px 0;
+    line-height: 1.35;
   }
-
-  .btn {
-    cursor: pointer;
-    width: 100px;
-    margin: 10px;
-    color: #fefeff;
-    font-size: 18px;
-    background-color: #e53e3eb9;
-    border-color: rgb(110, 44, 44);
-    border-width: 3px;
-  }
-
-  .btn:hover {
-    background-image: linear-gradient(#ffcc4c, #f89808);
-  }
-
-  .btn-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .checkpoint-screen {
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    text-align: center;
-    background-color: var(--section-bg-color);
-    border-radius: 20px;
-    padding: 10px;
-    display: none;
-    color: white;
-  }
-
-  .score {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 18px;
-    font-family: Comic Sans MS;
-    z-index: 1000; /* Immer über dem Spielfeld sichtbar */
-    text-align: center;
-    display: none;
-  }
-
-  #restart-btn {
-    display: none;
-  }
-
-  .touch-controls {
-    display: none;
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    left: 20px;
-    z-index: 1100;
-    justify-content: space-between;
-    pointer-events: none;
-  }
-
-  .touch-controls button {
-    width: 64px;
-    height: 64px;
-    border: 2px solid rgba(255, 255, 255, 0.75);
-    border-radius: 50%;
-    background: rgba(30, 30, 30, 0.72);
-    color: white;
-    font-size: 28px;
-    touch-action: none;
-    pointer-events: auto;
-  }
-
-  #canvas {
-    display: block;
-    width: 100vw; /* Volle Breite des Viewports */
-    height: 100vh; /* Volle Höhe des Viewports */
-  }
-
-  @media (min-width: 768px) {
-    .start-screen {
-      width: 60%;
-      max-width: 700px;
-    }
-
-    .checkpoint-screen {
-      max-width: 300px;
-    }
-  }
-
-  @media (pointer: coarse) {
-    body.game-running .touch-controls {
-      display: flex;
-    }
-  }
+}

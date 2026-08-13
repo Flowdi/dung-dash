@@ -2,6 +2,15 @@
 
 Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der richtigen Reihenfolge und bringe den Kothaufen ans Ziel.
 
+## Aktuelle Features
+
+- Zeitmessung ab der ersten Spielerbewegung
+- Fliegen-Score mit zeitlich begrenzter Combo bis ×4
+- Bronze-, Silber- und Goldmedaillen
+- persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
+- pausierbarer Spiellauf und vollständiger Neustart
+- responsive Tastatur- und Touchsteuerung
+
 ## Spielen
 
 `index.html` kann direkt im Browser geöffnet werden. Alternativ kann der Ordner über einen lokalen Webserver bereitgestellt werden.
@@ -33,4 +42,6 @@ npm test
 - `src/level.js` – Leveldaten
 - `src/assets.js` – Sprite-Ladevorgang
 - `src/config.js` – zentrale Konstanten
+- `src/score.js` – Timer, Combo, Score und Medaillen
+- `src/storage.js` – fehlertolerante lokale Rekordspeicherung
 - `tests/` – Regressionstests

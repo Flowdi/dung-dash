@@ -7,6 +7,8 @@ import { Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
+import { calculateFinalScore, calculateMedal, formatTime, RunStats } from "../src/score.js";
+import { ProgressStore } from "../src/storage.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -135,4 +137,48 @@ test("P and Escape invoke the pause callback without repeating", () => {
   listeners.get("keydown")(event("Escape"));
   listeners.get("keydown")(event("p", true));
   assert.equal(pauseCalls, 2);
+});
+
+test("run timer starts with the first player input and pauses without updates", () => {
+  const stats = new RunStats();
+  stats.update(1, false);
+  assert.equal(stats.elapsedSeconds, 0);
+  stats.update(0.5, true);
+  stats.update(0.5, false);
+  assert.equal(stats.elapsedSeconds, 1);
+  assert.equal(formatTime(stats.elapsedSeconds), "00:01.0");
+});
+
+test("collecting flies builds a time-limited combo", () => {
+  const stats = new RunStats();
+  stats.collectFly();
+  stats.update(1, true);
+  stats.collectFly();
+  assert.equal(stats.combo, 2);
+  assert.equal(stats.bestCombo, 2);
+  assert.equal(stats.flyScore, 1500);
+  stats.update(5, false);
+  assert.equal(stats.combo, 0);
+});
+
+test("all flies and a fast clean run earn gold and a larger score", () => {
+  const perfect = { elapsedSeconds: 60, fliesCollected: 20, totalFlies: 20, falls: 0 };
+  const partial = { elapsedSeconds: 120, fliesCollected: 10, totalFlies: 20, falls: 1 };
+  assert.equal(calculateMedal(perfect), "Gold");
+  assert.ok(calculateFinalScore(perfect) > calculateFinalScore(partial));
+});
+
+test("progress store keeps personal records", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, medal: "Bronze" });
+  const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, medal: "Gold" });
+  assert.equal(progress.bestScore, 1500);
+  assert.equal(progress.bestTime, 80);
+  assert.equal(progress.totalRuns, 2);
+  assert.equal(progress.totalFlies, 30);
 });

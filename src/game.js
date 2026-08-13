@@ -9,6 +9,8 @@ import {
 import { loadSprites } from "./assets.js";
 import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
+import { formatTime, RunStats } from "./score.js";
+import { ProgressStore } from "./storage.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -31,6 +33,9 @@ export class Game {
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
+    this.timerElement = documentObject.getElementById("run-time");
+    this.runScoreElement = documentObject.getElementById("run-score");
+    this.comboElement = documentObject.getElementById("combo");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image);
     this.state = GameState.READY;
@@ -39,6 +44,14 @@ export class Game {
     this.previousFrameTime = null;
     this.cameraX = 0;
     this.fliesCollected = 0;
+    this.stats = new RunStats();
+    let storage = null;
+    try {
+      storage = windowObject.localStorage;
+    } catch {
+      // file:// und strenge Privatsphärenmodi können den Zugriff vollständig sperren.
+    }
+    this.progressStore = new ProgressStore(storage);
     this.viewport = calculateViewport(windowObject.innerWidth, windowObject.innerHeight, windowObject.devicePixelRatio);
   }
 
@@ -78,8 +91,10 @@ export class Game {
     this.input.reset();
     this.cameraX = 0;
     this.fliesCollected = 0;
+    this.stats = new RunStats();
     this.fliesCollectedElement.textContent = "0";
     this.totalFliesElement.textContent = String(this.level.flies.length);
+    this.updateHud();
     this.checkpointScreen.style.display = "none";
     this.restartButton.style.display = "none";
     this.pauseButton.hidden = false;
@@ -105,6 +120,7 @@ export class Game {
 
   update(deltaTime) {
     const { player, platforms, blockades, flies, checkpoints } = this.level;
+    this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
     player.update(deltaTime, this.input, this.state === GameState.PLAYING);
     resolvePlatformCollisions(player, platforms);
     resolveBlockadeCollisions(player, blockades);
@@ -112,6 +128,7 @@ export class Game {
     flies.forEach((fly) => {
       if (fly.collectIfTouching(player)) {
         this.fliesCollected += 1;
+        this.stats.collectFly();
         this.fliesCollectedElement.textContent = String(this.fliesCollected);
       }
     });
@@ -125,12 +142,27 @@ export class Game {
 
     const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
     this.cameraX = Math.max(0, Math.min(targetX, LEVEL_WIDTH - this.viewport.viewportWidth));
+    this.updateHud();
+  }
+
+  updateHud() {
+    this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
+    this.runScoreElement.textContent = String(this.stats.flyScore);
+    this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
   }
 
   finish() {
     this.state = GameState.FINISHED;
     this.input.reset();
-    this.showMessage("Geschafft!", "Du hast die letzte Toilette erreicht!", false);
+    const result = this.stats.finish(this.level.flies.length);
+    const progress = this.progressStore.record(result);
+    this.runScoreElement.textContent = String(result.score);
+    this.showMessage(
+      `${result.medal}-Medaille!`,
+      `Zeit: ${formatTime(result.elapsedSeconds)} · Fliegen: ${result.fliesCollected}/${result.totalFlies} · ` +
+        `Score: ${result.score} · Rekord: ${progress.bestScore}`,
+      false
+    );
     this.restartButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
     this.restartButton.focus();

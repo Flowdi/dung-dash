@@ -72,6 +72,20 @@ body {
   cursor: pointer;
 }
 
+.run-stats {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.combo {
+  min-height: 1.25em;
+  color: var(--focus);
+  font-weight: 800;
+}
+
 .btn:hover,
 .hud-button:hover {
   background: var(--accent-hover);

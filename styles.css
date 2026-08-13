@@ -72,6 +72,31 @@ body {
   cursor: pointer;
 }
 
+.level-picker {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 360px);
+  margin: 14px auto 0;
+  font-weight: 700;
+}
+
+.level-picker select {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: #303030;
+  color: #fff;
+  font: inherit;
+}
+
+.level-description {
+  min-height: 2.8em;
+  margin: 8px auto;
+  color: #d8d8d8;
+  line-height: 1.4;
+}
+
 .run-stats {
   display: flex;
   justify-content: center;
@@ -84,6 +109,22 @@ body {
   min-height: 1.25em;
   color: var(--focus);
   font-weight: 800;
+}
+
+.charge-label:has(+ progress[hidden]),
+progress[hidden] {
+  display: none;
+}
+
+.charge-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+#jump-charge {
+  width: 100%;
+  accent-color: var(--focus);
 }
 
 .btn:hover,
@@ -127,8 +168,18 @@ button:focus-visible {
   font-size: 0.9rem;
 }
 
-#restart-btn {
+#restart-btn,
+#level-menu-btn {
   display: none;
+}
+
+.secondary-btn {
+  border-color: #777;
+  background: #3f3f3f;
+}
+
+.secondary-btn:hover {
+  background: #606060;
 }
 
 #canvas {

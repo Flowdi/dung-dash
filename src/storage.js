@@ -6,6 +6,8 @@ const emptyProgress = () => ({
   totalRuns: 0,
   totalFlies: 0,
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
+  unlockedLevels: ["bathroom-run"],
+  levelRecords: {},
 });
 
 export class ProgressStore {
@@ -22,7 +24,7 @@ export class ProgressStore {
     }
   }
 
-  record(result) {
+  record(result, levelId = "bathroom-run", nextLevelId = null) {
     const progress = this.load();
     const next = {
       ...progress,
@@ -34,6 +36,20 @@ export class ProgressStore {
         ...progress.medals,
         [result.medal]: (progress.medals[result.medal] ?? 0) + 1,
       },
+      unlockedLevels: [...new Set([
+        ...(progress.unlockedLevels ?? ["bathroom-run"]),
+        ...(nextLevelId ? [nextLevelId] : []),
+      ])],
+      levelRecords: {
+        ...(progress.levelRecords ?? {}),
+        [levelId]: {
+          bestScore: Math.max(progress.levelRecords?.[levelId]?.bestScore ?? 0, result.score),
+          bestTime: progress.levelRecords?.[levelId]?.bestTime == null
+            ? result.elapsedSeconds
+            : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+          medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
+        },
+      },
     };
     try {
       this.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -41,5 +57,10 @@ export class ProgressStore {
       // Das Spiel bleibt auch bei deaktiviertem oder vollem Speicher spielbar.
     }
     return next;
+  }
+
+  bestMedal(current, candidate) {
+    const rank = { Bronze: 1, Silber: 2, Gold: 3 };
+    return (rank[candidate] ?? 0) >= (rank[current] ?? 0) ? candidate : current;
   }
 }

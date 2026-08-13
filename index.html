@@ -19,6 +19,12 @@
       </p>
       <p class="instructions">Mit der Leertaste springen. Mit P oder Escape pausieren.</p>
 
+      <label class="level-picker" for="level-select">
+        Level
+        <select id="level-select"></select>
+      </label>
+      <p class="level-description" id="level-description"></p>
+
       <div class="btn-container">
         <button class="btn" id="start-btn" type="button">Spiel starten</button>
       </div>
@@ -28,13 +34,16 @@
       <p>Fliegen eingesammelt: <span id="flies-collected">0</span>/<span id="total-flies">20</span></p>
       <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span></p>
       <p class="combo" id="combo" aria-live="polite"></p>
+      <label class="charge-label" for="jump-charge">Sprungkraft</label>
+      <progress id="jump-charge" max="1" value="0" hidden></progress>
       <button class="hud-button" id="pause-btn" type="button" aria-pressed="false" hidden>Pause</button>
     </div>
     <!-- Checkpoint-Bereich -->
     <section class="checkpoint-screen" role="status" aria-live="assertive" aria-atomic="true">
       <h2 id="checkpoint-title">Gratuliere</h2>
       <p id="checkpoint-message">Dein Kothaufen hat die Toilette erreicht!</p>
-      <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
+        <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
+        <button class="btn secondary-btn" id="level-menu-btn" type="button">Anderes Level wählen</button>
     </section>
 
     <canvas id="canvas" role="img" aria-label="Spielfeld von Dung Dash">

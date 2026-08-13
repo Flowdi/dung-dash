@@ -6,6 +6,7 @@ export const overlaps = (first, second) =>
 
 export const resolvePlatformCollisions = (player, platforms) => {
   for (const platform of platforms) {
+    if (!platform.active) continue;
     const previousBottom = player.previousPosition.y + player.height;
     const currentBottom = player.position.y + player.height;
     const horizontallyOverlapping =
@@ -19,8 +20,15 @@ export const resolvePlatformCollisions = (player, platforms) => {
       horizontallyOverlapping
     ) {
       player.position.y = platform.position.y - player.height;
-      player.velocity.y = 0;
-      player.isGrounded = true;
+      if (platform.type === "bounce") {
+        player.velocity.y = -1100;
+        player.isGrounded = false;
+      } else {
+        player.velocity.y = 0;
+        if (player.jumpMode === "charged") player.velocity.x = 0;
+        player.isGrounded = true;
+      }
+      if (platform.type === "fragile") platform.active = false;
     }
   }
 };

@@ -8,8 +8,8 @@ import {
 } from "./config.js";
 
 export class Player {
-  constructor() {
-    this.position = { x: 100, y: 400 };
+  constructor(spawn = { x: 100, y: 400 }, options = {}) {
+    this.position = { ...spawn };
     this.previousPosition = { ...this.position };
     this.velocity = { x: 0, y: 0 };
     this.width = 40;
@@ -17,13 +17,23 @@ export class Player {
     this.isGrounded = false;
     this.coyoteTimeRemaining = 0;
     this.lookDirection = "neutral";
+    this.worldWidth = options.worldWidth ?? LEVEL_WIDTH;
+    this.groundY = options.groundY ?? GROUND_Y;
+    this.jumpMode = options.jumpMode ?? "arcade";
+    this.jumpCharge = 0;
   }
 
   update(deltaTime, input, canMove = true) {
     this.previousPosition = { ...this.position };
 
     const horizontalInput = Number(input.right) - Number(input.left);
-    this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+    if (this.jumpMode === "arcade") {
+      this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+    } else if (this.isGrounded) {
+      // Im Präzisionsmodus wird die Richtung nur für den nächsten Absprung gewählt.
+      // Restgeschwindigkeit aus dem vorherigen Sprung darf nicht zur Rutschbewegung werden.
+      this.velocity.x = 0;
+    }
     if (horizontalInput < 0) this.lookDirection = "left";
     if (horizontalInput > 0) this.lookDirection = "right";
 
@@ -34,7 +44,20 @@ export class Player {
     }
     input.tick(deltaTime);
 
-    if (input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
+    if (this.jumpMode === "charged" && this.isGrounded && input.jumpHeld && canMove) {
+      this.velocity.x = 0;
+      this.jumpCharge = Math.min(1, this.jumpCharge + deltaTime / 1.1);
+    }
+
+    if (this.jumpMode === "charged" && input.consumeJumpRelease() && this.coyoteTimeRemaining > 0 && canMove) {
+      const charge = Math.max(0.25, this.jumpCharge);
+      this.velocity.y = -(900 + 850 * charge);
+      this.velocity.x = horizontalInput * (220 + 260 * charge);
+      this.isGrounded = false;
+      this.coyoteTimeRemaining = 0;
+      this.jumpCharge = 0;
+      input.consumeJump();
+    } else if (this.jumpMode === "arcade" && input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
       this.velocity.y = -JUMP_SPEED;
       this.isGrounded = false;
       this.coyoteTimeRemaining = 0;
@@ -44,13 +67,14 @@ export class Player {
     this.velocity.y += GRAVITY * deltaTime;
     this.position.x += this.velocity.x * deltaTime;
     this.position.y += this.velocity.y * deltaTime;
-    this.position.x = Math.max(0, Math.min(this.position.x, LEVEL_WIDTH - this.width));
+    this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width));
 
     this.isGrounded = false;
-    const floorY = GROUND_Y - this.height;
+    const floorY = this.groundY - this.height;
     if (this.position.y >= floorY) {
       this.position.y = floorY;
       this.velocity.y = 0;
+      if (this.jumpMode === "charged") this.velocity.x = 0;
       this.isGrounded = true;
     }
 
@@ -72,14 +96,24 @@ export class Player {
 }
 
 export class Platform {
-  constructor(x, y) {
+  constructor(x, y, type = "normal") {
     this.position = { x, y };
     this.width = 200;
     this.height = 40;
+    this.type = type;
+    this.active = true;
   }
 
   draw(ctx, cameraX, sprites) {
+    if (!this.active) return;
     ctx.drawImage(sprites.platform, this.position.x - cameraX, this.position.y, this.width, this.height);
+    if (this.type !== "normal") {
+      ctx.save();
+      ctx.globalAlpha = 0.32;
+      ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
+      ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
+      ctx.restore();
+    }
   }
 }
 
@@ -116,15 +150,25 @@ export class CheckPoint {
 }
 
 export class Fly {
-  constructor(x, y) {
+  constructor(x, y, type = "normal") {
     this.position = { x, y };
     this.bodySize = 10;
     this.collected = false;
+    this.type = type;
   }
 
   draw(ctx, cameraX, sprites) {
     if (!this.collected) {
       const size = this.bodySize * 4;
+      if (this.type !== "normal") {
+        ctx.save();
+        ctx.fillStyle = this.type === "gold" ? "#ffd700" : "#6ee7ff";
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.arc(this.position.x - cameraX, this.position.y, size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.drawImage(sprites.fly, this.position.x - cameraX - size / 2, this.position.y - size / 2, size, size);
     }
   }

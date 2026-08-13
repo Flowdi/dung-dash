@@ -46,12 +46,14 @@ export class RunStats {
     if (this.comboRemaining === 0) this.combo = 0;
   }
 
-  collectFly() {
+  collectFly(type = "normal") {
     this.fliesCollected += 1;
     this.combo = this.comboRemaining > 0 ? this.combo + 1 : 1;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     this.comboRemaining = COMBO_WINDOW;
-    this.flyScore += SCORE_PER_FLY * Math.min(this.combo, 4);
+    const typeMultiplier = type === "gold" ? 3 : 1;
+    this.flyScore += SCORE_PER_FLY * Math.min(this.combo, 4) * typeMultiplier;
+    if (type === "time") this.elapsedSeconds = Math.max(0, this.elapsedSeconds - 5);
   }
 
   finish(totalFlies) {

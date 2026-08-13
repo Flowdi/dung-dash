@@ -2,8 +2,6 @@ import {
   calculateViewport,
   GameState,
   GROUND_HEIGHT,
-  GROUND_Y,
-  LEVEL_WIDTH,
   MAX_FRAME_TIME,
 } from "./config.js";
 import { loadSprites } from "./assets.js";
@@ -11,6 +9,7 @@ import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
 import { formatTime, RunStats } from "./score.js";
 import { ProgressStore } from "./storage.js";
+import { LEVELS } from "./levels.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -29,13 +28,17 @@ export class Game {
     this.checkpointMessage = documentObject.getElementById("checkpoint-message");
     this.score = documentObject.querySelector(".score");
     this.startButton = documentObject.getElementById("start-btn");
+    this.levelSelect = documentObject.getElementById("level-select");
+    this.levelDescription = documentObject.getElementById("level-description");
     this.restartButton = documentObject.getElementById("restart-btn");
+    this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
     this.comboElement = documentObject.getElementById("combo");
+    this.jumpChargeElement = documentObject.getElementById("jump-charge");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image);
     this.state = GameState.READY;
@@ -43,6 +46,7 @@ export class Game {
     this.messageTimeout = null;
     this.previousFrameTime = null;
     this.cameraX = 0;
+    this.cameraY = 0;
     this.fliesCollected = 0;
     this.stats = new RunStats();
     let storage = null;
@@ -53,6 +57,7 @@ export class Game {
     }
     this.progressStore = new ProgressStore(storage);
     this.viewport = calculateViewport(windowObject.innerWidth, windowObject.innerHeight, windowObject.devicePixelRatio);
+    this.selectedLevelId = LEVELS[0].id;
   }
 
   initialize() {
@@ -62,10 +67,43 @@ export class Game {
       { onPause: () => this.togglePause() }
     );
     this.startButton.addEventListener("click", () => this.start());
+    this.levelSelect.addEventListener("change", () => {
+      this.selectedLevelId = this.levelSelect.value;
+      this.updateLevelDescription();
+    });
     this.restartButton.addEventListener("click", () => this.reset());
+    this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
+    this.renderLevelOptions();
+  }
+
+  renderLevelOptions() {
+    const progress = this.progressStore.load();
+    this.levelSelect.replaceChildren();
+    LEVELS.forEach((definition, index) => {
+      const option = this.document.createElement("option");
+      const unlocked = progress.unlockedLevels.includes(definition.id);
+      const record = progress.levelRecords?.[definition.id];
+      option.value = definition.id;
+      option.disabled = !unlocked;
+      option.textContent = `${index + 1}. ${definition.name}${record ? ` · ${record.medal}` : ""}${unlocked ? "" : " 🔒"}`;
+      this.levelSelect.append(option);
+    });
+    if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
+      this.selectedLevelId = progress.unlockedLevels[0] ?? LEVELS[0].id;
+    }
+    this.levelSelect.value = this.selectedLevelId;
+    this.updateLevelDescription();
+  }
+
+  updateLevelDescription() {
+    const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
+    const record = this.progressStore.load().levelRecords?.[definition.id];
+    this.levelDescription.textContent = record
+      ? `${definition.description} Bestwert: ${record.bestScore} Punkte.`
+      : definition.description;
   }
 
   async start() {
@@ -86,10 +124,11 @@ export class Game {
   reset() {
     if (this.animationFrameId !== null) this.window.cancelAnimationFrame(this.animationFrameId);
     if (this.messageTimeout !== null) this.window.clearTimeout(this.messageTimeout);
-    this.level = createLevel();
+    this.level = createLevel(this.selectedLevelId);
     this.document.body.classList.add("game-running");
     this.input.reset();
     this.cameraX = 0;
+    this.cameraY = Math.max(0, this.level.height - this.viewport.viewportHeight);
     this.fliesCollected = 0;
     this.stats = new RunStats();
     this.fliesCollectedElement.textContent = "0";
@@ -97,6 +136,7 @@ export class Game {
     this.updateHud();
     this.checkpointScreen.style.display = "none";
     this.restartButton.style.display = "none";
+    this.levelMenuButton.style.display = "none";
     this.pauseButton.hidden = false;
     this.pauseButton.textContent = "Pause";
     this.pauseButton.setAttribute("aria-pressed", "false");
@@ -115,7 +155,10 @@ export class Game {
     this.canvas.height = Math.round(this.window.innerHeight * this.viewport.devicePixelRatio);
     this.canvas.style.width = `${this.window.innerWidth}px`;
     this.canvas.style.height = `${this.window.innerHeight}px`;
-    this.cameraX = Math.min(this.cameraX, Math.max(0, LEVEL_WIDTH - this.viewport.viewportWidth));
+    const levelWidth = this.level?.width ?? LEVELS[0].width;
+    const levelHeight = this.level?.height ?? 800;
+    this.cameraX = Math.min(this.cameraX, Math.max(0, levelWidth - this.viewport.viewportWidth));
+    this.cameraY = Math.min(this.cameraY, Math.max(0, levelHeight - this.viewport.viewportHeight));
   }
 
   update(deltaTime) {
@@ -128,7 +171,7 @@ export class Game {
     flies.forEach((fly) => {
       if (fly.collectIfTouching(player)) {
         this.fliesCollected += 1;
-        this.stats.collectFly();
+        this.stats.collectFly(fly.type);
         this.fliesCollectedElement.textContent = String(this.fliesCollected);
       }
     });
@@ -141,7 +184,9 @@ export class Game {
     }
 
     const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
-    this.cameraX = Math.max(0, Math.min(targetX, LEVEL_WIDTH - this.viewport.viewportWidth));
+    this.cameraX = Math.max(0, Math.min(targetX, this.level.width - this.viewport.viewportWidth));
+    const targetY = player.position.y - this.viewport.viewportHeight * 0.55;
+    this.cameraY = Math.max(0, Math.min(targetY, this.level.height - this.viewport.viewportHeight));
     this.updateHud();
   }
 
@@ -149,13 +194,18 @@ export class Game {
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
+    const charge = this.level?.player.jumpCharge ?? 0;
+    this.jumpChargeElement.hidden = this.level?.mode !== "vertical";
+    this.jumpChargeElement.value = charge;
   }
 
   finish() {
     this.state = GameState.FINISHED;
     this.input.reset();
     const result = this.stats.finish(this.level.flies.length);
-    const progress = this.progressStore.record(result);
+    const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
+    const nextLevelId = LEVELS[levelIndex + 1]?.id ?? null;
+    const progress = this.progressStore.record(result, this.level.id, nextLevelId);
     this.runScoreElement.textContent = String(result.score);
     this.showMessage(
       `${result.medal}-Medaille!`,
@@ -164,8 +214,33 @@ export class Game {
       false
     );
     this.restartButton.style.display = "inline-block";
+    this.levelMenuButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
     this.restartButton.focus();
+    this.renderLevelOptions();
+  }
+
+  returnToLevelSelect() {
+    if (this.animationFrameId !== null) {
+      this.window.cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    if (this.messageTimeout !== null) {
+      this.window.clearTimeout(this.messageTimeout);
+      this.messageTimeout = null;
+    }
+    this.state = GameState.READY;
+    this.input.reset();
+    this.document.body.classList.remove("game-running");
+    this.checkpointScreen.style.display = "none";
+    this.score.style.display = "none";
+    this.pauseButton.hidden = true;
+    this.restartButton.style.display = "none";
+    this.levelMenuButton.style.display = "none";
+    this.startButton.disabled = false;
+    this.startScreen.style.display = "block";
+    this.renderLevelOptions();
+    this.levelSelect.focus();
   }
 
   togglePause() {
@@ -202,7 +277,13 @@ export class Game {
     const firstTileX = Math.floor(this.cameraX / tileWidth) * tileWidth;
     const lastVisibleX = this.cameraX + this.viewport.viewportWidth;
     for (let x = firstTileX; x < lastVisibleX + tileWidth; x += tileWidth) {
-      this.ctx.drawImage(this.assets.sprites.platform, x - this.cameraX, GROUND_Y, tileWidth, GROUND_HEIGHT);
+      this.ctx.drawImage(
+        this.assets.sprites.platform,
+        x - this.cameraX,
+        this.level.height - GROUND_HEIGHT,
+        tileWidth,
+        GROUND_HEIGHT
+      );
     }
   }
 
@@ -211,6 +292,7 @@ export class Game {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.setTransform(devicePixelRatio * renderScale, 0, 0, devicePixelRatio * renderScale, 0, 0);
+    this.ctx.translate(0, -this.cameraY);
     this.drawGround();
     this.level.platforms.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
     this.level.blockades.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));

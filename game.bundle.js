@@ -284,6 +284,117 @@
     checkpoints: checkpointPositions.map(([x, y, order]) => new CheckPoint(x, y, order))
   });
 
+  // src/score.js
+  var SCORE_PER_FLY = 500;
+  var COMPLETION_BONUS = 2e3;
+  var ALL_FLIES_BONUS = 3e3;
+  var MAX_TIME_BONUS = 6e3;
+  var TIME_BONUS_PER_SECOND = 40;
+  var COMBO_WINDOW = 4;
+  var formatTime = (seconds) => {
+    const safeSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainder = safeSeconds - minutes * 60;
+    return `${String(minutes).padStart(2, "0")}:${remainder.toFixed(1).padStart(4, "0")}`;
+  };
+  var calculateMedal = ({ elapsedSeconds, fliesCollected, totalFlies, falls }) => {
+    if (fliesCollected === totalFlies && elapsedSeconds <= 75 && falls === 0) return "Gold";
+    if (fliesCollected >= Math.ceil(totalFlies * 0.75) && elapsedSeconds <= 120) return "Silber";
+    return "Bronze";
+  };
+  var calculateFinalScore = ({ elapsedSeconds, fliesCollected, totalFlies, falls }) => {
+    const flyScore = fliesCollected * SCORE_PER_FLY;
+    const timeBonus = Math.max(0, Math.round(MAX_TIME_BONUS - elapsedSeconds * TIME_BONUS_PER_SECOND));
+    const collectionBonus = fliesCollected === totalFlies ? ALL_FLIES_BONUS : 0;
+    const fallPenalty = falls * 250;
+    return Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty);
+  };
+  var RunStats = class {
+    constructor() {
+      this.elapsedSeconds = 0;
+      this.started = false;
+      this.fliesCollected = 0;
+      this.flyScore = 0;
+      this.combo = 0;
+      this.bestCombo = 0;
+      this.comboRemaining = 0;
+      this.falls = 0;
+    }
+    update(deltaTime, hasPlayerInput) {
+      if (hasPlayerInput) this.started = true;
+      if (!this.started) return;
+      this.elapsedSeconds += deltaTime;
+      this.comboRemaining = Math.max(0, this.comboRemaining - deltaTime);
+      if (this.comboRemaining === 0) this.combo = 0;
+    }
+    collectFly() {
+      this.fliesCollected += 1;
+      this.combo = this.comboRemaining > 0 ? this.combo + 1 : 1;
+      this.bestCombo = Math.max(this.bestCombo, this.combo);
+      this.comboRemaining = COMBO_WINDOW;
+      this.flyScore += SCORE_PER_FLY * Math.min(this.combo, 4);
+    }
+    finish(totalFlies) {
+      const result = {
+        elapsedSeconds: this.elapsedSeconds,
+        fliesCollected: this.fliesCollected,
+        totalFlies,
+        falls: this.falls,
+        bestCombo: this.bestCombo,
+        flyScore: this.flyScore
+      };
+      return {
+        ...result,
+        medal: calculateMedal(result),
+        score: calculateFinalScore(result) - result.fliesCollected * SCORE_PER_FLY + result.flyScore
+      };
+    }
+  };
+
+  // src/storage.js
+  var STORAGE_KEY = "dung-dash-progress-v1";
+  var emptyProgress = () => ({
+    bestScore: 0,
+    bestTime: null,
+    totalRuns: 0,
+    totalFlies: 0,
+    medals: { Bronze: 0, Silber: 0, Gold: 0 }
+  });
+  var ProgressStore = class {
+    constructor(storage) {
+      this.storage = storage;
+    }
+    load() {
+      var _a, _b;
+      try {
+        const saved = JSON.parse((_b = (_a = this.storage) == null ? void 0 : _a.getItem(STORAGE_KEY)) != null ? _b : "null");
+        return saved ? { ...emptyProgress(), ...saved } : emptyProgress();
+      } catch (e) {
+        return emptyProgress();
+      }
+    }
+    record(result) {
+      var _a, _b;
+      const progress = this.load();
+      const next = {
+        ...progress,
+        bestScore: Math.max(progress.bestScore, result.score),
+        bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
+        totalRuns: progress.totalRuns + 1,
+        totalFlies: progress.totalFlies + result.fliesCollected,
+        medals: {
+          ...progress.medals,
+          [result.medal]: ((_a = progress.medals[result.medal]) != null ? _a : 0) + 1
+        }
+      };
+      try {
+        (_b = this.storage) == null ? void 0 : _b.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+      }
+      return next;
+    }
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var resolvePlatformCollisions = (player, platforms) => {
@@ -345,6 +456,9 @@
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
+      this.timerElement = documentObject.getElementById("run-time");
+      this.runScoreElement = documentObject.getElementById("run-score");
+      this.comboElement = documentObject.getElementById("combo");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image);
       this.state = GameState.READY;
@@ -353,6 +467,13 @@
       this.previousFrameTime = null;
       this.cameraX = 0;
       this.fliesCollected = 0;
+      this.stats = new RunStats();
+      let storage = null;
+      try {
+        storage = windowObject.localStorage;
+      } catch (e) {
+      }
+      this.progressStore = new ProgressStore(storage);
       this.viewport = calculateViewport(windowObject.innerWidth, windowObject.innerHeight, windowObject.devicePixelRatio);
     }
     initialize() {
@@ -389,8 +510,10 @@
       this.input.reset();
       this.cameraX = 0;
       this.fliesCollected = 0;
+      this.stats = new RunStats();
       this.fliesCollectedElement.textContent = "0";
       this.totalFliesElement.textContent = String(this.level.flies.length);
+      this.updateHud();
       this.checkpointScreen.style.display = "none";
       this.restartButton.style.display = "none";
       this.pauseButton.hidden = false;
@@ -414,12 +537,14 @@
     }
     update(deltaTime) {
       const { player, platforms, blockades, flies, checkpoints } = this.level;
+      this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
       player.update(deltaTime, this.input, this.state === GameState.PLAYING);
       resolvePlatformCollisions(player, platforms);
       resolveBlockadeCollisions(player, blockades);
       flies.forEach((fly) => {
         if (fly.collectIfTouching(player)) {
           this.fliesCollected += 1;
+          this.stats.collectFly();
           this.fliesCollectedElement.textContent = String(this.fliesCollected);
         }
       });
@@ -431,11 +556,24 @@
       }
       const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
       this.cameraX = Math.max(0, Math.min(targetX, LEVEL_WIDTH - this.viewport.viewportWidth));
+      this.updateHud();
+    }
+    updateHud() {
+      this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
+      this.runScoreElement.textContent = String(this.stats.flyScore);
+      this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
     }
     finish() {
       this.state = GameState.FINISHED;
       this.input.reset();
-      this.showMessage("Geschafft!", "Du hast die letzte Toilette erreicht!", false);
+      const result = this.stats.finish(this.level.flies.length);
+      const progress = this.progressStore.record(result);
+      this.runScoreElement.textContent = String(result.score);
+      this.showMessage(
+        `${result.medal}-Medaille!`,
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}`,
+        false
+      );
       this.restartButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.restartButton.focus();

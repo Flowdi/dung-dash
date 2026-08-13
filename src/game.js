@@ -31,6 +31,7 @@ export class Game {
     this.levelSelect = documentObject.getElementById("level-select");
     this.levelDescription = documentObject.getElementById("level-description");
     this.restartButton = documentObject.getElementById("restart-btn");
+    this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -71,6 +72,7 @@ export class Game {
       this.updateLevelDescription();
     });
     this.restartButton.addEventListener("click", () => this.reset());
+    this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
@@ -134,6 +136,7 @@ export class Game {
     this.updateHud();
     this.checkpointScreen.style.display = "none";
     this.restartButton.style.display = "none";
+    this.levelMenuButton.style.display = "none";
     this.pauseButton.hidden = false;
     this.pauseButton.textContent = "Pause";
     this.pauseButton.setAttribute("aria-pressed", "false");
@@ -211,9 +214,33 @@ export class Game {
       false
     );
     this.restartButton.style.display = "inline-block";
+    this.levelMenuButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
     this.restartButton.focus();
     this.renderLevelOptions();
+  }
+
+  returnToLevelSelect() {
+    if (this.animationFrameId !== null) {
+      this.window.cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    if (this.messageTimeout !== null) {
+      this.window.clearTimeout(this.messageTimeout);
+      this.messageTimeout = null;
+    }
+    this.state = GameState.READY;
+    this.input.reset();
+    this.document.body.classList.remove("game-running");
+    this.checkpointScreen.style.display = "none";
+    this.score.style.display = "none";
+    this.pauseButton.hidden = true;
+    this.restartButton.style.display = "none";
+    this.levelMenuButton.style.display = "none";
+    this.startButton.disabled = false;
+    this.startScreen.style.display = "block";
+    this.renderLevelOptions();
+    this.levelSelect.focus();
   }
 
   togglePause() {

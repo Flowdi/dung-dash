@@ -27,7 +27,13 @@ export class Player {
     this.previousPosition = { ...this.position };
 
     const horizontalInput = Number(input.right) - Number(input.left);
-    if (this.jumpMode === "arcade") this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+    if (this.jumpMode === "arcade") {
+      this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+    } else if (this.isGrounded) {
+      // Im Präzisionsmodus wird die Richtung nur für den nächsten Absprung gewählt.
+      // Restgeschwindigkeit aus dem vorherigen Sprung darf nicht zur Rutschbewegung werden.
+      this.velocity.x = 0;
+    }
     if (horizontalInput < 0) this.lookDirection = "left";
     if (horizontalInput > 0) this.lookDirection = "right";
 
@@ -68,6 +74,7 @@ export class Player {
     if (this.position.y >= floorY) {
       this.position.y = floorY;
       this.velocity.y = 0;
+      if (this.jumpMode === "charged") this.velocity.x = 0;
       this.isGrounded = true;
     }
 

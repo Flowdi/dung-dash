@@ -164,7 +164,11 @@
     update(deltaTime, input, canMove = true) {
       this.previousPosition = { ...this.position };
       const horizontalInput = Number(input.right) - Number(input.left);
-      if (this.jumpMode === "arcade") this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+      if (this.jumpMode === "arcade") {
+        this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
+      } else if (this.isGrounded) {
+        this.velocity.x = 0;
+      }
       if (horizontalInput < 0) this.lookDirection = "left";
       if (horizontalInput > 0) this.lookDirection = "right";
       if (this.isGrounded) {
@@ -200,6 +204,7 @@
       if (this.position.y >= floorY) {
         this.position.y = floorY;
         this.velocity.y = 0;
+        if (this.jumpMode === "charged") this.velocity.x = 0;
         this.isGrounded = true;
       }
       if (this.position.y < 0) {
@@ -630,6 +635,7 @@
           player.isGrounded = false;
         } else {
           player.velocity.y = 0;
+          if (player.jumpMode === "charged") player.velocity.x = 0;
           player.isGrounded = true;
         }
         if (platform.type === "fragile") platform.active = false;
@@ -682,6 +688,7 @@
       this.levelSelect = documentObject.getElementById("level-select");
       this.levelDescription = documentObject.getElementById("level-description");
       this.restartButton = documentObject.getElementById("restart-btn");
+      this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -720,6 +727,7 @@
         this.updateLevelDescription();
       });
       this.restartButton.addEventListener("click", () => this.reset());
+      this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
@@ -780,6 +788,7 @@
       this.updateHud();
       this.checkpointScreen.style.display = "none";
       this.restartButton.style.display = "none";
+      this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
@@ -852,9 +861,32 @@
         false
       );
       this.restartButton.style.display = "inline-block";
+      this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.restartButton.focus();
       this.renderLevelOptions();
+    }
+    returnToLevelSelect() {
+      if (this.animationFrameId !== null) {
+        this.window.cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+      if (this.messageTimeout !== null) {
+        this.window.clearTimeout(this.messageTimeout);
+        this.messageTimeout = null;
+      }
+      this.state = GameState.READY;
+      this.input.reset();
+      this.document.body.classList.remove("game-running");
+      this.checkpointScreen.style.display = "none";
+      this.score.style.display = "none";
+      this.pauseButton.hidden = true;
+      this.restartButton.style.display = "none";
+      this.levelMenuButton.style.display = "none";
+      this.startButton.disabled = false;
+      this.startScreen.style.display = "block";
+      this.renderLevelOptions();
+      this.levelSelect.focus();
     }
     togglePause() {
       if (this.state === GameState.PLAYING) {

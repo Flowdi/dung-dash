@@ -168,8 +168,18 @@ button:focus-visible {
   font-size: 0.9rem;
 }
 
-#restart-btn {
+#restart-btn,
+#level-menu-btn {
   display: none;
+}
+
+.secondary-btn {
+  border-color: #777;
+  background: #3f3f3f;
+}
+
+.secondary-btn:hover {
+  background: #606060;
 }
 
 #canvas {

@@ -262,3 +262,36 @@ test("charged jump strength grows while the jump button is held", () => {
   assert.ok(player.velocity.y < -1200);
   assert.ok(player.velocity.x > 0);
 });
+
+test("Royal Flush stops horizontal drift on every platform landing", () => {
+  const { player, platforms } = createLevel("royal-flush");
+  const platform = platforms[1];
+  player.position = { x: platform.position.x + 40, y: platform.position.y - 30 };
+  player.previousPosition = { x: player.position.x, y: platform.position.y - 60 };
+  player.velocity = { x: 420, y: 300 };
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.isGrounded, true);
+  assert.equal(player.velocity.x, 0);
+  assert.equal(player.position.y, platform.position.y - player.height);
+});
+
+test("Royal Flush can charge and jump again after landing", () => {
+  const { player, platforms } = createLevel("royal-flush");
+  const platform = platforms[0];
+  const input = new InputController();
+  player.position = { x: platform.position.x + 20, y: platform.position.y - player.height };
+  player.previousPosition = { ...player.position };
+  player.velocity = { x: 300, y: 20 };
+  resolvePlatformCollisions(player, [platform]);
+
+  input.left = true;
+  input.jumpHeld = true;
+  player.update(0.55, input);
+  assert.ok(player.jumpCharge >= 0.5);
+  input.jumpHeld = false;
+  input.jumpReleased = true;
+  player.isGrounded = true;
+  player.update(1 / 60, input);
+  assert.ok(player.velocity.y < 0);
+  assert.ok(player.velocity.x < 0);
+});

@@ -9,6 +9,7 @@ import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
 import { calculateFinalScore, calculateMedal, formatTime, RunStats } from "../src/score.js";
 import { ProgressStore } from "../src/storage.js";
+import { LEVELS } from "../src/levels.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -181,4 +182,83 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("level definitions create independent data-driven levels", () => {
+  const first = createLevel(LEVELS[0].id);
+  const second = createLevel(LEVELS[1].id);
+  assert.equal(first.id, "bathroom-run");
+  assert.equal(second.id, "sewer-shortcut");
+  assert.notEqual(first.width, second.width);
+  assert.equal(second.player.worldWidth, second.width);
+  assert.ok(second.platforms.some((platform) => platform.type === "bounce"));
+  assert.ok(second.platforms.some((platform) => platform.type === "fragile"));
+});
+
+test("special flies modify score and time", () => {
+  const stats = new RunStats();
+  stats.update(10, true);
+  stats.collectFly("gold");
+  assert.equal(stats.flyScore, 1500);
+  stats.collectFly("time");
+  assert.equal(stats.elapsedSeconds, 5);
+});
+
+test("finishing a level unlocks the next level and stores its record", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const progress = store.record(
+    { score: 4000, elapsedSeconds: 70, fliesCollected: 20, medal: "Gold" },
+    "bathroom-run",
+    "sewer-shortcut"
+  );
+  assert.ok(progress.unlockedLevels.includes("sewer-shortcut"));
+  assert.equal(progress.levelRecords["bathroom-run"].bestScore, 4000);
+  assert.equal(progress.levelRecords["bathroom-run"].medal, "Gold");
+});
+
+test("bounce and fragile platforms expose their gameplay behavior", () => {
+  const { player } = createLevel();
+  const bounce = { position: { x: 100, y: 500 }, width: 200, height: 40, type: "bounce", active: true };
+  player.position = { x: 120, y: 470 };
+  player.previousPosition = { x: 120, y: 450 };
+  player.velocity.y = 200;
+  resolvePlatformCollisions(player, [bounce]);
+  assert.ok(player.velocity.y < 0);
+
+  const fragile = { ...bounce, type: "fragile", active: true };
+  player.position = { x: 120, y: 470 };
+  player.previousPosition = { x: 120, y: 450 };
+  player.velocity.y = 200;
+  resolvePlatformCollisions(player, [fragile]);
+  assert.equal(fragile.active, false);
+});
+
+test("Royal Flush creates a tall level with charged jumps", () => {
+  const level = createLevel("royal-flush");
+  assert.equal(level.mode, "vertical");
+  assert.equal(level.height, 3200);
+  assert.equal(level.player.jumpMode, "charged");
+  assert.equal(level.player.groundY, 3160);
+});
+
+test("charged jump strength grows while the jump button is held", () => {
+  const player = createLevel("royal-flush").player;
+  const input = new InputController();
+  player.isGrounded = true;
+  input.right = true;
+  input.jumpHeld = true;
+  player.update(0.6, input);
+  const charge = player.jumpCharge;
+  input.jumpHeld = false;
+  input.jumpReleased = true;
+  player.isGrounded = true;
+  player.update(1 / 60, input);
+  assert.ok(charge > 0.5);
+  assert.ok(player.velocity.y < -1200);
+  assert.ok(player.velocity.x > 0);
 });

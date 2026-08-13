@@ -10,6 +10,9 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - pausierbarer Spiellauf und vollständiger Neustart
 - responsive Tastatur- und Touchsteuerung
+- drei datengetriebene Level mit Auswahl und Freischaltung
+- goldene Fliegen, Zeitfliegen, Sprungplattformen und zerbrechliche Plattformen
+- vertikaler „Royal Flush“-Prototyp mit Kamerafahrt und aufladbarer Sprungkraft
 
 ## Spielen
 
@@ -40,6 +43,7 @@ npm test
 - `src/physics.js` – Kollisionen
 - `src/input.js` – Tastatur- und Touchsteuerung
 - `src/level.js` – Leveldaten
+- `src/levels.js` – unabhängiger Levelkatalog
 - `src/assets.js` – Sprite-Ladevorgang
 - `src/config.js` – zentrale Konstanten
 - `src/score.js` – Timer, Combo, Score und Medaillen

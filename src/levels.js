@@ -59,7 +59,7 @@ export const LEVELS = Object.freeze([
   {
     id: "royal-flush",
     name: "Royal Flush",
-    description: "Vertikaler Präzisionsmodus: Sprung halten, ausrichten und loslassen.",
+    description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
     mode: "vertical",
     width: 1000,
     height: 3200,

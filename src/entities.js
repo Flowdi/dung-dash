@@ -19,21 +19,13 @@ export class Player {
     this.lookDirection = "neutral";
     this.worldWidth = options.worldWidth ?? LEVEL_WIDTH;
     this.groundY = options.groundY ?? GROUND_Y;
-    this.jumpMode = options.jumpMode ?? "arcade";
-    this.jumpCharge = 0;
   }
 
   update(deltaTime, input, canMove = true) {
     this.previousPosition = { ...this.position };
 
     const horizontalInput = Number(input.right) - Number(input.left);
-    if (this.jumpMode === "arcade") {
-      this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
-    } else if (this.isGrounded) {
-      // Im Präzisionsmodus wird die Richtung nur für den nächsten Absprung gewählt.
-      // Restgeschwindigkeit aus dem vorherigen Sprung darf nicht zur Rutschbewegung werden.
-      this.velocity.x = 0;
-    }
+    this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
     if (horizontalInput < 0) this.lookDirection = "left";
     if (horizontalInput > 0) this.lookDirection = "right";
 
@@ -44,20 +36,7 @@ export class Player {
     }
     input.tick(deltaTime);
 
-    if (this.jumpMode === "charged" && this.isGrounded && input.jumpHeld && canMove) {
-      this.velocity.x = 0;
-      this.jumpCharge = Math.min(1, this.jumpCharge + deltaTime / 1.1);
-    }
-
-    if (this.jumpMode === "charged" && input.consumeJumpRelease() && this.coyoteTimeRemaining > 0 && canMove) {
-      const charge = Math.max(0.25, this.jumpCharge);
-      this.velocity.y = -(900 + 850 * charge);
-      this.velocity.x = horizontalInput * (220 + 260 * charge);
-      this.isGrounded = false;
-      this.coyoteTimeRemaining = 0;
-      this.jumpCharge = 0;
-      input.consumeJump();
-    } else if (this.jumpMode === "arcade" && input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
+    if (input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
       this.velocity.y = -JUMP_SPEED;
       this.isGrounded = false;
       this.coyoteTimeRemaining = 0;
@@ -74,7 +53,6 @@ export class Player {
     if (this.position.y >= floorY) {
       this.position.y = floorY;
       this.velocity.y = 0;
-      if (this.jumpMode === "charged") this.velocity.x = 0;
       this.isGrounded = true;
     }
 

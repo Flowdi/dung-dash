@@ -38,7 +38,6 @@ export class Game {
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
     this.comboElement = documentObject.getElementById("combo");
-    this.jumpChargeElement = documentObject.getElementById("jump-charge");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image);
     this.state = GameState.READY;
@@ -194,9 +193,6 @@ export class Game {
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
-    const charge = this.level?.player.jumpCharge ?? 0;
-    this.jumpChargeElement.hidden = this.level?.mode !== "vertical";
-    this.jumpChargeElement.value = charge;
   }
 
   finish() {

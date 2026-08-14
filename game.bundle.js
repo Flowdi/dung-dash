@@ -62,8 +62,6 @@
       this.left = false;
       this.right = false;
       this.jumpBufferRemaining = 0;
-      this.jumpHeld = false;
-      this.jumpReleased = false;
     }
     get hasBufferedJump() {
       return this.jumpBufferRemaining > 0;
@@ -74,11 +72,6 @@
     consumeJump() {
       this.jumpBufferRemaining = 0;
     }
-    consumeJumpRelease() {
-      const released = this.jumpReleased;
-      this.jumpReleased = false;
-      return released;
-    }
     tick(deltaTime) {
       this.jumpBufferRemaining = Math.max(0, this.jumpBufferRemaining - deltaTime);
     }
@@ -86,8 +79,6 @@
       this.left = false;
       this.right = false;
       this.jumpBufferRemaining = 0;
-      this.jumpHeld = false;
-      this.jumpReleased = false;
     }
     bind(windowObject, touchControls = [], { onPause = () => {
     } } = {}) {
@@ -101,17 +92,12 @@
           onPause();
         }
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
-          this.jumpHeld = true;
           this.queueJump();
         }
       });
       windowObject.addEventListener("keyup", (event) => {
         if (event.key === "ArrowLeft") this.left = false;
         if (event.key === "ArrowRight") this.right = false;
-        if (event.key === "ArrowUp" || event.key === " " || event.code === "Space") {
-          this.jumpHeld = false;
-          this.jumpReleased = true;
-        }
       });
       windowObject.addEventListener("blur", () => this.reset());
       touchControls.forEach((button) => {
@@ -122,19 +108,12 @@
           (_a = button.setPointerCapture) == null ? void 0 : _a.call(button, event.pointerId);
           if (control === "left") this.left = true;
           if (control === "right") this.right = true;
-          if (control === "jump") {
-            this.jumpHeld = true;
-            this.queueJump();
-          }
+          if (control === "jump") this.queueJump();
         };
         const release = (event) => {
           event.preventDefault();
           if (control === "left") this.left = false;
           if (control === "right") this.right = false;
-          if (control === "jump") {
-            this.jumpHeld = false;
-            this.jumpReleased = true;
-          }
         };
         button.addEventListener("pointerdown", press);
         button.addEventListener("pointerup", release);
@@ -147,7 +126,7 @@
   // src/entities.js
   var Player = class {
     constructor(spawn = { x: 100, y: 400 }, options = {}) {
-      var _a, _b, _c;
+      var _a, _b;
       this.position = { ...spawn };
       this.previousPosition = { ...this.position };
       this.velocity = { x: 0, y: 0 };
@@ -158,17 +137,11 @@
       this.lookDirection = "neutral";
       this.worldWidth = (_a = options.worldWidth) != null ? _a : LEVEL_WIDTH;
       this.groundY = (_b = options.groundY) != null ? _b : GROUND_Y;
-      this.jumpMode = (_c = options.jumpMode) != null ? _c : "arcade";
-      this.jumpCharge = 0;
     }
     update(deltaTime, input, canMove = true) {
       this.previousPosition = { ...this.position };
       const horizontalInput = Number(input.right) - Number(input.left);
-      if (this.jumpMode === "arcade") {
-        this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
-      } else if (this.isGrounded) {
-        this.velocity.x = 0;
-      }
+      this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;
       if (horizontalInput < 0) this.lookDirection = "left";
       if (horizontalInput > 0) this.lookDirection = "right";
       if (this.isGrounded) {
@@ -177,19 +150,7 @@
         this.coyoteTimeRemaining = Math.max(0, this.coyoteTimeRemaining - deltaTime);
       }
       input.tick(deltaTime);
-      if (this.jumpMode === "charged" && this.isGrounded && input.jumpHeld && canMove) {
-        this.velocity.x = 0;
-        this.jumpCharge = Math.min(1, this.jumpCharge + deltaTime / 1.1);
-      }
-      if (this.jumpMode === "charged" && input.consumeJumpRelease() && this.coyoteTimeRemaining > 0 && canMove) {
-        const charge = Math.max(0.25, this.jumpCharge);
-        this.velocity.y = -(900 + 850 * charge);
-        this.velocity.x = horizontalInput * (220 + 260 * charge);
-        this.isGrounded = false;
-        this.coyoteTimeRemaining = 0;
-        this.jumpCharge = 0;
-        input.consumeJump();
-      } else if (this.jumpMode === "arcade" && input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
+      if (input.hasBufferedJump && this.coyoteTimeRemaining > 0 && canMove) {
         this.velocity.y = -JUMP_SPEED;
         this.isGrounded = false;
         this.coyoteTimeRemaining = 0;
@@ -204,7 +165,6 @@
       if (this.position.y >= floorY) {
         this.position.y = floorY;
         this.velocity.y = 0;
-        if (this.jumpMode === "charged") this.velocity.x = 0;
         this.isGrounded = true;
       }
       if (this.position.y < 0) {
@@ -418,7 +378,7 @@
     {
       id: "royal-flush",
       name: "Royal Flush",
-      description: "Vertikaler Pr\xE4zisionsmodus: Sprung halten, ausrichten und loslassen.",
+      description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
       mode: "vertical",
       width: 1e3,
       height: 3200,
@@ -478,8 +438,7 @@
       mode: (_b = definition.mode) != null ? _b : "horizontal",
       player: new Player(definition.spawn, {
         worldWidth: definition.width,
-        groundY: ((_c = definition.height) != null ? _c : 800) - 40,
-        jumpMode: definition.mode === "vertical" ? "charged" : "arcade"
+        groundY: ((_c = definition.height) != null ? _c : 800) - 40
       }),
       platforms: definition.platforms.map(([x, y, type = "normal"]) => new Platform(x, y, type)),
       blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),
@@ -635,7 +594,6 @@
           player.isGrounded = false;
         } else {
           player.velocity.y = 0;
-          if (player.jumpMode === "charged") player.velocity.x = 0;
           player.isGrounded = true;
         }
         if (platform.type === "fragile") platform.active = false;
@@ -695,7 +653,6 @@
       this.timerElement = documentObject.getElementById("run-time");
       this.runScoreElement = documentObject.getElementById("run-score");
       this.comboElement = documentObject.getElementById("combo");
-      this.jumpChargeElement = documentObject.getElementById("jump-charge");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image);
       this.state = GameState.READY;
@@ -838,13 +795,9 @@
       this.updateHud();
     }
     updateHud() {
-      var _a, _b, _c;
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
-      const charge = (_b = (_a = this.level) == null ? void 0 : _a.player.jumpCharge) != null ? _b : 0;
-      this.jumpChargeElement.hidden = ((_c = this.level) == null ? void 0 : _c.mode) !== "vertical";
-      this.jumpChargeElement.value = charge;
     }
     finish() {
       var _a, _b;

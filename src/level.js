@@ -12,7 +12,6 @@ export const createLevel = (levelId) => {
     player: new Player(definition.spawn, {
       worldWidth: definition.width,
       groundY: (definition.height ?? 800) - 40,
-      jumpMode: definition.mode === "vertical" ? "charged" : "arcade",
     }),
     platforms: definition.platforms.map(([x, y, type = "normal"]) => new Platform(x, y, type)),
     blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),

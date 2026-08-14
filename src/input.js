@@ -5,8 +5,6 @@ export class InputController {
     this.left = false;
     this.right = false;
     this.jumpBufferRemaining = 0;
-    this.jumpHeld = false;
-    this.jumpReleased = false;
   }
 
   get hasBufferedJump() {
@@ -21,12 +19,6 @@ export class InputController {
     this.jumpBufferRemaining = 0;
   }
 
-  consumeJumpRelease() {
-    const released = this.jumpReleased;
-    this.jumpReleased = false;
-    return released;
-  }
-
   tick(deltaTime) {
     this.jumpBufferRemaining = Math.max(0, this.jumpBufferRemaining - deltaTime);
   }
@@ -35,8 +27,6 @@ export class InputController {
     this.left = false;
     this.right = false;
     this.jumpBufferRemaining = 0;
-    this.jumpHeld = false;
-    this.jumpReleased = false;
   }
 
   bind(windowObject, touchControls = [], { onPause = () => {} } = {}) {
@@ -50,7 +40,6 @@ export class InputController {
         onPause();
       }
       if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
-        this.jumpHeld = true;
         this.queueJump();
       }
     });
@@ -58,10 +47,6 @@ export class InputController {
     windowObject.addEventListener("keyup", (event) => {
       if (event.key === "ArrowLeft") this.left = false;
       if (event.key === "ArrowRight") this.right = false;
-      if (event.key === "ArrowUp" || event.key === " " || event.code === "Space") {
-        this.jumpHeld = false;
-        this.jumpReleased = true;
-      }
     });
     windowObject.addEventListener("blur", () => this.reset());
 
@@ -72,19 +57,12 @@ export class InputController {
         button.setPointerCapture?.(event.pointerId);
         if (control === "left") this.left = true;
         if (control === "right") this.right = true;
-        if (control === "jump") {
-          this.jumpHeld = true;
-          this.queueJump();
-        }
+        if (control === "jump") this.queueJump();
       };
       const release = (event) => {
         event.preventDefault();
         if (control === "left") this.left = false;
         if (control === "right") this.right = false;
-        if (control === "jump") {
-          this.jumpHeld = false;
-          this.jumpReleased = true;
-        }
       };
       button.addEventListener("pointerdown", press);
       button.addEventListener("pointerup", release);

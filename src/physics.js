@@ -25,7 +25,6 @@ export const resolvePlatformCollisions = (player, platforms) => {
         player.isGrounded = false;
       } else {
         player.velocity.y = 0;
-        if (player.jumpMode === "charged") player.velocity.x = 0;
         player.isGrounded = true;
       }
       if (platform.type === "fragile") platform.active = false;

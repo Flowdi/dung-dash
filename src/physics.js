@@ -4,21 +4,77 @@ export const overlaps = (first, second) =>
   first.position.y < second.position.y + second.height &&
   first.position.y + first.height > second.position.y;
 
+const rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) =>
+  firstEnd > secondStart && firstStart < secondEnd;
+
+const findPlatformImpact = (player, platform) => {
+  const previous = player.previousPosition;
+  const current = player.position;
+  const deltaX = current.x - previous.x;
+  const deltaY = current.y - previous.y;
+  const left = platform.position.x;
+  const right = left + platform.width;
+  const top = platform.position.y;
+  const bottom = top + platform.height;
+  const impacts = [];
+
+  if (deltaY > 0) {
+    const time = (top - (previous.y + player.height)) / deltaY;
+    const xAtImpact = previous.x + deltaX * time;
+    if (
+      time >= 0 && time <= 1 &&
+      rangesOverlap(xAtImpact, xAtImpact + player.width, left, right)
+    ) {
+      impacts.push({ side: "top", time });
+    }
+  }
+
+  if (platform.type !== "one-way" && deltaY < 0) {
+    const time = (bottom - previous.y) / deltaY;
+    const xAtImpact = previous.x + deltaX * time;
+    if (
+      time >= 0 && time <= 1 &&
+      rangesOverlap(xAtImpact, xAtImpact + player.width, left, right)
+    ) {
+      impacts.push({ side: "bottom", time });
+    }
+  }
+
+  if (platform.type !== "one-way" && deltaX > 0) {
+    const time = (left - (previous.x + player.width)) / deltaX;
+    const yAtImpact = previous.y + deltaY * time;
+    if (
+      time >= 0 && time <= 1 &&
+      rangesOverlap(yAtImpact, yAtImpact + player.height, top, bottom)
+    ) {
+      impacts.push({ side: "left", time });
+    }
+  }
+
+  if (platform.type !== "one-way" && deltaX < 0) {
+    const time = (right - previous.x) / deltaX;
+    const yAtImpact = previous.y + deltaY * time;
+    if (
+      time >= 0 && time <= 1 &&
+      rangesOverlap(yAtImpact, yAtImpact + player.height, top, bottom)
+    ) {
+      impacts.push({ side: "right", time });
+    }
+  }
+
+  return impacts.reduce(
+    (earliest, impact) => earliest === null || impact.time < earliest.time ? impact : earliest,
+    null
+  );
+};
+
 export const resolvePlatformCollisions = (player, platforms) => {
   for (const platform of platforms) {
     if (!platform.active) continue;
-    const previousBottom = player.previousPosition.y + player.height;
-    const currentBottom = player.position.y + player.height;
-    const horizontallyOverlapping =
-      player.position.x + player.width > platform.position.x &&
-      player.position.x < platform.position.x + platform.width;
+    const impact = findPlatformImpact(player, platform);
+    if (!impact) continue;
 
-    if (
-      player.velocity.y >= 0 &&
-      previousBottom <= platform.position.y &&
-      currentBottom >= platform.position.y &&
-      horizontallyOverlapping
-    ) {
+    if (impact.side === "top") {
       player.position.y = platform.position.y - player.height;
       if (platform.type === "bounce") {
         player.velocity.y = -1100;
@@ -28,6 +84,15 @@ export const resolvePlatformCollisions = (player, platforms) => {
         player.isGrounded = true;
       }
       if (platform.type === "fragile") platform.active = false;
+    } else if (impact.side === "bottom") {
+      player.position.y = platform.position.y + platform.height;
+      player.velocity.y = 0;
+    } else if (impact.side === "left") {
+      player.position.x = platform.position.x - player.width;
+      player.velocity.x = 0;
+    } else if (impact.side === "right") {
+      player.position.x = platform.position.x + platform.width;
+      player.velocity.x = 0;
     }
   }
 };

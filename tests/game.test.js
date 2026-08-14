@@ -90,6 +90,48 @@ test("landing places the player exactly on a platform", () => {
   assert.equal(player.isGrounded, true);
 });
 
+test("solid platforms block fast jumps from below", () => {
+  const { player } = createLevel();
+  const platform = { position: { x: 500, y: 300 }, width: 200, height: 40, type: "normal", active: true };
+  player.previousPosition = { x: 540, y: 370 };
+  player.position = { x: 540, y: 250 };
+  player.velocity.y = -1600;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.y, 340);
+  assert.equal(player.velocity.y, 0);
+});
+
+test("solid platforms block movement from the left and right", () => {
+  const { player } = createLevel();
+  const platform = { position: { x: 500, y: 450 }, width: 200, height: 40, type: "normal", active: true };
+
+  player.previousPosition = { x: 440, y: 450 };
+  player.position = { x: 510, y: 450 };
+  player.velocity.x = 300;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.x, 460);
+  assert.equal(player.velocity.x, 0);
+
+  player.previousPosition = { x: 720, y: 450 };
+  player.position = { x: 650, y: 450 };
+  player.velocity.x = -300;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.x, 700);
+  assert.equal(player.velocity.x, 0);
+});
+
+test("only explicitly declared one-way platforms allow jumping through", () => {
+  const { player } = createLevel();
+  const oneWay = { position: { x: 500, y: 300 }, width: 200, height: 40, type: "one-way", active: true };
+  player.previousPosition = { x: 540, y: 370 };
+  player.position = { x: 540, y: 250 };
+  player.velocity.y = -1600;
+  resolvePlatformCollisions(player, [oneWay]);
+  assert.equal(player.position.y, 250);
+  assert.equal(player.velocity.y, -1600);
+  assert.equal(LEVELS.every((level) => level.platforms.every((platform) => platform[2] !== "one-way")), true);
+});
+
 test("small viewports preserve an 800-unit world height", () => {
   const viewport = calculateViewport(600, 400, 1);
   assert.equal(viewport.renderScale, 0.5);

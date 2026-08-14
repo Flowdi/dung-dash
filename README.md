@@ -14,6 +14,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - goldene Fliegen, Zeitfliegen, Sprungplattformen und zerbrechliche Plattformen
 - vertikaler „Royal Flush“-Modus mit Kamerafahrt und derselben direkten Sprungsteuerung wie die normalen Level
 - Rückkehr zur Levelauswahl nach jedem Lauf
+- vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 
 ## Spielen
 

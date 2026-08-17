@@ -27,7 +27,7 @@ export class ProgressStore {
     }
   }
 
-  record(result, levelId = "bathroom-run", nextLevelId = null) {
+  record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
     const next = {
       ...progress,
@@ -51,6 +51,10 @@ export class ProgressStore {
             ? result.elapsedSeconds
             : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
+          missions: [...new Set([
+            ...(progress.levelRecords?.[levelId]?.missions ?? []),
+            ...completedMissions,
+          ])],
         },
       },
     };

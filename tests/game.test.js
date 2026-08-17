@@ -11,6 +11,7 @@ import { calculateFinalScore, calculateMedal, formatTime, RunStats } from "../sr
 import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
+import { completedMissionIds, evaluateMissions } from "../src/missions.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -253,6 +254,31 @@ test("progress store persists achievements only once", () => {
   assert.deepEqual(second.achievements, first.achievements);
 });
 
+test("level missions evaluate time, collection, combo and score goals", () => {
+  const missions = [
+    { id: "fast", type: "time", target: 60 },
+    { id: "flies", type: "flies", target: 10 },
+    { id: "combo", type: "combo", target: 4 },
+    { id: "score", type: "score", target: 12000 },
+  ];
+  const result = { elapsedSeconds: 59, fliesCollected: 9, bestCombo: 4, score: 12500 };
+  assert.deepEqual(completedMissionIds(missions, result), ["fast", "combo", "score"]);
+  assert.equal(evaluateMissions(missions, result)[1].completed, false);
+});
+
+test("completed level missions accumulate without duplicates", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const result = { score: 5000, elapsedSeconds: 80, fliesCollected: 10, medal: "Silber", bestCombo: 2, falls: 0 };
+  store.record(result, "bathroom-run", null, ["collector"]);
+  const progress = store.record(result, "bathroom-run", null, ["collector", "speed"]);
+  assert.deepEqual(progress.levelRecords["bathroom-run"].missions, ["collector", "speed"]);
+});
+
 test("level definitions create independent data-driven levels", () => {
   const first = createLevel(LEVELS[0].id);
   const second = createLevel(LEVELS[1].id);
@@ -274,6 +300,13 @@ test("every level has its own complete visual theme", () => {
     assert.equal(level.theme.toiletCrop.length, 4);
     assert.ok(level.theme.platformCrop.every(Number.isFinite));
     assert.ok(level.theme.toiletCrop.every(Number.isFinite));
+  });
+});
+
+test("every level defines three unique missions", () => {
+  LEVELS.forEach((level) => {
+    assert.equal(level.missions.length, 3);
+    assert.equal(new Set(level.missions.map(({ id }) => id)).size, 3);
   });
 });
 

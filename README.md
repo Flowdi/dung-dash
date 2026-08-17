@@ -17,6 +17,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 - eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
 - Karriereübersicht mit Gesamtstatistik und sechs dauerhaft gespeicherten Achievements
+- drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 
 ## Spielen
 
@@ -52,5 +53,6 @@ npm test
 - `assets/themes/` – generierte Levelhintergründe und transparente Plattform-/Toiletten-Atlanten
 - `src/config.js` – zentrale Konstanten
 - `src/score.js` – Timer, Combo, Score und Medaillen
+- `src/missions.js` – Auswertung der levelbezogenen Herausforderungen
 - `src/storage.js` – fehlertolerante lokale Rekordspeicherung
 - `tests/` – Regressionstests

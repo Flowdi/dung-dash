@@ -26,3 +26,13 @@ test("all generated level theme assets are present", async () => {
     access(new URL(`../assets/themes/${name}-atlas.png`, import.meta.url)),
   ]));
 });
+
+test("HUD and transient checkpoint messages use separate screen corners", async () => {
+  const [gameSource, styles] = await Promise.all([
+    readFile(new URL("../src/game.js", import.meta.url), "utf8"),
+    readFile(new URL("../styles.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(gameSource, /classList\.toggle\("toast", autoHide\)/);
+  assert.match(styles, /\.score\s*\{[\s\S]*?left:\s*max\(12px/);
+  assert.match(styles, /\.checkpoint-screen\.toast\s*\{[\s\S]*?right:\s*max\(12px/);
+});

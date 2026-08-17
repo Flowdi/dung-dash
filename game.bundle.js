@@ -858,6 +858,7 @@
       this.totalFliesElement.textContent = String(this.level.flies.length);
       this.updateHud();
       this.checkpointScreen.style.display = "none";
+      this.checkpointScreen.classList.remove("toast");
       this.restartButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
@@ -973,12 +974,16 @@
     }
     showMessage(title, message, autoHide = true) {
       if (this.messageTimeout !== null) this.window.clearTimeout(this.messageTimeout);
+      this.messageTimeout = null;
       this.checkpointTitle.textContent = title;
       this.checkpointMessage.textContent = message;
+      this.checkpointScreen.classList.toggle("toast", autoHide);
       this.checkpointScreen.style.display = "block";
       if (autoHide) {
         this.messageTimeout = this.window.setTimeout(() => {
           this.checkpointScreen.style.display = "none";
+          this.checkpointScreen.classList.remove("toast");
+          this.messageTimeout = null;
         }, 2e3);
       }
     }

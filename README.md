@@ -16,6 +16,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Rückkehr zur Levelauswahl nach jedem Lauf
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 - eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
+- Karriereübersicht mit Gesamtstatistik und sechs dauerhaft gespeicherten Achievements
 
 ## Spielen
 

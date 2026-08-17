@@ -578,6 +578,29 @@
     }
   };
 
+  // src/achievements.js
+  var ACHIEVEMENTS = Object.freeze([
+    { id: "first-flush", name: "Erste Sp\xFClung", description: "Schlie\xDFe dein erstes Level ab." },
+    { id: "fly-hunter", name: "Fliegenj\xE4ger", description: "Sammle insgesamt 50 Fliegen." },
+    { id: "combo-master", name: "Combo-Meister", description: "Erreiche eine \xD74-Combo." },
+    { id: "golden-pile", name: "Goldst\xFCck", description: "Verdiene eine Goldmedaille." },
+    { id: "speed-runner", name: "Ab durch die Sch\xFCssel", description: "Beende ein Level in h\xF6chstens 60 Sekunden." },
+    { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." }
+  ]);
+  var findNewAchievements = (progress, result) => {
+    var _a;
+    const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
+    const qualifies = {
+      "first-flush": progress.totalRuns >= 1,
+      "fly-hunter": progress.totalFlies >= 50,
+      "combo-master": result.bestCombo >= 4,
+      "golden-pile": result.medal === "Gold",
+      "speed-runner": result.elapsedSeconds <= 60,
+      "sure-footed": result.falls === 0
+    };
+    return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
+  };
+
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
   var emptyProgress = () => ({
@@ -587,7 +610,8 @@
     totalFlies: 0,
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
-    levelRecords: {}
+    levelRecords: {},
+    achievements: []
   });
   var ProgressStore = class {
     constructor(storage) {
@@ -603,7 +627,7 @@
       }
     }
     record(result, levelId = "bathroom-run", nextLevelId = null) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
       const progress = this.load();
       const next = {
         ...progress,
@@ -628,11 +652,13 @@
           }
         }
       };
+      const newAchievements = findNewAchievements(next, result);
+      next.achievements = [...(_k = progress.achievements) != null ? _k : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_k = this.storage) == null ? void 0 : _k.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_l = this.storage) == null ? void 0 : _l.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
-      return next;
+      return { ...next, newAchievements };
     }
     bestMedal(current, candidate) {
       var _a, _b;
@@ -759,6 +785,8 @@
       this.startButton = documentObject.getElementById("start-btn");
       this.levelSelect = documentObject.getElementById("level-select");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.careerStats = documentObject.getElementById("career-stats");
+      this.achievementList = documentObject.getElementById("achievement-list");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
@@ -803,6 +831,7 @@
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();
+      this.renderProgress();
     }
     renderLevelOptions() {
       var _a;
@@ -829,6 +858,30 @@
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte.` : definition.description;
+    }
+    renderProgress() {
+      var _a;
+      const progress = this.progressStore.load();
+      const stats = [
+        ["L\xE4ufe", progress.totalRuns],
+        ["Fliegen", progress.totalFlies],
+        ["Highscore", progress.bestScore],
+        ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)]
+      ];
+      this.careerStats.replaceChildren(...stats.map(([label, value]) => {
+        const item = this.document.createElement("p");
+        item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
+      const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
+      this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
+        const item = this.document.createElement("article");
+        const isUnlocked = unlocked.has(achievement.id);
+        item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
+        item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
+        item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+        return item;
+      }));
     }
     async start() {
       if (this.state !== GameState.READY && this.state !== GameState.ERROR) return;
@@ -925,7 +978,7 @@
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}`,
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
         false
       );
       this.restartButton.style.display = "inline-block";
@@ -933,6 +986,7 @@
       this.pauseButton.hidden = true;
       this.restartButton.focus();
       this.renderLevelOptions();
+      this.renderProgress();
     }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
@@ -954,6 +1008,7 @@
       this.startButton.disabled = false;
       this.startScreen.style.display = "block";
       this.renderLevelOptions();
+      this.renderProgress();
       this.levelSelect.focus();
     }
     togglePause() {

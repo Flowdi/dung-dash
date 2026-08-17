@@ -97,6 +97,81 @@ body {
   line-height: 1.4;
 }
 
+.progress-panel {
+  width: min(100%, 620px);
+  margin: 16px auto;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.progress-panel h2 {
+  margin-bottom: 10px;
+  font-size: 1.15rem;
+}
+
+.career-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.career-stats p {
+  display: grid;
+  gap: 2px;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.78rem;
+}
+
+.career-stats strong {
+  color: var(--focus);
+  font-size: 1rem;
+}
+
+.achievement-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.achievement {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #9d9d9d;
+  text-align: left;
+  filter: grayscale(1);
+}
+
+.achievement.unlocked {
+  color: var(--panel-text);
+  background: rgba(255, 223, 112, 0.1);
+  filter: none;
+}
+
+.achievement strong,
+.achievement small {
+  display: block;
+}
+
+.achievement strong {
+  font-size: 0.76rem;
+}
+
+.achievement small {
+  margin-top: 2px;
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
 .run-stats {
   display: flex;
   justify-content: space-between;
@@ -247,9 +322,23 @@ button:focus-visible {
     margin: 6px 0;
     line-height: 1.35;
   }
+
+  .progress-panel {
+    display: none;
+  }
 }
 
 @media (max-width: 540px) {
+  .start-screen {
+    max-height: 94vh;
+    overflow-y: auto;
+  }
+
+  .career-stats,
+  .achievement-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .score {
     width: 184px;
     padding: 7px 9px;

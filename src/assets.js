@@ -5,6 +5,14 @@ const spriteSources = {
   fly: "./assets/sprites/fly.png",
   toilet: "./assets/sprites/toilet.png",
   platform: "./assets/sprites/platform.png",
+  bathroomBackground: "./assets/themes/bathroom-background.png",
+  bathroomAtlas: "./assets/themes/bathroom-atlas.png",
+  sewerBackground: "./assets/themes/sewer-background.png",
+  sewerAtlas: "./assets/themes/sewer-atlas.png",
+  festivalBackground: "./assets/themes/festival-background.png",
+  festivalAtlas: "./assets/themes/festival-atlas.png",
+  royalBackground: "./assets/themes/royal-background.png",
+  royalAtlas: "./assets/themes/royal-atlas.png",
 };
 
 export const loadSprites = (ImageConstructor = Image) => {

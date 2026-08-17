@@ -7,6 +7,16 @@ import {
   MOVE_SPEED,
 } from "./config.js";
 
+const drawThemeSprite = (ctx, sprites, theme, cropName, fallbackName, x, y, width, height) => {
+  const atlas = theme?.atlas ? sprites[theme.atlas] : null;
+  const crop = theme?.[cropName];
+  if (atlas && crop) {
+    ctx.drawImage(atlas, ...crop, x, y, width, height);
+  } else {
+    ctx.drawImage(sprites[fallbackName], x, y, width, height);
+  }
+};
+
 export class Player {
   constructor(spawn = { x: 100, y: 400 }, options = {}) {
     this.position = { ...spawn };
@@ -82,9 +92,19 @@ export class Platform {
     this.active = true;
   }
 
-  draw(ctx, cameraX, sprites) {
+  draw(ctx, cameraX, sprites, theme) {
     if (!this.active) return;
-    ctx.drawImage(sprites.platform, this.position.x - cameraX, this.position.y, this.width, this.height);
+    drawThemeSprite(
+      ctx,
+      sprites,
+      theme,
+      "platformCrop",
+      "platform",
+      this.position.x - cameraX,
+      this.position.y,
+      this.width,
+      this.height
+    );
     if (this.type !== "normal") {
       ctx.save();
       ctx.globalAlpha = 0.32;
@@ -102,11 +122,11 @@ export class Blockade {
     this.height = 200;
   }
 
-  draw(ctx, cameraX, sprites) {
+  draw(ctx, cameraX, sprites, theme) {
     ctx.save();
     ctx.translate(this.position.x - cameraX + this.width, this.position.y);
     ctx.rotate(Math.PI / 2);
-    ctx.drawImage(sprites.platform, 0, 0, this.height, this.width);
+    drawThemeSprite(ctx, sprites, theme, "platformCrop", "platform", 0, 0, this.height, this.width);
     ctx.restore();
   }
 }
@@ -120,9 +140,19 @@ export class CheckPoint {
     this.claimed = false;
   }
 
-  draw(ctx, cameraX, sprites) {
+  draw(ctx, cameraX, sprites, theme) {
     if (!this.claimed) {
-      ctx.drawImage(sprites.toilet, this.position.x - cameraX, this.position.y, this.width, this.height);
+      drawThemeSprite(
+        ctx,
+        sprites,
+        theme,
+        "toiletCrop",
+        "toilet",
+        this.position.x - cameraX,
+        this.position.y,
+        this.width,
+        this.height
+      );
     }
   }
 }

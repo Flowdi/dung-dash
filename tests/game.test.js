@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { calculateViewport } from "../src/config.js";
 import { GameState } from "../src/config.js";
-import { Player } from "../src/entities.js";
+import { CheckPoint, Platform, Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
@@ -235,6 +235,33 @@ test("level definitions create independent data-driven levels", () => {
   assert.equal(second.player.worldWidth, second.width);
   assert.ok(second.platforms.some((platform) => platform.type === "bounce"));
   assert.ok(second.platforms.some((platform) => platform.type === "fragile"));
+});
+
+test("every level has its own complete visual theme", () => {
+  const backgrounds = new Set(LEVELS.map((level) => level.theme.background));
+  const atlases = new Set(LEVELS.map((level) => level.theme.atlas));
+  assert.equal(backgrounds.size, LEVELS.length);
+  assert.equal(atlases.size, LEVELS.length);
+  LEVELS.forEach((level) => {
+    assert.equal(level.theme.platformCrop.length, 4);
+    assert.equal(level.theme.toiletCrop.length, 4);
+    assert.ok(level.theme.platformCrop.every(Number.isFinite));
+    assert.ok(level.theme.toiletCrop.every(Number.isFinite));
+  });
+});
+
+test("platforms and toilets render from the selected theme atlas", () => {
+  const theme = LEVELS[1].theme;
+  const atlas = { id: "sewer-atlas" };
+  const sprites = { [theme.atlas]: atlas, platform: {}, toilet: {} };
+  const calls = [];
+  const ctx = { drawImage: (...args) => calls.push(args) };
+
+  new Platform(100, 200).draw(ctx, 10, sprites, theme);
+  new CheckPoint(300, 400, 1).draw(ctx, 10, sprites, theme);
+
+  assert.deepEqual(calls[0], [atlas, ...theme.platformCrop, 90, 200, 200, 40]);
+  assert.deepEqual(calls[1], [atlas, ...theme.toiletCrop, 290, 400, 40, 70]);
 });
 
 test("special flies modify score and time", () => {

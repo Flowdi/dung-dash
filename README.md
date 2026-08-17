@@ -15,6 +15,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - vertikaler „Royal Flush“-Modus mit Kamerafahrt und derselben direkten Sprungsteuerung wie die normalen Level
 - Rückkehr zur Levelauswahl nach jedem Lauf
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
+- eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
 
 ## Spielen
 
@@ -47,6 +48,7 @@ npm test
 - `src/level.js` – Leveldaten
 - `src/levels.js` – unabhängiger Levelkatalog
 - `src/assets.js` – Sprite-Ladevorgang
+- `assets/themes/` – generierte Levelhintergründe und transparente Plattform-/Toiletten-Atlanten
 - `src/config.js` – zentrale Konstanten
 - `src/score.js` – Timer, Combo, Score und Medaillen
 - `src/storage.js` – fehlertolerante lokale Rekordspeicherung

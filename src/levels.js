@@ -3,6 +3,12 @@ export const LEVELS = Object.freeze([
     id: "bathroom-run",
     name: "Badezimmer-Sprint",
     description: "Der klassische horizontale Lauf zur letzten Toilette.",
+    theme: {
+      background: "bathroomBackground",
+      atlas: "bathroomAtlas",
+      platformCrop: [0, 600, 850, 300],
+      toiletCrop: [850, 250, 404, 680],
+    },
     width: 5000,
     spawn: { x: 100, y: 400 },
     platforms: [
@@ -23,6 +29,12 @@ export const LEVELS = Object.freeze([
     id: "sewer-shortcut",
     name: "Kanal-Kürzel",
     description: "Kürzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+    theme: {
+      background: "sewerBackground",
+      atlas: "sewerAtlas",
+      platformCrop: [0, 560, 810, 310],
+      toiletCrop: [800, 240, 454, 650],
+    },
     width: 3600,
     spawn: { x: 80, y: 600 },
     platforms: [
@@ -41,6 +53,12 @@ export const LEVELS = Object.freeze([
     id: "festival-flush",
     name: "Festival-Flucht",
     description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+    theme: {
+      background: "festivalBackground",
+      atlas: "festivalAtlas",
+      platformCrop: [0, 510, 930, 390],
+      toiletCrop: [900, 230, 354, 680],
+    },
     width: 4200,
     spawn: { x: 100, y: 680 },
     platforms: [
@@ -60,6 +78,12 @@ export const LEVELS = Object.freeze([
     id: "royal-flush",
     name: "Royal Flush",
     description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+    theme: {
+      background: "royalBackground",
+      atlas: "royalAtlas",
+      platformCrop: [0, 500, 840, 360],
+      toiletCrop: [820, 160, 434, 750],
+    },
     mode: "vertical",
     width: 1000,
     height: 3200,

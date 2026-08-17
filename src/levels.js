@@ -3,6 +3,11 @@ export const LEVELS = Object.freeze([
     id: "bathroom-run",
     name: "Badezimmer-Sprint",
     description: "Der klassische horizontale Lauf zur letzten Toilette.",
+    missions: [
+      { id: "bathroom-collector", label: "Sammle alle 20 Fliegen", type: "flies", target: 20 },
+      { id: "bathroom-speed", label: "Schaffe das Level in 100 Sekunden", type: "time", target: 100 },
+      { id: "bathroom-combo", label: "Erreiche eine ×3-Combo", type: "combo", target: 3 },
+    ],
     theme: {
       background: "bathroomBackground",
       atlas: "bathroomAtlas",
@@ -29,6 +34,11 @@ export const LEVELS = Object.freeze([
     id: "sewer-shortcut",
     name: "Kanal-Kürzel",
     description: "Kürzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+    missions: [
+      { id: "sewer-collector", label: "Sammle alle 10 Fliegen", type: "flies", target: 10 },
+      { id: "sewer-speed", label: "Schaffe das Level in 75 Sekunden", type: "time", target: 75 },
+      { id: "sewer-score", label: "Erreiche 12.000 Punkte", type: "score", target: 12000 },
+    ],
     theme: {
       background: "sewerBackground",
       atlas: "sewerAtlas",
@@ -53,6 +63,11 @@ export const LEVELS = Object.freeze([
     id: "festival-flush",
     name: "Festival-Flucht",
     description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+    missions: [
+      { id: "festival-collector", label: "Sammle alle 11 Fliegen", type: "flies", target: 11 },
+      { id: "festival-combo", label: "Erreiche eine ×4-Combo", type: "combo", target: 4 },
+      { id: "festival-score", label: "Erreiche 16.000 Punkte", type: "score", target: 16000 },
+    ],
     theme: {
       background: "festivalBackground",
       atlas: "festivalAtlas",
@@ -78,6 +93,11 @@ export const LEVELS = Object.freeze([
     id: "royal-flush",
     name: "Royal Flush",
     description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+    missions: [
+      { id: "royal-climber", label: "Erreiche das Ziel in 150 Sekunden", type: "time", target: 150 },
+      { id: "royal-collector", label: "Sammle mindestens 12 Fliegen", type: "flies", target: 12 },
+      { id: "royal-score", label: "Erreiche 15.000 Punkte", type: "score", target: 15000 },
+    ],
     theme: {
       background: "royalBackground",
       atlas: "royalAtlas",

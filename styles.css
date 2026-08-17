@@ -97,6 +97,53 @@ body {
   line-height: 1.4;
 }
 
+.mission-panel {
+  width: min(100%, 620px);
+  margin: 10px auto;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 223, 112, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 223, 112, 0.055);
+  text-align: left;
+}
+
+.mission-panel h2 {
+  display: flex;
+  justify-content: space-between;
+  color: var(--focus);
+  font-size: 1rem;
+}
+
+.mission-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.mission {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #c8c8c8;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.mission > span:first-child {
+  color: var(--focus);
+  font-size: 1.2rem;
+}
+
+.mission.completed {
+  background: rgba(255, 223, 112, 0.14);
+  color: #fff;
+}
+
 .progress-panel {
   width: min(100%, 620px);
   margin: 16px auto;
@@ -326,6 +373,15 @@ button:focus-visible {
   .progress-panel {
     display: none;
   }
+
+  .mission-panel {
+    margin: 5px auto;
+    padding: 7px 10px;
+  }
+
+  .mission-list {
+    margin-top: 5px;
+  }
 }
 
 @media (max-width: 540px) {
@@ -335,7 +391,8 @@ button:focus-visible {
   }
 
   .career-stats,
-  .achievement-list {
+  .achievement-list,
+  .mission-list {
     grid-template-columns: repeat(2, 1fr);
   }
 

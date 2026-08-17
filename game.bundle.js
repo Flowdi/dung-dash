@@ -302,6 +302,11 @@
       id: "bathroom-run",
       name: "Badezimmer-Sprint",
       description: "Der klassische horizontale Lauf zur letzten Toilette.",
+      missions: [
+        { id: "bathroom-collector", label: "Sammle alle 20 Fliegen", type: "flies", target: 20 },
+        { id: "bathroom-speed", label: "Schaffe das Level in 100 Sekunden", type: "time", target: 100 },
+        { id: "bathroom-combo", label: "Erreiche eine \xD73-Combo", type: "combo", target: 3 }
+      ],
       theme: {
         background: "bathroomBackground",
         atlas: "bathroomAtlas",
@@ -354,6 +359,11 @@
       id: "sewer-shortcut",
       name: "Kanal-K\xFCrzel",
       description: "K\xFCrzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+      missions: [
+        { id: "sewer-collector", label: "Sammle alle 10 Fliegen", type: "flies", target: 10 },
+        { id: "sewer-speed", label: "Schaffe das Level in 75 Sekunden", type: "time", target: 75 },
+        { id: "sewer-score", label: "Erreiche 12.000 Punkte", type: "score", target: 12e3 }
+      ],
       theme: {
         background: "sewerBackground",
         atlas: "sewerAtlas",
@@ -393,6 +403,11 @@
       id: "festival-flush",
       name: "Festival-Flucht",
       description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+      missions: [
+        { id: "festival-collector", label: "Sammle alle 11 Fliegen", type: "flies", target: 11 },
+        { id: "festival-combo", label: "Erreiche eine \xD74-Combo", type: "combo", target: 4 },
+        { id: "festival-score", label: "Erreiche 16.000 Punkte", type: "score", target: 16e3 }
+      ],
       theme: {
         background: "festivalBackground",
         atlas: "festivalAtlas",
@@ -434,6 +449,11 @@
       id: "royal-flush",
       name: "Royal Flush",
       description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+      missions: [
+        { id: "royal-climber", label: "Erreiche das Ziel in 150 Sekunden", type: "time", target: 150 },
+        { id: "royal-collector", label: "Sammle mindestens 12 Fliegen", type: "flies", target: 12 },
+        { id: "royal-score", label: "Erreiche 15.000 Punkte", type: "score", target: 15e3 }
+      ],
       theme: {
         background: "royalBackground",
         atlas: "royalAtlas",
@@ -498,6 +518,7 @@
       height: (_a = definition.height) != null ? _a : 800,
       mode: (_b = definition.mode) != null ? _b : "horizontal",
       theme: definition.theme,
+      missions: definition.missions,
       player: new Player(definition.spawn, {
         worldWidth: definition.width,
         groundY: ((_c = definition.height) != null ? _c : 800) - 40
@@ -626,8 +647,8 @@
         return emptyProgress();
       }
     }
-    record(result, levelId = "bathroom-run", nextLevelId = null) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
       const progress = this.load();
       const next = {
         ...progress,
@@ -648,14 +669,18 @@
           [levelId]: {
             bestScore: Math.max((_f = (_e = (_d = progress.levelRecords) == null ? void 0 : _d[levelId]) == null ? void 0 : _e.bestScore) != null ? _f : 0, result.score),
             bestTime: ((_h = (_g = progress.levelRecords) == null ? void 0 : _g[levelId]) == null ? void 0 : _h.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            medal: this.bestMedal((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.medal, result.medal)
+            medal: this.bestMedal((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.medal, result.medal),
+            missions: [.../* @__PURE__ */ new Set([
+              ...(_m = (_l = (_k = progress.levelRecords) == null ? void 0 : _k[levelId]) == null ? void 0 : _l.missions) != null ? _m : [],
+              ...completedMissions
+            ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_k = progress.achievements) != null ? _k : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_n = progress.achievements) != null ? _n : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_l = this.storage) == null ? void 0 : _l.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_o = this.storage) == null ? void 0 : _o.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return { ...next, newAchievements };
@@ -666,6 +691,13 @@
       return ((_a = rank[candidate]) != null ? _a : 0) >= ((_b = rank[current]) != null ? _b : 0) ? candidate : current;
     }
   };
+
+  // src/missions.js
+  var evaluateMissions = (missions, result) => missions.map((mission) => ({
+    ...mission,
+    completed: mission.type === "time" ? result.elapsedSeconds <= mission.target : mission.type === "flies" ? result.fliesCollected >= mission.target : mission.type === "combo" ? result.bestCombo >= mission.target : mission.type === "score" ? result.score >= mission.target : false
+  }));
+  var completedMissionIds = (missions, result) => evaluateMissions(missions, result).filter(({ completed }) => completed).map(({ id }) => id);
 
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
@@ -785,6 +817,8 @@
       this.startButton = documentObject.getElementById("start-btn");
       this.levelSelect = documentObject.getElementById("level-select");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.missionList = documentObject.getElementById("mission-list");
+      this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.restartButton = documentObject.getElementById("restart-btn");
@@ -824,6 +858,7 @@
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
         this.updateLevelDescription();
+        this.renderMissions();
       });
       this.restartButton.addEventListener("click", () => this.reset());
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
@@ -832,19 +867,21 @@
       this.resize();
       this.renderLevelOptions();
       this.renderProgress();
+      this.renderMissions();
     }
     renderLevelOptions() {
       var _a;
       const progress = this.progressStore.load();
       this.levelSelect.replaceChildren();
       LEVELS.forEach((definition, index) => {
-        var _a2;
+        var _a2, _b, _c;
         const option = this.document.createElement("option");
         const unlocked = progress.unlockedLevels.includes(definition.id);
         const record = (_a2 = progress.levelRecords) == null ? void 0 : _a2[definition.id];
         option.value = definition.id;
         option.disabled = !unlocked;
-        option.textContent = `${index + 1}. ${definition.name}${record ? ` \xB7 ${record.medal}` : ""}${unlocked ? "" : " \u{1F512}"}`;
+        const stars = (_c = (_b = record == null ? void 0 : record.missions) == null ? void 0 : _b.length) != null ? _c : 0;
+        option.textContent = `${index + 1}. ${definition.name}${record ? ` \xB7 ${record.medal}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
         this.levelSelect.append(option);
       });
       if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -858,6 +895,19 @@
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte.` : definition.description;
+    }
+    renderMissions() {
+      var _a, _b, _c, _d;
+      const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
+      const completed = new Set((_d = (_c = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id]) == null ? void 0 : _c.missions) != null ? _d : []);
+      this.missionStars.textContent = `${completed.size}/${definition.missions.length} \u2605`;
+      this.missionList.replaceChildren(...definition.missions.map((mission) => {
+        const item = this.document.createElement("p");
+        const isCompleted = completed.has(mission.id);
+        item.className = `mission${isCompleted ? " completed" : ""}`;
+        item.innerHTML = `<span aria-hidden="true">${isCompleted ? "\u2605" : "\u2606"}</span><span>${mission.label}</span>`;
+        return item;
+      }));
     }
     renderProgress() {
       var _a;
@@ -972,13 +1022,15 @@
       this.state = GameState.FINISHED;
       this.input.reset();
       const result = this.stats.finish(this.level.flies.length);
+      const missionResults = evaluateMissions(this.level.missions, result);
+      const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
       const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
       const nextLevelId = (_b = (_a = LEVELS[levelIndex + 1]) == null ? void 0 : _a.id) != null ? _b : null;
-      const progress = this.progressStore.record(result, this.level.id, nextLevelId);
+      const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : "") + ` \xB7 Missionen: ${missionResults.filter(({ completed }) => completed).length}/${missionResults.length}`,
         false
       );
       this.restartButton.style.display = "inline-block";
@@ -987,6 +1039,7 @@
       this.restartButton.focus();
       this.renderLevelOptions();
       this.renderProgress();
+      this.renderMissions();
     }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
@@ -1009,6 +1062,7 @@
       this.startScreen.style.display = "block";
       this.renderLevelOptions();
       this.renderProgress();
+      this.renderMissions();
       this.levelSelect.focus();
     }
     togglePause() {

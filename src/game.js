@@ -11,6 +11,7 @@ import { formatTime, RunStats } from "./score.js";
 import { ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
+import { completedMissionIds, evaluateMissions } from "./missions.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -31,6 +32,8 @@ export class Game {
     this.startButton = documentObject.getElementById("start-btn");
     this.levelSelect = documentObject.getElementById("level-select");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.missionList = documentObject.getElementById("mission-list");
+    this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.restartButton = documentObject.getElementById("restart-btn");
@@ -72,6 +75,7 @@ export class Game {
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
       this.updateLevelDescription();
+      this.renderMissions();
     });
     this.restartButton.addEventListener("click", () => this.reset());
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
@@ -80,6 +84,7 @@ export class Game {
     this.resize();
     this.renderLevelOptions();
     this.renderProgress();
+    this.renderMissions();
   }
 
   renderLevelOptions() {
@@ -91,7 +96,8 @@ export class Game {
       const record = progress.levelRecords?.[definition.id];
       option.value = definition.id;
       option.disabled = !unlocked;
-      option.textContent = `${index + 1}. ${definition.name}${record ? ` · ${record.medal}` : ""}${unlocked ? "" : " 🔒"}`;
+      const stars = record?.missions?.length ?? 0;
+      option.textContent = `${index + 1}. ${definition.name}${record ? ` · ${record.medal}` : ""}${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
     });
     if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -107,6 +113,19 @@ export class Game {
     this.levelDescription.textContent = record
       ? `${definition.description} Bestwert: ${record.bestScore} Punkte.`
       : definition.description;
+  }
+
+  renderMissions() {
+    const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
+    const completed = new Set(this.progressStore.load().levelRecords?.[definition.id]?.missions ?? []);
+    this.missionStars.textContent = `${completed.size}/${definition.missions.length} ★`;
+    this.missionList.replaceChildren(...definition.missions.map((mission) => {
+      const item = this.document.createElement("p");
+      const isCompleted = completed.has(mission.id);
+      item.className = `mission${isCompleted ? " completed" : ""}`;
+      item.innerHTML = `<span aria-hidden="true">${isCompleted ? "★" : "☆"}</span><span>${mission.label}</span>`;
+      return item;
+    }));
   }
 
   renderProgress() {
@@ -229,9 +248,11 @@ export class Game {
     this.state = GameState.FINISHED;
     this.input.reset();
     const result = this.stats.finish(this.level.flies.length);
+    const missionResults = evaluateMissions(this.level.missions, result);
+    const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
     const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
     const nextLevelId = LEVELS[levelIndex + 1]?.id ?? null;
-    const progress = this.progressStore.record(result, this.level.id, nextLevelId);
+    const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
     this.runScoreElement.textContent = String(result.score);
     this.showMessage(
       `${result.medal}-Medaille!`,
@@ -239,7 +260,8 @@ export class Game {
         `Score: ${result.score} · Rekord: ${progress.bestScore}` +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
-          : ""),
+          : "") +
+        ` · Missionen: ${missionResults.filter(({ completed }) => completed).length}/${missionResults.length}`,
       false
     );
     this.restartButton.style.display = "inline-block";
@@ -248,6 +270,7 @@ export class Game {
     this.restartButton.focus();
     this.renderLevelOptions();
     this.renderProgress();
+    this.renderMissions();
   }
 
   returnToLevelSelect() {
@@ -271,6 +294,7 @@ export class Game {
     this.startScreen.style.display = "block";
     this.renderLevelOptions();
     this.renderProgress();
+    this.renderMissions();
     this.levelSelect.focus();
   }
 

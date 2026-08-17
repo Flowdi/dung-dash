@@ -10,6 +10,7 @@ import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics
 import { calculateFinalScore, calculateMedal, formatTime, RunStats } from "../src/score.js";
 import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
+import { findNewAchievements } from "../src/achievements.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -224,6 +225,32 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("achievements unlock from run and career progress", () => {
+  const achievements = findNewAchievements(
+    { totalRuns: 1, totalFlies: 50, achievements: [] },
+    { bestCombo: 4, medal: "Gold", elapsedSeconds: 55, falls: 0 }
+  );
+  assert.deepEqual(
+    achievements.map(({ id }) => id),
+    ["first-flush", "fly-hunter", "combo-master", "golden-pile", "speed-runner", "sure-footed"]
+  );
+});
+
+test("progress store persists achievements only once", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const result = { score: 5000, elapsedSeconds: 55, fliesCollected: 20, medal: "Gold", bestCombo: 4, falls: 0 };
+  const first = store.record(result);
+  const second = store.record(result);
+  assert.ok(first.newAchievements.length > 0);
+  assert.equal(second.newAchievements.length, 0);
+  assert.deepEqual(second.achievements, first.achievements);
 });
 
 test("level definitions create independent data-driven levels", () => {

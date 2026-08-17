@@ -1,3 +1,5 @@
+import { findNewAchievements } from "./achievements.js";
+
 const STORAGE_KEY = "dung-dash-progress-v1";
 
 const emptyProgress = () => ({
@@ -8,6 +10,7 @@ const emptyProgress = () => ({
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
+  achievements: [],
 });
 
 export class ProgressStore {
@@ -51,12 +54,14 @@ export class ProgressStore {
         },
       },
     };
+    const newAchievements = findNewAchievements(next, result);
+    next.achievements = [...(progress.achievements ?? []), ...newAchievements.map(({ id }) => id)];
     try {
       this.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
       // Das Spiel bleibt auch bei deaktiviertem oder vollem Speicher spielbar.
     }
-    return next;
+    return { ...next, newAchievements };
   }
 
   bestMedal(current, candidate) {

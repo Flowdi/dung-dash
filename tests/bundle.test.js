@@ -36,3 +36,9 @@ test("HUD and transient checkpoint messages use separate screen corners", async 
   assert.match(styles, /\.score\s*\{[\s\S]*?left:\s*max\(12px/);
   assert.match(styles, /\.checkpoint-screen\.toast\s*\{[\s\S]*?right:\s*max\(12px/);
 });
+
+test("start screen exposes career stats and achievements", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /id="career-stats"/);
+  assert.match(html, /id="achievement-list"/);
+});

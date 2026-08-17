@@ -10,6 +10,7 @@ import { createLevel } from "./level.js";
 import { formatTime, RunStats } from "./score.js";
 import { ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
+import { ACHIEVEMENTS } from "./achievements.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -30,6 +31,8 @@ export class Game {
     this.startButton = documentObject.getElementById("start-btn");
     this.levelSelect = documentObject.getElementById("level-select");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.careerStats = documentObject.getElementById("career-stats");
+    this.achievementList = documentObject.getElementById("achievement-list");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
@@ -76,6 +79,7 @@ export class Game {
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
     this.renderLevelOptions();
+    this.renderProgress();
   }
 
   renderLevelOptions() {
@@ -103,6 +107,31 @@ export class Game {
     this.levelDescription.textContent = record
       ? `${definition.description} Bestwert: ${record.bestScore} Punkte.`
       : definition.description;
+  }
+
+  renderProgress() {
+    const progress = this.progressStore.load();
+    const stats = [
+      ["Läufe", progress.totalRuns],
+      ["Fliegen", progress.totalFlies],
+      ["Highscore", progress.bestScore],
+      ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
+    ];
+    this.careerStats.replaceChildren(...stats.map(([label, value]) => {
+      const item = this.document.createElement("p");
+      item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      return item;
+    }));
+
+    const unlocked = new Set(progress.achievements ?? []);
+    this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
+      const item = this.document.createElement("article");
+      const isUnlocked = unlocked.has(achievement.id);
+      item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
+      item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
+      item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+      return item;
+    }));
   }
 
   async start() {
@@ -207,7 +236,10 @@ export class Game {
     this.showMessage(
       `${result.medal}-Medaille!`,
       `Zeit: ${formatTime(result.elapsedSeconds)} · Fliegen: ${result.fliesCollected}/${result.totalFlies} · ` +
-        `Score: ${result.score} · Rekord: ${progress.bestScore}`,
+        `Score: ${result.score} · Rekord: ${progress.bestScore}` +
+        (progress.newAchievements.length
+          ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
+          : ""),
       false
     );
     this.restartButton.style.display = "inline-block";
@@ -215,6 +247,7 @@ export class Game {
     this.pauseButton.hidden = true;
     this.restartButton.focus();
     this.renderLevelOptions();
+    this.renderProgress();
   }
 
   returnToLevelSelect() {
@@ -237,6 +270,7 @@ export class Game {
     this.startButton.disabled = false;
     this.startScreen.style.display = "block";
     this.renderLevelOptions();
+    this.renderProgress();
     this.levelSelect.focus();
   }
 

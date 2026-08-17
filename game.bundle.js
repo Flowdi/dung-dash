@@ -34,7 +34,15 @@
     playerRight: "./assets/sprites/player-right.png",
     fly: "./assets/sprites/fly.png",
     toilet: "./assets/sprites/toilet.png",
-    platform: "./assets/sprites/platform.png"
+    platform: "./assets/sprites/platform.png",
+    bathroomBackground: "./assets/themes/bathroom-background.png",
+    bathroomAtlas: "./assets/themes/bathroom-atlas.png",
+    sewerBackground: "./assets/themes/sewer-background.png",
+    sewerAtlas: "./assets/themes/sewer-atlas.png",
+    festivalBackground: "./assets/themes/festival-background.png",
+    festivalAtlas: "./assets/themes/festival-atlas.png",
+    royalBackground: "./assets/themes/royal-background.png",
+    royalAtlas: "./assets/themes/royal-atlas.png"
   };
   var loadSprites = (ImageConstructor = Image) => {
     const sprites = {};
@@ -124,6 +132,15 @@
   };
 
   // src/entities.js
+  var drawThemeSprite = (ctx, sprites, theme, cropName, fallbackName, x, y, width, height) => {
+    const atlas = (theme == null ? void 0 : theme.atlas) ? sprites[theme.atlas] : null;
+    const crop = theme == null ? void 0 : theme[cropName];
+    if (atlas && crop) {
+      ctx.drawImage(atlas, ...crop, x, y, width, height);
+    } else {
+      ctx.drawImage(sprites[fallbackName], x, y, width, height);
+    }
+  };
   var Player = class {
     constructor(spawn = { x: 100, y: 400 }, options = {}) {
       var _a, _b;
@@ -185,9 +202,19 @@
       this.type = type;
       this.active = true;
     }
-    draw(ctx, cameraX, sprites) {
+    draw(ctx, cameraX, sprites, theme) {
       if (!this.active) return;
-      ctx.drawImage(sprites.platform, this.position.x - cameraX, this.position.y, this.width, this.height);
+      drawThemeSprite(
+        ctx,
+        sprites,
+        theme,
+        "platformCrop",
+        "platform",
+        this.position.x - cameraX,
+        this.position.y,
+        this.width,
+        this.height
+      );
       if (this.type !== "normal") {
         ctx.save();
         ctx.globalAlpha = 0.32;
@@ -203,11 +230,11 @@
       this.width = 40;
       this.height = 200;
     }
-    draw(ctx, cameraX, sprites) {
+    draw(ctx, cameraX, sprites, theme) {
       ctx.save();
       ctx.translate(this.position.x - cameraX + this.width, this.position.y);
       ctx.rotate(Math.PI / 2);
-      ctx.drawImage(sprites.platform, 0, 0, this.height, this.width);
+      drawThemeSprite(ctx, sprites, theme, "platformCrop", "platform", 0, 0, this.height, this.width);
       ctx.restore();
     }
   };
@@ -219,9 +246,19 @@
       this.order = order;
       this.claimed = false;
     }
-    draw(ctx, cameraX, sprites) {
+    draw(ctx, cameraX, sprites, theme) {
       if (!this.claimed) {
-        ctx.drawImage(sprites.toilet, this.position.x - cameraX, this.position.y, this.width, this.height);
+        drawThemeSprite(
+          ctx,
+          sprites,
+          theme,
+          "toiletCrop",
+          "toilet",
+          this.position.x - cameraX,
+          this.position.y,
+          this.width,
+          this.height
+        );
       }
     }
   };
@@ -265,6 +302,12 @@
       id: "bathroom-run",
       name: "Badezimmer-Sprint",
       description: "Der klassische horizontale Lauf zur letzten Toilette.",
+      theme: {
+        background: "bathroomBackground",
+        atlas: "bathroomAtlas",
+        platformCrop: [0, 600, 850, 300],
+        toiletCrop: [850, 250, 404, 680]
+      },
       width: 5e3,
       spawn: { x: 100, y: 400 },
       platforms: [
@@ -311,6 +354,12 @@
       id: "sewer-shortcut",
       name: "Kanal-K\xFCrzel",
       description: "K\xFCrzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+      theme: {
+        background: "sewerBackground",
+        atlas: "sewerAtlas",
+        platformCrop: [0, 560, 810, 310],
+        toiletCrop: [800, 240, 454, 650]
+      },
       width: 3600,
       spawn: { x: 80, y: 600 },
       platforms: [
@@ -344,6 +393,12 @@
       id: "festival-flush",
       name: "Festival-Flucht",
       description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+      theme: {
+        background: "festivalBackground",
+        atlas: "festivalAtlas",
+        platformCrop: [0, 510, 930, 390],
+        toiletCrop: [900, 230, 354, 680]
+      },
       width: 4200,
       spawn: { x: 100, y: 680 },
       platforms: [
@@ -379,6 +434,12 @@
       id: "royal-flush",
       name: "Royal Flush",
       description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+      theme: {
+        background: "royalBackground",
+        atlas: "royalAtlas",
+        platformCrop: [0, 500, 840, 360],
+        toiletCrop: [820, 160, 434, 750]
+      },
       mode: "vertical",
       width: 1e3,
       height: 3200,
@@ -436,6 +497,7 @@
       width: definition.width,
       height: (_a = definition.height) != null ? _a : 800,
       mode: (_b = definition.mode) != null ? _b : "horizontal",
+      theme: definition.theme,
       player: new Player(definition.spawn, {
         worldWidth: definition.width,
         groundY: ((_c = definition.height) != null ? _c : 800) - 40
@@ -581,13 +643,56 @@
 
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
+  var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
+  var findPlatformImpact = (player, platform) => {
+    const previous = player.previousPosition;
+    const current = player.position;
+    const deltaX = current.x - previous.x;
+    const deltaY = current.y - previous.y;
+    const left = platform.position.x;
+    const right = left + platform.width;
+    const top = platform.position.y;
+    const bottom = top + platform.height;
+    const impacts = [];
+    if (deltaY > 0) {
+      const time = (top - (previous.y + player.height)) / deltaY;
+      const xAtImpact = previous.x + deltaX * time;
+      if (time >= 0 && time <= 1 && rangesOverlap(xAtImpact, xAtImpact + player.width, left, right)) {
+        impacts.push({ side: "top", time });
+      }
+    }
+    if (platform.type !== "one-way" && deltaY < 0) {
+      const time = (bottom - previous.y) / deltaY;
+      const xAtImpact = previous.x + deltaX * time;
+      if (time >= 0 && time <= 1 && rangesOverlap(xAtImpact, xAtImpact + player.width, left, right)) {
+        impacts.push({ side: "bottom", time });
+      }
+    }
+    if (platform.type !== "one-way" && deltaX > 0) {
+      const time = (left - (previous.x + player.width)) / deltaX;
+      const yAtImpact = previous.y + deltaY * time;
+      if (time >= 0 && time <= 1 && rangesOverlap(yAtImpact, yAtImpact + player.height, top, bottom)) {
+        impacts.push({ side: "left", time });
+      }
+    }
+    if (platform.type !== "one-way" && deltaX < 0) {
+      const time = (right - previous.x) / deltaX;
+      const yAtImpact = previous.y + deltaY * time;
+      if (time >= 0 && time <= 1 && rangesOverlap(yAtImpact, yAtImpact + player.height, top, bottom)) {
+        impacts.push({ side: "right", time });
+      }
+    }
+    return impacts.reduce(
+      (earliest, impact) => earliest === null || impact.time < earliest.time ? impact : earliest,
+      null
+    );
+  };
   var resolvePlatformCollisions = (player, platforms) => {
     for (const platform of platforms) {
       if (!platform.active) continue;
-      const previousBottom = player.previousPosition.y + player.height;
-      const currentBottom = player.position.y + player.height;
-      const horizontallyOverlapping = player.position.x + player.width > platform.position.x && player.position.x < platform.position.x + platform.width;
-      if (player.velocity.y >= 0 && previousBottom <= platform.position.y && currentBottom >= platform.position.y && horizontallyOverlapping) {
+      const impact = findPlatformImpact(player, platform);
+      if (!impact) continue;
+      if (impact.side === "top") {
         player.position.y = platform.position.y - player.height;
         if (platform.type === "bounce") {
           player.velocity.y = -1100;
@@ -597,6 +702,15 @@
           player.isGrounded = true;
         }
         if (platform.type === "fragile") platform.active = false;
+      } else if (impact.side === "bottom") {
+        player.position.y = platform.position.y + platform.height;
+        player.velocity.y = 0;
+      } else if (impact.side === "left") {
+        player.position.x = platform.position.x - player.width;
+        player.velocity.x = 0;
+      } else if (impact.side === "right") {
+        player.position.x = platform.position.x + platform.width;
+        player.velocity.x = 0;
       }
     }
   };
@@ -873,8 +987,10 @@
       const firstTileX = Math.floor(this.cameraX / tileWidth) * tileWidth;
       const lastVisibleX = this.cameraX + this.viewport.viewportWidth;
       for (let x = firstTileX; x < lastVisibleX + tileWidth; x += tileWidth) {
+        const atlas = this.assets.sprites[this.level.theme.atlas];
         this.ctx.drawImage(
-          this.assets.sprites.platform,
+          atlas,
+          ...this.level.theme.platformCrop,
           x - this.cameraX,
           this.level.height - GROUND_HEIGHT,
           tileWidth,
@@ -882,16 +998,37 @@
         );
       }
     }
+    drawBackground() {
+      const background = this.assets.sprites[this.level.theme.background];
+      const tileHeight = 800;
+      const tileWidth = tileHeight * (background.width / background.height);
+      const offsetX = this.cameraX * 0.12 % tileWidth;
+      const offsetY = this.cameraY * 0.12 % tileHeight;
+      for (let y = -offsetY; y < this.viewport.viewportHeight; y += tileHeight) {
+        for (let x = -offsetX; x < this.viewport.viewportWidth; x += tileWidth) {
+          this.ctx.drawImage(background, x, y, tileWidth, tileHeight);
+        }
+      }
+      this.ctx.fillStyle = "rgba(20, 20, 24, 0.16)";
+      this.ctx.fillRect(0, 0, this.viewport.viewportWidth, this.viewport.viewportHeight);
+    }
     draw() {
       const { devicePixelRatio, renderScale } = this.viewport;
       this.ctx.setTransform(1, 0, 0, 1, 0, 0);
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.setTransform(devicePixelRatio * renderScale, 0, 0, devicePixelRatio * renderScale, 0, 0);
+      this.drawBackground();
       this.ctx.translate(0, -this.cameraY);
       this.drawGround();
-      this.level.platforms.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
-      this.level.blockades.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
-      this.level.checkpoints.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
+      this.level.platforms.forEach(
+        (item) => item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+      );
+      this.level.blockades.forEach(
+        (item) => item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+      );
+      this.level.checkpoints.forEach(
+        (item) => item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+      );
       this.level.flies.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
       this.level.player.draw(this.ctx, this.cameraX, this.assets.sprites);
     }

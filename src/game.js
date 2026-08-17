@@ -272,9 +272,11 @@ export class Game {
     const tileWidth = 200;
     const firstTileX = Math.floor(this.cameraX / tileWidth) * tileWidth;
     const lastVisibleX = this.cameraX + this.viewport.viewportWidth;
-    for (let x = firstTileX; x < lastVisibleX + tileWidth; x += tileWidth) {
+      for (let x = firstTileX; x < lastVisibleX + tileWidth; x += tileWidth) {
+      const atlas = this.assets.sprites[this.level.theme.atlas];
       this.ctx.drawImage(
-        this.assets.sprites.platform,
+        atlas,
+        ...this.level.theme.platformCrop,
         x - this.cameraX,
         this.level.height - GROUND_HEIGHT,
         tileWidth,
@@ -283,16 +285,38 @@ export class Game {
     }
   }
 
+  drawBackground() {
+    const background = this.assets.sprites[this.level.theme.background];
+    const tileHeight = 800;
+    const tileWidth = tileHeight * (background.width / background.height);
+    const offsetX = (this.cameraX * 0.12) % tileWidth;
+    const offsetY = (this.cameraY * 0.12) % tileHeight;
+    for (let y = -offsetY; y < this.viewport.viewportHeight; y += tileHeight) {
+      for (let x = -offsetX; x < this.viewport.viewportWidth; x += tileWidth) {
+        this.ctx.drawImage(background, x, y, tileWidth, tileHeight);
+      }
+    }
+    this.ctx.fillStyle = "rgba(20, 20, 24, 0.16)";
+    this.ctx.fillRect(0, 0, this.viewport.viewportWidth, this.viewport.viewportHeight);
+  }
+
   draw() {
     const { devicePixelRatio, renderScale } = this.viewport;
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.setTransform(devicePixelRatio * renderScale, 0, 0, devicePixelRatio * renderScale, 0, 0);
+    this.drawBackground();
     this.ctx.translate(0, -this.cameraY);
     this.drawGround();
-    this.level.platforms.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
-    this.level.blockades.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
-    this.level.checkpoints.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
+    this.level.platforms.forEach((item) =>
+      item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+    );
+    this.level.blockades.forEach((item) =>
+      item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+    );
+    this.level.checkpoints.forEach((item) =>
+      item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
+    );
     this.level.flies.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
     this.level.player.draw(this.ctx, this.cameraX, this.assets.sprites);
   }

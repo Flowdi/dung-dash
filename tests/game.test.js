@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { calculateViewport } from "../src/config.js";
 import { GameState } from "../src/config.js";
-import { Player } from "../src/entities.js";
+import { CheckPoint, Platform, Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
@@ -88,6 +88,48 @@ test("landing places the player exactly on a platform", () => {
   resolvePlatformCollisions(player, platforms);
   assert.equal(player.position.y, platform.position.y - player.height);
   assert.equal(player.isGrounded, true);
+});
+
+test("solid platforms block fast jumps from below", () => {
+  const { player } = createLevel();
+  const platform = { position: { x: 500, y: 300 }, width: 200, height: 40, type: "normal", active: true };
+  player.previousPosition = { x: 540, y: 370 };
+  player.position = { x: 540, y: 250 };
+  player.velocity.y = -1600;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.y, 340);
+  assert.equal(player.velocity.y, 0);
+});
+
+test("solid platforms block movement from the left and right", () => {
+  const { player } = createLevel();
+  const platform = { position: { x: 500, y: 450 }, width: 200, height: 40, type: "normal", active: true };
+
+  player.previousPosition = { x: 440, y: 450 };
+  player.position = { x: 510, y: 450 };
+  player.velocity.x = 300;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.x, 460);
+  assert.equal(player.velocity.x, 0);
+
+  player.previousPosition = { x: 720, y: 450 };
+  player.position = { x: 650, y: 450 };
+  player.velocity.x = -300;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.x, 700);
+  assert.equal(player.velocity.x, 0);
+});
+
+test("only explicitly declared one-way platforms allow jumping through", () => {
+  const { player } = createLevel();
+  const oneWay = { position: { x: 500, y: 300 }, width: 200, height: 40, type: "one-way", active: true };
+  player.previousPosition = { x: 540, y: 370 };
+  player.position = { x: 540, y: 250 };
+  player.velocity.y = -1600;
+  resolvePlatformCollisions(player, [oneWay]);
+  assert.equal(player.position.y, 250);
+  assert.equal(player.velocity.y, -1600);
+  assert.equal(LEVELS.every((level) => level.platforms.every((platform) => platform[2] !== "one-way")), true);
 });
 
 test("small viewports preserve an 800-unit world height", () => {
@@ -193,6 +235,33 @@ test("level definitions create independent data-driven levels", () => {
   assert.equal(second.player.worldWidth, second.width);
   assert.ok(second.platforms.some((platform) => platform.type === "bounce"));
   assert.ok(second.platforms.some((platform) => platform.type === "fragile"));
+});
+
+test("every level has its own complete visual theme", () => {
+  const backgrounds = new Set(LEVELS.map((level) => level.theme.background));
+  const atlases = new Set(LEVELS.map((level) => level.theme.atlas));
+  assert.equal(backgrounds.size, LEVELS.length);
+  assert.equal(atlases.size, LEVELS.length);
+  LEVELS.forEach((level) => {
+    assert.equal(level.theme.platformCrop.length, 4);
+    assert.equal(level.theme.toiletCrop.length, 4);
+    assert.ok(level.theme.platformCrop.every(Number.isFinite));
+    assert.ok(level.theme.toiletCrop.every(Number.isFinite));
+  });
+});
+
+test("platforms and toilets render from the selected theme atlas", () => {
+  const theme = LEVELS[1].theme;
+  const atlas = { id: "sewer-atlas" };
+  const sprites = { [theme.atlas]: atlas, platform: {}, toilet: {} };
+  const calls = [];
+  const ctx = { drawImage: (...args) => calls.push(args) };
+
+  new Platform(100, 200).draw(ctx, 10, sprites, theme);
+  new CheckPoint(300, 400, 1).draw(ctx, 10, sprites, theme);
+
+  assert.deepEqual(calls[0], [atlas, ...theme.platformCrop, 90, 200, 200, 40]);
+  assert.deepEqual(calls[1], [atlas, ...theme.toiletCrop, 290, 400, 40, 70]);
 });
 
 test("special flies modify score and time", () => {

@@ -9,6 +9,7 @@ export const createLevel = (levelId) => {
     width: definition.width,
     height: definition.height ?? 800,
     mode: definition.mode ?? "horizontal",
+    theme: definition.theme,
     player: new Player(definition.spawn, {
       worldWidth: definition.width,
       groundY: (definition.height ?? 800) - 40,

@@ -212,6 +212,8 @@ export class Game {
   update(deltaTime) {
     const { player, platforms, blockades, flies, checkpoints } = this.level;
     this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
+    platforms.forEach((platform) => platform.update(deltaTime));
+    player.followSupportPlatform();
     player.update(deltaTime, this.input, this.state === GameState.PLAYING);
     resolvePlatformCollisions(player, platforms);
     resolveBlockadeCollisions(player, blockades);

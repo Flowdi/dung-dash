@@ -10,11 +10,14 @@ const rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) =>
 const findPlatformImpact = (player, platform) => {
   const previous = player.previousPosition;
   const current = player.position;
-  const deltaX = current.x - previous.x;
-  const deltaY = current.y - previous.y;
-  const left = platform.position.x;
+  const platformPrevious = platform.previousPosition ?? platform.position;
+  const platformDeltaX = platform.position.x - platformPrevious.x;
+  const platformDeltaY = platform.position.y - platformPrevious.y;
+  const deltaX = current.x - previous.x - platformDeltaX;
+  const deltaY = current.y - previous.y - platformDeltaY;
+  const left = platformPrevious.x;
   const right = left + platform.width;
-  const top = platform.position.y;
+  const top = platformPrevious.y;
   const bottom = top + platform.height;
   const impacts = [];
 
@@ -69,6 +72,7 @@ const findPlatformImpact = (player, platform) => {
 };
 
 export const resolvePlatformCollisions = (player, platforms) => {
+  player.supportPlatform = null;
   for (const platform of platforms) {
     if (!platform.active) continue;
     const impact = findPlatformImpact(player, platform);
@@ -82,6 +86,7 @@ export const resolvePlatformCollisions = (player, platforms) => {
       } else {
         player.velocity.y = 0;
         player.isGrounded = true;
+        player.supportPlatform = platform;
       }
       if (platform.type === "fragile") platform.active = false;
     } else if (impact.side === "bottom") {

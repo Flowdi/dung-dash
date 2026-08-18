@@ -29,6 +29,14 @@ export class Player {
     this.lookDirection = "neutral";
     this.worldWidth = options.worldWidth ?? LEVEL_WIDTH;
     this.groundY = options.groundY ?? GROUND_Y;
+    this.supportPlatform = null;
+  }
+
+  followSupportPlatform() {
+    if (!this.supportPlatform?.active) return;
+    this.position.x += this.supportPlatform.movementDelta.x;
+    this.position.y += this.supportPlatform.movementDelta.y;
+    this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width));
   }
 
   update(deltaTime, input, canMove = true) {
@@ -84,12 +92,35 @@ export class Player {
 }
 
 export class Platform {
-  constructor(x, y, type = "normal") {
+  constructor(x, y, type = "normal", options = {}) {
     this.position = { x, y };
+    this.previousPosition = { ...this.position };
+    this.origin = { ...this.position };
     this.width = 200;
     this.height = 40;
     this.type = type;
     this.active = true;
+    this.range = options.range ?? 140;
+    this.speed = options.speed ?? 80;
+    this.phase = options.phase ?? 0;
+    this.elapsed = 0;
+    this.movementDelta = { x: 0, y: 0 };
+  }
+
+  update(deltaTime) {
+    this.previousPosition = { ...this.position };
+    if (this.type !== "moving-x" && this.type !== "moving-y") {
+      this.movementDelta = { x: 0, y: 0 };
+      return;
+    }
+    this.elapsed += deltaTime;
+    const offset = Math.sin(this.phase + this.elapsed * this.speed / this.range) * this.range;
+    if (this.type === "moving-x") this.position.x = this.origin.x + offset;
+    if (this.type === "moving-y") this.position.y = this.origin.y + offset;
+    this.movementDelta = {
+      x: this.position.x - this.previousPosition.x,
+      y: this.position.y - this.previousPosition.y,
+    };
   }
 
   draw(ctx, cameraX, sprites, theme) {
@@ -107,9 +138,20 @@ export class Platform {
     );
     if (this.type !== "normal") {
       ctx.save();
-      ctx.globalAlpha = 0.32;
-      ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
+      ctx.globalAlpha = 0.36;
+      ctx.fillStyle = this.type === "bounce"
+        ? "#55e6ff"
+        : this.type.startsWith("moving-")
+          ? "#d86cff"
+          : "#fff3a0";
       ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
+      if (this.type.startsWith("moving-")) {
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 20px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(this.type === "moving-x" ? "↔" : "↕", this.position.x - cameraX + this.width / 2, this.position.y + 27);
+      }
       ctx.restore();
     }
   }

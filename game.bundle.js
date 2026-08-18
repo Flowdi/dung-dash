@@ -154,6 +154,14 @@
       this.lookDirection = "neutral";
       this.worldWidth = (_a = options.worldWidth) != null ? _a : LEVEL_WIDTH;
       this.groundY = (_b = options.groundY) != null ? _b : GROUND_Y;
+      this.supportPlatform = null;
+    }
+    followSupportPlatform() {
+      var _a;
+      if (!((_a = this.supportPlatform) == null ? void 0 : _a.active)) return;
+      this.position.x += this.supportPlatform.movementDelta.x;
+      this.position.y += this.supportPlatform.movementDelta.y;
+      this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width));
     }
     update(deltaTime, input, canMove = true) {
       this.previousPosition = { ...this.position };
@@ -195,12 +203,35 @@
     }
   };
   var Platform = class {
-    constructor(x, y, type = "normal") {
+    constructor(x, y, type = "normal", options = {}) {
+      var _a, _b, _c;
       this.position = { x, y };
+      this.previousPosition = { ...this.position };
+      this.origin = { ...this.position };
       this.width = 200;
       this.height = 40;
       this.type = type;
       this.active = true;
+      this.range = (_a = options.range) != null ? _a : 140;
+      this.speed = (_b = options.speed) != null ? _b : 80;
+      this.phase = (_c = options.phase) != null ? _c : 0;
+      this.elapsed = 0;
+      this.movementDelta = { x: 0, y: 0 };
+    }
+    update(deltaTime) {
+      this.previousPosition = { ...this.position };
+      if (this.type !== "moving-x" && this.type !== "moving-y") {
+        this.movementDelta = { x: 0, y: 0 };
+        return;
+      }
+      this.elapsed += deltaTime;
+      const offset = Math.sin(this.phase + this.elapsed * this.speed / this.range) * this.range;
+      if (this.type === "moving-x") this.position.x = this.origin.x + offset;
+      if (this.type === "moving-y") this.position.y = this.origin.y + offset;
+      this.movementDelta = {
+        x: this.position.x - this.previousPosition.x,
+        y: this.position.y - this.previousPosition.y
+      };
     }
     draw(ctx, cameraX, sprites, theme) {
       if (!this.active) return;
@@ -217,9 +248,16 @@
       );
       if (this.type !== "normal") {
         ctx.save();
-        ctx.globalAlpha = 0.32;
-        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
+        ctx.globalAlpha = 0.36;
+        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : this.type.startsWith("moving-") ? "#d86cff" : "#fff3a0";
         ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
+        if (this.type.startsWith("moving-")) {
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 20px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(this.type === "moving-x" ? "\u2194" : "\u2195", this.position.x - cameraX + this.width / 2, this.position.y + 27);
+        }
         ctx.restore();
       }
     }
@@ -324,7 +362,7 @@
         [2500, 450, "bounce"],
         [2900, 400],
         [3150, 350],
-        [3900, 450],
+        [3900, 450, "moving-y", { range: 110, speed: 65 }],
         [4200, 400, "fragile"],
         [4400, 200],
         [4550, 200],
@@ -381,7 +419,7 @@
         [1850, 420, "bounce"],
         [2200, 230],
         [2550, 420, "fragile"],
-        [2900, 300],
+        [2900, 300, "moving-y", { range: 90, speed: 70 }],
         [3250, 160]
       ],
       blockades: [[1100, 560], [2350, 500], [3500, -10]],
@@ -418,13 +456,13 @@
       spawn: { x: 100, y: 680 },
       platforms: [
         [420, 600, "fragile"],
-        [720, 460],
+        [720, 460, "moving-x", { range: 120, speed: 85 }],
         [1050, 300, "bounce"],
         [1400, 180],
         [1750, 420, "fragile"],
         [2100, 260],
         [2450, 520, "bounce"],
-        [2800, 330],
+        [2800, 330, "moving-y", { range: 110, speed: 75 }],
         [3150, 180, "fragile"],
         [3500, 380],
         [3850, 140]
@@ -466,13 +504,13 @@
       spawn: { x: 100, y: 3100 },
       platforms: [
         [80, 3140],
-        [360, 2980],
+        [360, 2980, "moving-x", { range: 150, speed: 80 }],
         [680, 2820],
         [300, 2640],
         [40, 2460],
-        [430, 2290],
+        [430, 2290, "moving-y", { range: 90, speed: 65 }],
         [720, 2100],
-        [360, 1900],
+        [360, 1900, "moving-x", { range: 170, speed: 85 }],
         [60, 1710],
         [500, 1510],
         [750, 1310],
@@ -523,7 +561,9 @@
         worldWidth: definition.width,
         groundY: ((_c = definition.height) != null ? _c : 800) - 40
       }),
-      platforms: definition.platforms.map(([x, y, type = "normal"]) => new Platform(x, y, type)),
+      platforms: definition.platforms.map(
+        ([x, y, type = "normal", options = {}]) => new Platform(x, y, type, options)
+      ),
       blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),
       flies: definition.flies.map(([x, y, type = "normal"]) => new Fly(x, y, type)),
       checkpoints: definition.checkpoints.map(([x, y, order]) => new CheckPoint(x, y, order))
@@ -703,13 +743,17 @@
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
   var findPlatformImpact = (player, platform) => {
+    var _a;
     const previous = player.previousPosition;
     const current = player.position;
-    const deltaX = current.x - previous.x;
-    const deltaY = current.y - previous.y;
-    const left = platform.position.x;
+    const platformPrevious = (_a = platform.previousPosition) != null ? _a : platform.position;
+    const platformDeltaX = platform.position.x - platformPrevious.x;
+    const platformDeltaY = platform.position.y - platformPrevious.y;
+    const deltaX = current.x - previous.x - platformDeltaX;
+    const deltaY = current.y - previous.y - platformDeltaY;
+    const left = platformPrevious.x;
     const right = left + platform.width;
-    const top = platform.position.y;
+    const top = platformPrevious.y;
     const bottom = top + platform.height;
     const impacts = [];
     if (deltaY > 0) {
@@ -746,6 +790,7 @@
     );
   };
   var resolvePlatformCollisions = (player, platforms) => {
+    player.supportPlatform = null;
     for (const platform of platforms) {
       if (!platform.active) continue;
       const impact = findPlatformImpact(player, platform);
@@ -758,6 +803,7 @@
         } else {
           player.velocity.y = 0;
           player.isGrounded = true;
+          player.supportPlatform = platform;
         }
         if (platform.type === "fragile") platform.active = false;
       } else if (impact.side === "bottom") {
@@ -990,6 +1036,8 @@
     update(deltaTime) {
       const { player, platforms, blockades, flies, checkpoints } = this.level;
       this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
+      platforms.forEach((platform) => platform.update(deltaTime));
+      player.followSupportPlatform();
       player.update(deltaTime, this.input, this.state === GameState.PLAYING);
       resolvePlatformCollisions(player, platforms);
       resolveBlockadeCollisions(player, blockades);

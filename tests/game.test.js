@@ -367,6 +367,51 @@ test("bounce and fragile platforms expose their gameplay behavior", () => {
   assert.equal(fragile.active, false);
 });
 
+test("moving platforms follow their configured axis and range", () => {
+  const horizontal = new Platform(100, 500, "moving-x", { range: 120, speed: 90 });
+  const vertical = new Platform(400, 300, "moving-y", { range: 80, speed: 60 });
+  horizontal.update(0.5);
+  vertical.update(0.5);
+  assert.notEqual(horizontal.position.x, horizontal.origin.x);
+  assert.equal(horizontal.position.y, horizontal.origin.y);
+  assert.notEqual(vertical.position.y, vertical.origin.y);
+  assert.equal(vertical.position.x, vertical.origin.x);
+  assert.ok(Math.abs(horizontal.position.x - horizontal.origin.x) <= horizontal.range);
+  assert.ok(Math.abs(vertical.position.y - vertical.origin.y) <= vertical.range);
+});
+
+test("the player is carried by a supporting moving platform", () => {
+  const player = new Player();
+  const platform = new Platform(100, 500, "moving-x", { range: 100, speed: 100 });
+  player.position = { x: 130, y: 460 };
+  player.supportPlatform = platform;
+  platform.update(0.5);
+  const expectedX = player.position.x + platform.movementDelta.x;
+  player.followSupportPlatform();
+  assert.equal(player.position.x, expectedX);
+  assert.equal(player.position.y, 460);
+});
+
+test("moving platforms push from the side without passing through the player", () => {
+  const player = new Player();
+  const platform = new Platform(100, 500, "moving-x");
+  platform.previousPosition = { x: 100, y: 500 };
+  platform.position = { x: 150, y: 500 };
+  player.previousPosition = { x: 310, y: 500 };
+  player.position = { x: 310, y: 500 };
+  player.velocity.x = 0;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.x, 350);
+});
+
+test("advanced levels contain moving platforms", () => {
+  const movingCounts = LEVELS.slice(1).map((level) =>
+    level.platforms.filter(([, , type]) => type?.startsWith("moving-")).length
+  );
+  assert.ok(movingCounts.every((count) => count > 0));
+  assert.ok(movingCounts.at(-1) >= 3);
+});
+
 test("Royal Flush remains a tall vertical level", () => {
   const level = createLevel("royal-flush");
   assert.equal(level.mode, "vertical");

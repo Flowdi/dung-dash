@@ -15,7 +15,9 @@ export const createLevel = (levelId) => {
       worldWidth: definition.width,
       groundY: (definition.height ?? 800) - 40,
     }),
-    platforms: definition.platforms.map(([x, y, type = "normal"]) => new Platform(x, y, type)),
+    platforms: definition.platforms.map(([x, y, type = "normal", options = {}]) =>
+      new Platform(x, y, type, options)
+    ),
     blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),
     flies: definition.flies.map(([x, y, type = "normal"]) => new Fly(x, y, type)),
     checkpoints: definition.checkpoints.map(([x, y, order]) => new CheckPoint(x, y, order)),

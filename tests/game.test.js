@@ -380,6 +380,18 @@ test("moving platforms follow their configured axis and range", () => {
   assert.ok(Math.abs(vertical.position.y - vertical.origin.y) <= vertical.range);
 });
 
+test("moving platforms use the unmarked level artwork", () => {
+  const theme = LEVELS[1].theme;
+  const calls = { drawImage: 0, fillRect: 0, fillText: 0 };
+  const ctx = {
+    drawImage: () => calls.drawImage += 1,
+    fillRect: () => calls.fillRect += 1,
+    fillText: () => calls.fillText += 1,
+  };
+  new Platform(100, 200, "moving-x").draw(ctx, 0, { [theme.atlas]: {} }, theme);
+  assert.deepEqual(calls, { drawImage: 1, fillRect: 0, fillText: 0 });
+});
+
 test("the player is carried by a supporting moving platform", () => {
   const player = new Player();
   const platform = new Platform(100, 500, "moving-x", { range: 100, speed: 100 });

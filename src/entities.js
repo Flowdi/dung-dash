@@ -101,7 +101,7 @@ export class Platform {
     this.type = type;
     this.active = true;
     this.range = options.range ?? 140;
-    this.speed = options.speed ?? 80;
+    this.speed = options.speed ?? 110;
     this.phase = options.phase ?? 0;
     this.elapsed = 0;
     this.movementDelta = { x: 0, y: 0 };
@@ -136,22 +136,11 @@ export class Platform {
       this.width,
       this.height
     );
-    if (this.type !== "normal") {
+    if (this.type === "bounce" || this.type === "fragile") {
       ctx.save();
       ctx.globalAlpha = 0.36;
-      ctx.fillStyle = this.type === "bounce"
-        ? "#55e6ff"
-        : this.type.startsWith("moving-")
-          ? "#d86cff"
-          : "#fff3a0";
+      ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
       ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
-      if (this.type.startsWith("moving-")) {
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 20px system-ui";
-        ctx.textAlign = "center";
-        ctx.fillText(this.type === "moving-x" ? "↔" : "↕", this.position.x - cameraX + this.width / 2, this.position.y + 27);
-      }
       ctx.restore();
     }
   }

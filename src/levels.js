@@ -19,7 +19,7 @@ export const LEVELS = Object.freeze([
     platforms: [
       [500, 450], [700, 400], [850, 350], [900, 350], [1050, 150],
       [2500, 450, "bounce"], [2900, 400], [3150, 350],
-      [3900, 450, "moving-y", { range: 110, speed: 65 }],
+      [3900, 450, "moving-y", { range: 110, speed: 90 }],
       [4200, 400, "fragile"], [4400, 200], [4550, 200], [4700, 150],
     ],
     blockades: [[1210, -10], [2860, 240], [2860, 0], [4860, -10]],
@@ -51,7 +51,7 @@ export const LEVELS = Object.freeze([
     platforms: [
       [380, 560], [650, 430, "bounce"], [930, 260], [1250, 430, "fragile"],
       [1550, 600], [1850, 420, "bounce"], [2200, 230], [2550, 420, "fragile"],
-      [2900, 300, "moving-y", { range: 90, speed: 70 }], [3250, 160],
+      [2900, 300, "moving-y", { range: 90, speed: 95 }], [3250, 160],
     ],
     blockades: [[1100, 560], [2350, 500], [3500, -10]],
     flies: [
@@ -78,9 +78,9 @@ export const LEVELS = Object.freeze([
     width: 4200,
     spawn: { x: 100, y: 680 },
     platforms: [
-      [420, 600, "fragile"], [720, 460, "moving-x", { range: 120, speed: 85 }], [1050, 300, "bounce"], [1400, 180],
+      [420, 600, "fragile"], [720, 460, "moving-x", { range: 120, speed: 115 }], [1050, 300, "bounce"], [1400, 180],
       [1750, 420, "fragile"], [2100, 260], [2450, 520, "bounce"],
-      [2800, 330, "moving-y", { range: 110, speed: 75 }],
+      [2800, 330, "moving-y", { range: 110, speed: 105 }],
       [3150, 180, "fragile"], [3500, 380], [3850, 140],
     ],
     blockades: [[1550, 500], [3000, 420], [4100, -10]],
@@ -111,9 +111,9 @@ export const LEVELS = Object.freeze([
     height: 3200,
     spawn: { x: 100, y: 3100 },
     platforms: [
-      [80, 3140], [360, 2980, "moving-x", { range: 150, speed: 80 }], [680, 2820], [300, 2640], [40, 2460],
-      [430, 2290, "moving-y", { range: 90, speed: 65 }], [720, 2100],
-      [360, 1900, "moving-x", { range: 170, speed: 85 }], [60, 1710], [500, 1510],
+      [80, 3140], [360, 2980, "moving-x", { range: 150, speed: 110 }], [680, 2820], [300, 2640], [40, 2460],
+      [430, 2290, "moving-y", { range: 90, speed: 90 }], [720, 2100],
+      [360, 1900, "moving-x", { range: 170, speed: 115 }], [60, 1710], [500, 1510],
       [750, 1310], [380, 1110], [80, 900], [460, 690], [720, 470], [390, 250],
     ],
     blockades: [],

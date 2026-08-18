@@ -213,7 +213,7 @@
       this.type = type;
       this.active = true;
       this.range = (_a = options.range) != null ? _a : 140;
-      this.speed = (_b = options.speed) != null ? _b : 80;
+      this.speed = (_b = options.speed) != null ? _b : 110;
       this.phase = (_c = options.phase) != null ? _c : 0;
       this.elapsed = 0;
       this.movementDelta = { x: 0, y: 0 };
@@ -246,18 +246,11 @@
         this.width,
         this.height
       );
-      if (this.type !== "normal") {
+      if (this.type === "bounce" || this.type === "fragile") {
         ctx.save();
         ctx.globalAlpha = 0.36;
-        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : this.type.startsWith("moving-") ? "#d86cff" : "#fff3a0";
+        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
         ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
-        if (this.type.startsWith("moving-")) {
-          ctx.globalAlpha = 0.9;
-          ctx.fillStyle = "#fff";
-          ctx.font = "bold 20px system-ui";
-          ctx.textAlign = "center";
-          ctx.fillText(this.type === "moving-x" ? "\u2194" : "\u2195", this.position.x - cameraX + this.width / 2, this.position.y + 27);
-        }
         ctx.restore();
       }
     }
@@ -362,7 +355,7 @@
         [2500, 450, "bounce"],
         [2900, 400],
         [3150, 350],
-        [3900, 450, "moving-y", { range: 110, speed: 65 }],
+        [3900, 450, "moving-y", { range: 110, speed: 90 }],
         [4200, 400, "fragile"],
         [4400, 200],
         [4550, 200],
@@ -419,7 +412,7 @@
         [1850, 420, "bounce"],
         [2200, 230],
         [2550, 420, "fragile"],
-        [2900, 300, "moving-y", { range: 90, speed: 70 }],
+        [2900, 300, "moving-y", { range: 90, speed: 95 }],
         [3250, 160]
       ],
       blockades: [[1100, 560], [2350, 500], [3500, -10]],
@@ -456,13 +449,13 @@
       spawn: { x: 100, y: 680 },
       platforms: [
         [420, 600, "fragile"],
-        [720, 460, "moving-x", { range: 120, speed: 85 }],
+        [720, 460, "moving-x", { range: 120, speed: 115 }],
         [1050, 300, "bounce"],
         [1400, 180],
         [1750, 420, "fragile"],
         [2100, 260],
         [2450, 520, "bounce"],
-        [2800, 330, "moving-y", { range: 110, speed: 75 }],
+        [2800, 330, "moving-y", { range: 110, speed: 105 }],
         [3150, 180, "fragile"],
         [3500, 380],
         [3850, 140]
@@ -504,13 +497,13 @@
       spawn: { x: 100, y: 3100 },
       platforms: [
         [80, 3140],
-        [360, 2980, "moving-x", { range: 150, speed: 80 }],
+        [360, 2980, "moving-x", { range: 150, speed: 110 }],
         [680, 2820],
         [300, 2640],
         [40, 2460],
-        [430, 2290, "moving-y", { range: 90, speed: 65 }],
+        [430, 2290, "moving-y", { range: 90, speed: 90 }],
         [720, 2100],
-        [360, 1900, "moving-x", { range: 170, speed: 85 }],
+        [360, 1900, "moving-x", { range: 170, speed: 115 }],
         [60, 1710],
         [500, 1510],
         [750, 1310],

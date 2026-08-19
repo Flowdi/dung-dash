@@ -91,7 +91,12 @@ export const resolvePlatformCollisions = (player, platforms) => {
       if (platform.type === "fragile") platform.active = false;
     } else if (impact.side === "bottom") {
       player.position.y = platform.position.y + platform.height;
-      player.velocity.y = 0;
+      if (platform.type === "moving-y" && platform.movementVelocity?.y > 0) {
+        player.position.y += 0.01;
+        player.velocity.y = platform.movementVelocity.y + 180;
+      } else {
+        player.velocity.y = 0;
+      }
     } else if (impact.side === "left") {
       player.position.x = platform.position.x - player.width;
       player.velocity.x = 0;

@@ -416,6 +416,19 @@ test("moving platforms push from the side without passing through the player", (
   assert.equal(player.position.x, 350);
 });
 
+test("a descending platform releases the player after an underside hit", () => {
+  const player = new Player();
+  const platform = new Platform(100, 500, "moving-y", { range: 100, speed: 110 });
+  platform.update(1 / 60);
+  player.previousPosition = { x: 140, y: 550 };
+  player.position = { x: 140, y: 520 };
+  player.velocity.y = -1100;
+  resolvePlatformCollisions(player, [platform]);
+  assert.ok(platform.movementVelocity.y > 0);
+  assert.ok(player.position.y > platform.position.y + platform.height);
+  assert.ok(player.velocity.y > platform.movementVelocity.y);
+});
+
 test("advanced levels contain moving platforms", () => {
   const movingCounts = LEVELS.slice(1).map((level) =>
     level.platforms.filter(([, , type]) => type?.startsWith("moving-")).length

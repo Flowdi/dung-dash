@@ -156,11 +156,12 @@
       this.groundY = (_b = options.groundY) != null ? _b : GROUND_Y;
       this.supportPlatform = null;
     }
-    followSupportPlatform() {
-      var _a;
+    followSupportPlatform(deltaTime = 0) {
+      var _a, _b;
       if (!((_a = this.supportPlatform) == null ? void 0 : _a.active)) return;
       this.position.x += this.supportPlatform.movementDelta.x;
       this.position.y += this.supportPlatform.movementDelta.y;
+      this.position.x += ((_b = this.supportPlatform.surfaceSpeed) != null ? _b : 0) * deltaTime;
       this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width));
     }
     update(deltaTime, input, canMove = true) {
@@ -204,7 +205,7 @@
   };
   var Platform = class {
     constructor(x, y, type = "normal", options = {}) {
-      var _a, _b, _c;
+      var _a, _b, _c, _d, _e, _f, _g;
       this.position = { x, y };
       this.previousPosition = { ...this.position };
       this.origin = { ...this.position };
@@ -216,17 +217,27 @@
       this.speed = (_b = options.speed) != null ? _b : 110;
       this.phase = (_c = options.phase) != null ? _c : 0;
       this.elapsed = 0;
+      this.activeDuration = (_d = options.activeDuration) != null ? _d : 2.4;
+      this.inactiveDuration = (_e = options.inactiveDuration) != null ? _e : 1.2;
+      this.surfaceSpeed = type === "conveyor-left" ? -((_f = options.surfaceSpeed) != null ? _f : 150) : type === "conveyor-right" ? (_g = options.surfaceSpeed) != null ? _g : 150 : 0;
       this.movementDelta = { x: 0, y: 0 };
       this.movementVelocity = { x: 0, y: 0 };
     }
     update(deltaTime) {
       this.previousPosition = { ...this.position };
+      this.elapsed += deltaTime;
+      if (this.type === "timed") {
+        const cycleDuration = this.activeDuration + this.inactiveDuration;
+        this.active = (this.elapsed + this.phase) % cycleDuration < this.activeDuration;
+        this.movementDelta = { x: 0, y: 0 };
+        this.movementVelocity = { x: 0, y: 0 };
+        return;
+      }
       if (this.type !== "moving-x" && this.type !== "moving-y") {
         this.movementDelta = { x: 0, y: 0 };
         this.movementVelocity = { x: 0, y: 0 };
         return;
       }
-      this.elapsed += deltaTime;
       const offset = Math.sin(this.phase + this.elapsed * this.speed / this.range) * this.range;
       if (this.type === "moving-x") this.position.x = this.origin.x + offset;
       if (this.type === "moving-y") this.position.y = this.origin.y + offset;
@@ -240,7 +251,13 @@
       };
     }
     draw(ctx, cameraX, sprites, theme) {
-      if (!this.active) return;
+      if (!this.active && this.type !== "timed") return;
+      if (this.type === "timed") {
+        const cycleTime = (this.elapsed + this.phase) % (this.activeDuration + this.inactiveDuration);
+        const remaining = this.activeDuration - cycleTime;
+        ctx.save();
+        ctx.globalAlpha = this.active ? remaining < 0.55 ? 0.42 : 1 : 0.12;
+      }
       drawThemeSprite(
         ctx,
         sprites,
@@ -252,11 +269,26 @@
         this.width,
         this.height
       );
+      if (this.type === "timed") ctx.restore();
       if (this.type === "bounce" || this.type === "fragile") {
         ctx.save();
         ctx.globalAlpha = 0.36;
         ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
         ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
+        ctx.restore();
+      }
+      if (this.type === "conveyor-left" || this.type === "conveyor-right") {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(this.position.x - cameraX, this.position.y, this.width, this.height);
+        ctx.clip();
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = "#101010";
+        const direction = this.type === "conveyor-left" ? -1 : 1;
+        const animationOffset = this.elapsed * Math.abs(this.surfaceSpeed) * direction % 40;
+        for (let x = -40; x < this.width + 40; x += 40) {
+          ctx.fillRect(this.position.x - cameraX + x + animationOffset, this.position.y + 29, 20, 4);
+        }
         ctx.restore();
       }
     }
@@ -414,9 +446,9 @@
         [650, 430, "bounce"],
         [930, 260],
         [1250, 430, "fragile"],
-        [1550, 600],
+        [1550, 600, "conveyor-right", { surfaceSpeed: 170 }],
         [1850, 420, "bounce"],
-        [2200, 230],
+        [2200, 230, "timed", { activeDuration: 2.7, inactiveDuration: 1.1 }],
         [2550, 420, "fragile"],
         [2900, 300, "moving-y", { range: 90, speed: 95 }],
         [3250, 160]
@@ -459,11 +491,11 @@
         [1050, 300, "bounce"],
         [1400, 180],
         [1750, 420, "fragile"],
-        [2100, 260],
+        [2100, 260, "conveyor-left", { surfaceSpeed: 190 }],
         [2450, 520, "bounce"],
         [2800, 330, "moving-y", { range: 110, speed: 105 }],
         [3150, 180, "fragile"],
-        [3500, 380],
+        [3500, 380, "timed", { activeDuration: 2.2, inactiveDuration: 1.2 }],
         [3850, 140]
       ],
       blockades: [[1550, 500], [3e3, 420], [4100, -10]],
@@ -508,15 +540,15 @@
         [300, 2640],
         [40, 2460],
         [430, 2290, "moving-y", { range: 90, speed: 90 }],
-        [720, 2100],
+        [720, 2100, "conveyor-left", { surfaceSpeed: 160 }],
         [360, 1900, "moving-x", { range: 170, speed: 115 }],
         [60, 1710],
         [500, 1510],
-        [750, 1310],
+        [750, 1310, "timed", { activeDuration: 2.8, inactiveDuration: 1 }],
         [380, 1110],
         [80, 900],
         [460, 690],
-        [720, 470],
+        [720, 470, "conveyor-right", { surfaceSpeed: 160 }],
         [390, 250]
       ],
       blockades: [],
@@ -1042,7 +1074,7 @@
       const { player, platforms, blockades, flies, checkpoints } = this.level;
       this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
       platforms.forEach((platform) => platform.update(deltaTime));
-      player.followSupportPlatform();
+      player.followSupportPlatform(deltaTime);
       player.update(deltaTime, this.input, this.state === GameState.PLAYING);
       resolvePlatformCollisions(player, platforms);
       resolveBlockadeCollisions(player, blockades);

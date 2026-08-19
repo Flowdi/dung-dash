@@ -437,6 +437,49 @@ test("advanced levels contain moving platforms", () => {
   assert.ok(movingCounts.at(-1) >= 3);
 });
 
+test("timed platforms disable and return on a predictable cycle", () => {
+  const platform = new Platform(100, 400, "timed", { activeDuration: 2, inactiveDuration: 1 });
+  platform.update(1.9);
+  assert.equal(platform.active, true);
+  platform.update(0.2);
+  assert.equal(platform.active, false);
+  platform.update(1);
+  assert.equal(platform.active, true);
+});
+
+test("inactive timed platforms have no collision", () => {
+  const player = new Player();
+  const platform = new Platform(100, 400, "timed", { activeDuration: 1, inactiveDuration: 2 });
+  platform.update(1.1);
+  player.previousPosition = { x: 140, y: 300 };
+  player.position = { x: 140, y: 390 };
+  player.velocity.y = 500;
+  resolvePlatformCollisions(player, [platform]);
+  assert.equal(player.position.y, 390);
+  assert.equal(player.isGrounded, false);
+});
+
+test("conveyor platforms carry their supported player in both directions", () => {
+  const player = new Player();
+  const right = new Platform(100, 500, "conveyor-right", { surfaceSpeed: 180 });
+  player.position = { x: 200, y: 460 };
+  player.supportPlatform = right;
+  player.followSupportPlatform(0.5);
+  assert.equal(player.position.x, 290);
+
+  const left = new Platform(100, 500, "conveyor-left", { surfaceSpeed: 120 });
+  player.supportPlatform = left;
+  player.followSupportPlatform(0.5);
+  assert.equal(player.position.x, 230);
+});
+
+test("advanced levels use timed and conveyor platforms", () => {
+  const advancedPlatforms = LEVELS.slice(1).flatMap(({ platforms }) => platforms);
+  assert.ok(advancedPlatforms.some(([, , type]) => type === "timed"));
+  assert.ok(advancedPlatforms.some(([, , type]) => type === "conveyor-left"));
+  assert.ok(advancedPlatforms.some(([, , type]) => type === "conveyor-right"));
+});
+
 test("Royal Flush remains a tall vertical level", () => {
   const level = createLevel("royal-flush");
   assert.equal(level.mode, "vertical");

@@ -19,6 +19,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Karriereübersicht mit Gesamtstatistik und sechs dauerhaft gespeicherten Achievements
 - drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
+- taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
 
 ## Spielen
 

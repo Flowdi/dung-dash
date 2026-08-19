@@ -50,7 +50,8 @@ export const LEVELS = Object.freeze([
     spawn: { x: 80, y: 600 },
     platforms: [
       [380, 560], [650, 430, "bounce"], [930, 260], [1250, 430, "fragile"],
-      [1550, 600], [1850, 420, "bounce"], [2200, 230], [2550, 420, "fragile"],
+      [1550, 600, "conveyor-right", { surfaceSpeed: 170 }], [1850, 420, "bounce"],
+      [2200, 230, "timed", { activeDuration: 2.7, inactiveDuration: 1.1 }], [2550, 420, "fragile"],
       [2900, 300, "moving-y", { range: 90, speed: 95 }], [3250, 160],
     ],
     blockades: [[1100, 560], [2350, 500], [3500, -10]],
@@ -79,9 +80,9 @@ export const LEVELS = Object.freeze([
     spawn: { x: 100, y: 680 },
     platforms: [
       [420, 600, "fragile"], [720, 460, "moving-x", { range: 120, speed: 115 }], [1050, 300, "bounce"], [1400, 180],
-      [1750, 420, "fragile"], [2100, 260], [2450, 520, "bounce"],
+      [1750, 420, "fragile"], [2100, 260, "conveyor-left", { surfaceSpeed: 190 }], [2450, 520, "bounce"],
       [2800, 330, "moving-y", { range: 110, speed: 105 }],
-      [3150, 180, "fragile"], [3500, 380], [3850, 140],
+      [3150, 180, "fragile"], [3500, 380, "timed", { activeDuration: 2.2, inactiveDuration: 1.2 }], [3850, 140],
     ],
     blockades: [[1550, 500], [3000, 420], [4100, -10]],
     flies: [
@@ -112,9 +113,11 @@ export const LEVELS = Object.freeze([
     spawn: { x: 100, y: 3100 },
     platforms: [
       [80, 3140], [360, 2980, "moving-x", { range: 150, speed: 110 }], [680, 2820], [300, 2640], [40, 2460],
-      [430, 2290, "moving-y", { range: 90, speed: 90 }], [720, 2100],
+      [430, 2290, "moving-y", { range: 90, speed: 90 }],
+      [720, 2100, "conveyor-left", { surfaceSpeed: 160 }],
       [360, 1900, "moving-x", { range: 170, speed: 115 }], [60, 1710], [500, 1510],
-      [750, 1310], [380, 1110], [80, 900], [460, 690], [720, 470], [390, 250],
+      [750, 1310, "timed", { activeDuration: 2.8, inactiveDuration: 1 }],
+      [380, 1110], [80, 900], [460, 690], [720, 470, "conveyor-right", { surfaceSpeed: 160 }], [390, 250],
     ],
     blockades: [],
     flies: [

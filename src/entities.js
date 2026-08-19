@@ -32,10 +32,11 @@ export class Player {
     this.supportPlatform = null;
   }
 
-  followSupportPlatform() {
+  followSupportPlatform(deltaTime = 0) {
     if (!this.supportPlatform?.active) return;
     this.position.x += this.supportPlatform.movementDelta.x;
     this.position.y += this.supportPlatform.movementDelta.y;
+    this.position.x += (this.supportPlatform.surfaceSpeed ?? 0) * deltaTime;
     this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width));
   }
 
@@ -104,18 +105,32 @@ export class Platform {
     this.speed = options.speed ?? 110;
     this.phase = options.phase ?? 0;
     this.elapsed = 0;
+    this.activeDuration = options.activeDuration ?? 2.4;
+    this.inactiveDuration = options.inactiveDuration ?? 1.2;
+    this.surfaceSpeed = type === "conveyor-left"
+      ? -(options.surfaceSpeed ?? 150)
+      : type === "conveyor-right"
+        ? options.surfaceSpeed ?? 150
+        : 0;
     this.movementDelta = { x: 0, y: 0 };
     this.movementVelocity = { x: 0, y: 0 };
   }
 
   update(deltaTime) {
     this.previousPosition = { ...this.position };
+    this.elapsed += deltaTime;
+    if (this.type === "timed") {
+      const cycleDuration = this.activeDuration + this.inactiveDuration;
+      this.active = (this.elapsed + this.phase) % cycleDuration < this.activeDuration;
+      this.movementDelta = { x: 0, y: 0 };
+      this.movementVelocity = { x: 0, y: 0 };
+      return;
+    }
     if (this.type !== "moving-x" && this.type !== "moving-y") {
       this.movementDelta = { x: 0, y: 0 };
       this.movementVelocity = { x: 0, y: 0 };
       return;
     }
-    this.elapsed += deltaTime;
     const offset = Math.sin(this.phase + this.elapsed * this.speed / this.range) * this.range;
     if (this.type === "moving-x") this.position.x = this.origin.x + offset;
     if (this.type === "moving-y") this.position.y = this.origin.y + offset;
@@ -130,7 +145,13 @@ export class Platform {
   }
 
   draw(ctx, cameraX, sprites, theme) {
-    if (!this.active) return;
+    if (!this.active && this.type !== "timed") return;
+    if (this.type === "timed") {
+      const cycleTime = (this.elapsed + this.phase) % (this.activeDuration + this.inactiveDuration);
+      const remaining = this.activeDuration - cycleTime;
+      ctx.save();
+      ctx.globalAlpha = this.active ? (remaining < 0.55 ? 0.42 : 1) : 0.12;
+    }
     drawThemeSprite(
       ctx,
       sprites,
@@ -142,11 +163,26 @@ export class Platform {
       this.width,
       this.height
     );
+    if (this.type === "timed") ctx.restore();
     if (this.type === "bounce" || this.type === "fragile") {
       ctx.save();
       ctx.globalAlpha = 0.36;
       ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
       ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
+      ctx.restore();
+    }
+    if (this.type === "conveyor-left" || this.type === "conveyor-right") {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(this.position.x - cameraX, this.position.y, this.width, this.height);
+      ctx.clip();
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "#101010";
+      const direction = this.type === "conveyor-left" ? -1 : 1;
+      const animationOffset = (this.elapsed * Math.abs(this.surfaceSpeed) * direction) % 40;
+      for (let x = -40; x < this.width + 40; x += 40) {
+        ctx.fillRect(this.position.x - cameraX + x + animationOffset, this.position.y + 29, 20, 4);
+      }
       ctx.restore();
     }
   }

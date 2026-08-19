@@ -217,11 +217,13 @@
       this.phase = (_c = options.phase) != null ? _c : 0;
       this.elapsed = 0;
       this.movementDelta = { x: 0, y: 0 };
+      this.movementVelocity = { x: 0, y: 0 };
     }
     update(deltaTime) {
       this.previousPosition = { ...this.position };
       if (this.type !== "moving-x" && this.type !== "moving-y") {
         this.movementDelta = { x: 0, y: 0 };
+        this.movementVelocity = { x: 0, y: 0 };
         return;
       }
       this.elapsed += deltaTime;
@@ -231,6 +233,10 @@
       this.movementDelta = {
         x: this.position.x - this.previousPosition.x,
         y: this.position.y - this.previousPosition.y
+      };
+      this.movementVelocity = {
+        x: this.movementDelta.x / deltaTime,
+        y: this.movementDelta.y / deltaTime
       };
     }
     draw(ctx, cameraX, sprites, theme) {
@@ -783,6 +789,7 @@
     );
   };
   var resolvePlatformCollisions = (player, platforms) => {
+    var _a;
     player.supportPlatform = null;
     for (const platform of platforms) {
       if (!platform.active) continue;
@@ -801,7 +808,12 @@
         if (platform.type === "fragile") platform.active = false;
       } else if (impact.side === "bottom") {
         player.position.y = platform.position.y + platform.height;
-        player.velocity.y = 0;
+        if (platform.type === "moving-y" && ((_a = platform.movementVelocity) == null ? void 0 : _a.y) > 0) {
+          player.position.y += 0.01;
+          player.velocity.y = platform.movementVelocity.y + 180;
+        } else {
+          player.velocity.y = 0;
+        }
       } else if (impact.side === "left") {
         player.position.x = platform.position.x - player.width;
         player.velocity.x = 0;

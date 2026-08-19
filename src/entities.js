@@ -105,12 +105,14 @@ export class Platform {
     this.phase = options.phase ?? 0;
     this.elapsed = 0;
     this.movementDelta = { x: 0, y: 0 };
+    this.movementVelocity = { x: 0, y: 0 };
   }
 
   update(deltaTime) {
     this.previousPosition = { ...this.position };
     if (this.type !== "moving-x" && this.type !== "moving-y") {
       this.movementDelta = { x: 0, y: 0 };
+      this.movementVelocity = { x: 0, y: 0 };
       return;
     }
     this.elapsed += deltaTime;
@@ -120,6 +122,10 @@ export class Platform {
     this.movementDelta = {
       x: this.position.x - this.previousPosition.x,
       y: this.position.y - this.previousPosition.y,
+    };
+    this.movementVelocity = {
+      x: this.movementDelta.x / deltaTime,
+      y: this.movementDelta.y / deltaTime,
     };
   }
 

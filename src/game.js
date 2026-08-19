@@ -12,6 +12,7 @@ import { ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
 import { completedMissionIds, evaluateMissions } from "./missions.js";
+import { calculateCoverRect } from "./rendering.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -352,15 +353,17 @@ export class Game {
 
   drawBackground() {
     const background = this.assets.sprites[this.level.theme.background];
-    const tileHeight = 800;
-    const tileWidth = tileHeight * (background.width / background.height);
-    const offsetX = (this.cameraX * 0.12) % tileWidth;
-    const offsetY = (this.cameraY * 0.12) % tileHeight;
-    for (let y = -offsetY; y < this.viewport.viewportHeight; y += tileHeight) {
-      for (let x = -offsetX; x < this.viewport.viewportWidth; x += tileWidth) {
-        this.ctx.drawImage(background, x, y, tileWidth, tileHeight);
-      }
-    }
+    const maxCameraX = Math.max(1, this.level.width - this.viewport.viewportWidth);
+    const maxCameraY = Math.max(1, this.level.height - this.viewport.viewportHeight);
+    const cover = calculateCoverRect(
+      background.width,
+      background.height,
+      this.viewport.viewportWidth,
+      this.viewport.viewportHeight,
+      this.cameraX / maxCameraX,
+      this.cameraY / maxCameraY
+    );
+    this.ctx.drawImage(background, cover.x, cover.y, cover.width, cover.height);
     this.ctx.fillStyle = "rgba(20, 20, 24, 0.16)";
     this.ctx.fillRect(0, 0, this.viewport.viewportWidth, this.viewport.viewportHeight);
   }

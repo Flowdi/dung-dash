@@ -27,6 +27,12 @@ test("all generated level theme assets are present", async () => {
   ]));
 });
 
+test("backgrounds render as one cover image instead of repeated tiles", async () => {
+  const gameSource = await readFile(new URL("../src/game.js", import.meta.url), "utf8");
+  assert.match(gameSource, /calculateCoverRect/);
+  assert.doesNotMatch(gameSource, /for \(let y = -offsetY/);
+});
+
 test("HUD and transient checkpoint messages use separate screen corners", async () => {
   const [gameSource, styles] = await Promise.all([
     readFile(new URL("../src/game.js", import.meta.url), "utf8"),

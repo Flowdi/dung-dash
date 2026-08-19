@@ -770,6 +770,22 @@
   }));
   var completedMissionIds = (missions, result) => evaluateMissions(missions, result).filter(({ completed }) => completed).map(({ id }) => id);
 
+  // src/rendering.js
+  var clamp01 = (value) => Math.max(0, Math.min(1, value));
+  var calculateCoverRect = (imageWidth, imageHeight, viewportWidth, viewportHeight, progressX = 0, progressY = 0) => {
+    const scale = Math.max(viewportWidth / imageWidth, viewportHeight / imageHeight);
+    const width = imageWidth * scale;
+    const height = imageHeight * scale;
+    const offsetX = (width - viewportWidth) * clamp01(progressX);
+    const offsetY = (height - viewportHeight) * clamp01(progressY);
+    return {
+      x: offsetX === 0 ? 0 : -offsetX,
+      y: offsetY === 0 ? 0 : -offsetY,
+      width,
+      height
+    };
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1199,15 +1215,17 @@
     }
     drawBackground() {
       const background = this.assets.sprites[this.level.theme.background];
-      const tileHeight = 800;
-      const tileWidth = tileHeight * (background.width / background.height);
-      const offsetX = this.cameraX * 0.12 % tileWidth;
-      const offsetY = this.cameraY * 0.12 % tileHeight;
-      for (let y = -offsetY; y < this.viewport.viewportHeight; y += tileHeight) {
-        for (let x = -offsetX; x < this.viewport.viewportWidth; x += tileWidth) {
-          this.ctx.drawImage(background, x, y, tileWidth, tileHeight);
-        }
-      }
+      const maxCameraX = Math.max(1, this.level.width - this.viewport.viewportWidth);
+      const maxCameraY = Math.max(1, this.level.height - this.viewport.viewportHeight);
+      const cover = calculateCoverRect(
+        background.width,
+        background.height,
+        this.viewport.viewportWidth,
+        this.viewport.viewportHeight,
+        this.cameraX / maxCameraX,
+        this.cameraY / maxCameraY
+      );
+      this.ctx.drawImage(background, cover.x, cover.y, cover.width, cover.height);
       this.ctx.fillStyle = "rgba(20, 20, 24, 0.16)";
       this.ctx.fillRect(0, 0, this.viewport.viewportWidth, this.viewport.viewportHeight);
     }

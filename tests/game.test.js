@@ -12,6 +12,7 @@ import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
 import { completedMissionIds, evaluateMissions } from "../src/missions.js";
+import { calculateCoverRect } from "../src/rendering.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -226,6 +227,22 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("wide backgrounds cover the viewport with one image", () => {
+  const cover = calculateCoverRect(1774, 887, 1920, 1017);
+  assert.ok(cover.width >= 1920);
+  assert.ok(cover.height >= 1017);
+  assert.equal(cover.x, 0);
+  assert.equal(cover.y, 0);
+});
+
+test("portrait backgrounds pan vertically without tiling", () => {
+  const top = calculateCoverRect(1024, 1536, 1000, 800, 0, 0);
+  const bottom = calculateCoverRect(1024, 1536, 1000, 800, 0, 1);
+  assert.equal(top.y, 0);
+  assert.equal(bottom.y, -(bottom.height - 800));
+  assert.equal(top.width, 1000);
 });
 
 test("achievements unlock from run and career progress", () => {

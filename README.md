@@ -16,6 +16,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Rückkehr zur Levelauswahl nach jedem Lauf
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 - eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
+- nahtlose, proportional skalierte Levelhintergründe mit kamerageführtem Bildausschnitt
 - Karriereübersicht mit Gesamtstatistik und sechs dauerhaft gespeicherten Achievements
 - drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
@@ -52,6 +53,7 @@ npm test
 - `src/level.js` – Leveldaten
 - `src/levels.js` – unabhängiger Levelkatalog
 - `src/assets.js` – Sprite-Ladevorgang
+- `src/rendering.js` – skalierte Hintergrundausschnitte ohne Bildwiederholung
 - `assets/themes/` – generierte Levelhintergründe und transparente Plattform-/Toiletten-Atlanten
 - `src/config.js` – zentrale Konstanten
 - `src/score.js` – Timer, Combo, Score und Medaillen

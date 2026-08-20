@@ -702,12 +702,24 @@
     if (fliesCollected >= Math.ceil(totalFlies * 0.75) && elapsedSeconds <= 120) return "Silber";
     return "Bronze";
   };
-  var calculateFinalScore = ({ elapsedSeconds, fliesCollected, totalFlies, falls }) => {
-    const flyScore = fliesCollected * SCORE_PER_FLY;
+  var calculateScoreBreakdown = ({
+    elapsedSeconds,
+    fliesCollected,
+    totalFlies,
+    falls,
+    flyScore = fliesCollected * SCORE_PER_FLY
+  }) => {
     const timeBonus = Math.max(0, Math.round(MAX_TIME_BONUS - elapsedSeconds * TIME_BONUS_PER_SECOND));
     const collectionBonus = fliesCollected === totalFlies ? ALL_FLIES_BONUS : 0;
     const fallPenalty = falls * 250;
-    return Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty);
+    return {
+      flyScore,
+      timeBonus,
+      collectionBonus,
+      completionBonus: COMPLETION_BONUS,
+      fallPenalty,
+      total: Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty)
+    };
   };
   var RunStats = class {
     constructor() {
@@ -750,10 +762,12 @@
         bestCombo: this.bestCombo,
         flyScore: this.flyScore
       };
+      const breakdown = calculateScoreBreakdown(result);
       return {
         ...result,
         medal: calculateMedal(result),
-        score: calculateFinalScore(result) - result.fliesCollected * SCORE_PER_FLY + result.flyScore
+        score: breakdown.total,
+        breakdown
       };
     }
   };
@@ -1009,7 +1023,10 @@
       this.careerStats = documentObject.getElementById("career-stats");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.restartButton = documentObject.getElementById("restart-btn");
+      this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
+      this.resultBreakdown = documentObject.getElementById("result-breakdown");
+      this.resultMissions = documentObject.getElementById("result-missions");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -1028,6 +1045,7 @@
       this.fliesCollected = 0;
       this.stats = new RunStats();
       this.lastSafePosition = { x: 100, y: 400 };
+      this.nextLevelId = null;
       let storage = null;
       try {
         storage = windowObject.localStorage;
@@ -1050,6 +1068,7 @@
         this.renderMissions();
       });
       this.restartButton.addEventListener("click", () => this.reset());
+      this.nextLevelButton.addEventListener("click", () => this.startNextLevel());
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.window.addEventListener("resize", () => this.resize());
@@ -1152,7 +1171,11 @@
       this.updateHud();
       this.checkpointScreen.style.display = "none";
       this.checkpointScreen.classList.remove("toast");
+      this.checkpointScreen.classList.remove("results");
+      this.resultBreakdown.hidden = true;
+      this.resultMissions.hidden = true;
       this.restartButton.style.display = "none";
+      this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
       this.pauseButton.textContent = "Pause";
@@ -1228,7 +1251,7 @@
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
     }
     finish() {
-      var _a, _b;
+      var _a, _b, _c, _d, _e;
       this.state = GameState.FINISHED;
       this.input.reset();
       const result = this.stats.finish(this.level.flies.length);
@@ -1236,20 +1259,50 @@
       const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
       const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
       const nextLevelId = (_b = (_a = LEVELS[levelIndex + 1]) == null ? void 0 : _a.id) != null ? _b : null;
+      const completedBefore = new Set(
+        (_e = (_d = (_c = this.progressStore.load().levelRecords) == null ? void 0 : _c[this.level.id]) == null ? void 0 : _d.missions) != null ? _e : []
+      );
+      const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
       const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : "") + ` \xB7 Missionen: ${missionResults.filter(({ completed }) => completed).length}/${missionResults.length}`,
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
         false
       );
+      this.renderRunResult(result, missionResults, newMissions);
+      this.nextLevelId = nextLevelId;
       this.restartButton.style.display = "inline-block";
+      this.nextLevelButton.style.display = nextLevelId ? "inline-block" : "none";
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.restartButton.focus();
       this.renderLevelOptions();
       this.renderProgress();
       this.renderMissions();
+    }
+    renderRunResult(result, missionResults, newMissions) {
+      const rows = [
+        ["Fliegen & Combo", result.breakdown.flyScore],
+        ["Zeitbonus", result.breakdown.timeBonus],
+        ["Alle Fliegen", result.breakdown.collectionBonus],
+        ["Levelabschluss", result.breakdown.completionBonus],
+        ["Trefferabzug", -result.breakdown.fallPenalty]
+      ];
+      this.checkpointScreen.classList.add("results");
+      this.resultBreakdown.hidden = false;
+      this.resultBreakdown.innerHTML = rows.map(
+        ([label, value]) => `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
+      ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+      this.resultMissions.hidden = false;
+      this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
+        (mission) => `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "\u2605" : "\u2606"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " \xB7 Neu!" : ""}</p>`
+      ).join("")}`;
+    }
+    startNextLevel() {
+      if (!this.nextLevelId) return;
+      this.selectedLevelId = this.nextLevelId;
+      this.reset();
     }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
@@ -1264,9 +1317,13 @@
       this.input.reset();
       this.document.body.classList.remove("game-running");
       this.checkpointScreen.style.display = "none";
+      this.checkpointScreen.classList.remove("results");
+      this.resultBreakdown.hidden = true;
+      this.resultMissions.hidden = true;
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.restartButton.style.display = "none";
+      this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
       this.startButton.disabled = false;
       this.startScreen.style.display = "block";

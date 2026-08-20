@@ -7,7 +7,7 @@ import { CheckPoint, Platform, Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
-import { calculateFinalScore, calculateMedal, formatTime, RunStats } from "../src/score.js";
+import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTime, RunStats } from "../src/score.js";
 import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
@@ -228,6 +228,35 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("score breakdown explains every part of the final total", () => {
+  const breakdown = calculateScoreBreakdown({
+    elapsedSeconds: 50,
+    fliesCollected: 10,
+    totalFlies: 10,
+    falls: 2,
+    flyScore: 9000,
+  });
+  assert.deepEqual(breakdown, {
+    flyScore: 9000,
+    timeBonus: 4000,
+    collectionBonus: 3000,
+    completionBonus: 2000,
+    fallPenalty: 500,
+    total: 17500,
+  });
+});
+
+test("finished run exposes the same score and breakdown total", () => {
+  const stats = new RunStats();
+  stats.elapsedSeconds = 80;
+  stats.collectFly("gold");
+  stats.registerFall();
+  const result = stats.finish(5);
+  assert.equal(result.score, result.breakdown.total);
+  assert.equal(result.breakdown.flyScore, stats.flyScore);
+  assert.equal(result.breakdown.fallPenalty, 250);
 });
 
 test("wide backgrounds cover the viewport with one image", () => {

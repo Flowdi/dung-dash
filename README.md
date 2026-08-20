@@ -22,6 +22,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
 - Wasserstrahlen, rotierende Toilettenbürsten und Rücksetzung zum letzten Checkpoint
+- ausführliche Ergebnisübersicht mit Score-Aufschlüsselung, Missionsstatus und direktem nächsten Level
 
 ## Spielen
 

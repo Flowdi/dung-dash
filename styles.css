@@ -274,6 +274,64 @@ button:focus-visible {
   margin-top: 10px;
 }
 
+.checkpoint-screen.results {
+  width: min(92%, 560px);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.result-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.result-breakdown[hidden],
+.result-missions[hidden] {
+  display: none;
+}
+
+.result-breakdown p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-breakdown .result-total {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--focus);
+  font-size: 1.08rem;
+}
+
+.result-missions {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  text-align: left;
+}
+
+.result-missions p {
+  margin: 0;
+  color: #aaa;
+  font-size: 0.86rem;
+}
+
+.result-missions p.completed {
+  color: var(--focus);
+}
+
 .score {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
@@ -311,6 +369,7 @@ button:focus-visible {
 }
 
 #restart-btn,
+#next-level-btn,
 #level-menu-btn {
   display: none;
 }
@@ -385,6 +444,14 @@ button:focus-visible {
 }
 
 @media (max-width: 540px) {
+  .result-breakdown {
+    grid-template-columns: 1fr;
+  }
+
+  .result-breakdown .result-total {
+    grid-column: 1;
+  }
+
   .start-screen {
     max-height: 94vh;
     overflow-y: auto;

@@ -21,6 +21,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
+- Wasserstrahlen, rotierende Toilettenbürsten und Rücksetzung zum letzten Checkpoint
 
 ## Spielen
 
@@ -58,5 +59,6 @@ npm test
 - `src/config.js` – zentrale Konstanten
 - `src/score.js` – Timer, Combo, Score und Medaillen
 - `src/missions.js` – Auswertung der levelbezogenen Herausforderungen
+- `src/hazards.js` – Gefahren, Rückstoß und Checkpoint-Respawn
 - `src/storage.js` – fehlertolerante lokale Rekordspeicherung
 - `tests/` – Regressionstests

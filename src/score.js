@@ -56,6 +56,12 @@ export class RunStats {
     if (type === "time") this.elapsedSeconds = Math.max(0, this.elapsedSeconds - 5);
   }
 
+  registerFall() {
+    this.falls += 1;
+    this.combo = 0;
+    this.comboRemaining = 0;
+  }
+
   finish(totalFlies) {
     const result = {
       elapsedSeconds: this.elapsedSeconds,

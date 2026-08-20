@@ -222,7 +222,7 @@ body {
 .run-stats {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }

@@ -1,5 +1,6 @@
 import { Blockade, CheckPoint, Fly, Platform, Player } from "./entities.js";
 import { getLevelDefinition } from "./levels.js";
+import { Hazard } from "./hazards.js";
 
 export const createLevel = (levelId) => {
   const definition = getLevelDefinition(levelId);
@@ -21,5 +22,8 @@ export const createLevel = (levelId) => {
     blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),
     flies: definition.flies.map(([x, y, type = "normal"]) => new Fly(x, y, type)),
     checkpoints: definition.checkpoints.map(([x, y, order]) => new CheckPoint(x, y, order)),
+    hazards: (definition.hazards ?? []).map(([x, y, type, options = {}]) =>
+      new Hazard(x, y, type, options)
+    ),
   };
 };

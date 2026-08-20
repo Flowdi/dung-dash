@@ -13,6 +13,7 @@ import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
 import { completedMissionIds, evaluateMissions } from "./missions.js";
 import { calculateCoverRect } from "./rendering.js";
+import { respawnAtCheckpoint } from "./hazards.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -44,6 +45,7 @@ export class Game {
     this.totalFliesElement = documentObject.getElementById("total-flies");
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
+    this.runFallsElement = documentObject.getElementById("run-falls");
     this.comboElement = documentObject.getElementById("combo");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image);
@@ -55,6 +57,7 @@ export class Game {
     this.cameraY = 0;
     this.fliesCollected = 0;
     this.stats = new RunStats();
+    this.lastSafePosition = { x: 100, y: 400 };
     let storage = null;
     try {
       storage = windowObject.localStorage;
@@ -179,6 +182,7 @@ export class Game {
     this.cameraY = Math.max(0, this.level.height - this.viewport.viewportHeight);
     this.fliesCollected = 0;
     this.stats = new RunStats();
+    this.lastSafePosition = { ...this.level.player.position };
     this.fliesCollectedElement.textContent = "0";
     this.totalFliesElement.textContent = String(this.level.flies.length);
     this.updateHud();
@@ -211,13 +215,25 @@ export class Game {
   }
 
   update(deltaTime) {
-    const { player, platforms, blockades, flies, checkpoints } = this.level;
+    const { player, platforms, blockades, flies, checkpoints, hazards } = this.level;
     this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
     platforms.forEach((platform) => platform.update(deltaTime));
     player.followSupportPlatform(deltaTime);
     player.update(deltaTime, this.input, this.state === GameState.PLAYING);
     resolvePlatformCollisions(player, platforms);
     resolveBlockadeCollisions(player, blockades);
+    hazards.forEach((hazard) => hazard.update(deltaTime));
+
+    for (const hazard of hazards) {
+      if (!hazard.touches(player)) continue;
+      const effect = hazard.applyTo(player);
+      if (effect === "respawn") {
+        respawnAtCheckpoint(player, this.lastSafePosition, this.stats, this.input);
+        this.showMessage("Autsch!", "Zurück zum letzten Checkpoint.");
+        this.updateHud();
+        return;
+      }
+    }
 
     flies.forEach((fly) => {
       if (fly.collectIfTouching(player)) {
@@ -231,7 +247,13 @@ export class Game {
     if (checkpoint) {
       checkpoint.claimed = true;
       if (checkpoint === checkpoints.at(-1)) this.finish();
-      else this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+      else {
+        this.lastSafePosition = {
+          x: Math.max(0, player.position.x - 60),
+          y: player.position.y,
+        };
+        this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+      }
     }
 
     const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
@@ -244,6 +266,7 @@ export class Game {
   updateHud() {
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
+    this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
   }
 
@@ -260,7 +283,7 @@ export class Game {
     this.showMessage(
       `${result.medal}-Medaille!`,
       `Zeit: ${formatTime(result.elapsedSeconds)} · Fliegen: ${result.fliesCollected}/${result.totalFlies} · ` +
-        `Score: ${result.score} · Rekord: ${progress.bestScore}` +
+        `Score: ${result.score} · Treffer: ${result.falls} · Rekord: ${progress.bestScore}` +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
           : "") +
@@ -386,6 +409,7 @@ export class Game {
       item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
     );
     this.level.flies.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
+    this.level.hazards.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
     this.level.player.draw(this.ctx, this.cameraX, this.assets.sprites);
   }
 

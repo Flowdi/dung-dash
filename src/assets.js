@@ -3,6 +3,7 @@ const spriteSources = {
   playerLeft: "./assets/sprites/player-left.png",
   playerRight: "./assets/sprites/player-right.png",
   fly: "./assets/sprites/fly.png",
+  hazardsAtlas: "./assets/sprites/hazards-atlas.png",
   toilet: "./assets/sprites/toilet.png",
   platform: "./assets/sprites/platform.png",
   bathroomBackground: "./assets/themes/bathroom-background.png",

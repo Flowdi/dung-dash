@@ -27,6 +27,14 @@ test("all generated level theme assets are present", async () => {
   ]));
 });
 
+test("generated hazard atlas is present and loaded", async () => {
+  const [assetSource] = await Promise.all([
+    readFile(new URL("../src/assets.js", import.meta.url), "utf8"),
+    access(new URL("../assets/sprites/hazards-atlas.png", import.meta.url)),
+  ]);
+  assert.match(assetSource, /hazardsAtlas/);
+});
+
 test("backgrounds render as one cover image instead of repeated tiles", async () => {
   const gameSource = await readFile(new URL("../src/game.js", import.meta.url), "utf8");
   assert.match(gameSource, /calculateCoverRect/);

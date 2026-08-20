@@ -30,6 +30,7 @@ export const LEVELS = Object.freeze([
       [4050, 600], [4300, 250], [4500, 100, "gold"], [4700, 20], [4800, 500],
     ],
     checkpoints: [[1170, 80, 1], [2900, 330, 2], [4800, 80, 3]],
+    hazards: [[2050, 630, "water", { phase: 0.4 }]],
   },
   {
     id: "sewer-shortcut",
@@ -60,6 +61,7 @@ export const LEVELS = Object.freeze([
       [1900, 350, "time"], [2250, 160], [2600, 350], [2950, 230], [3300, 90, "gold"],
     ],
     checkpoints: [[1050, 490, 1], [2300, 430, 2], [3400, 90, 3]],
+    hazards: [[1680, 650, "brush"], [2750, 610, "water", { phase: 0.8 }]],
   },
   {
     id: "festival-flush",
@@ -91,6 +93,7 @@ export const LEVELS = Object.freeze([
       [3200, 110, "gold"], [3550, 310], [3900, 70, "gold"],
     ],
     checkpoints: [[1500, 430, 1], [2950, 350, 2], [4000, 70, 3]],
+    hazards: [[1620, 650, "brush"], [2670, 610, "water"], [3650, 650, "brush", { width: 70, height: 100 }]],
   },
   {
     id: "royal-flush",
@@ -126,6 +129,7 @@ export const LEVELS = Object.freeze([
       [590, 1440], [840, 1240], [470, 1040], [170, 830], [550, 620], [810, 400, "gold"],
     ],
     checkpoints: [[790, 2040, 1], [120, 830, 2], [470, 180, 3]],
+    hazards: [[590, 2160, "brush"], [250, 1580, "water", { phase: 0.6 }], [600, 760, "brush"]],
   },
 ]);
 

@@ -13,6 +13,7 @@ import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
 import { completedMissionIds, evaluateMissions } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
+import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -495,6 +496,40 @@ test("advanced levels use timed and conveyor platforms", () => {
   assert.ok(advancedPlatforms.some(([, , type]) => type === "timed"));
   assert.ok(advancedPlatforms.some(([, , type]) => type === "conveyor-left"));
   assert.ok(advancedPlatforms.some(([, , type]) => type === "conveyor-right"));
+});
+
+test("water jets alternate activity and launch the player", () => {
+  const player = new Player();
+  const water = new Hazard(100, 500, "water", { activeDuration: 1, inactiveDuration: 1 });
+  player.position = { x: 110, y: 520 };
+  assert.equal(water.touches(player), true);
+  assert.equal(water.applyTo(player), "push");
+  assert.ok(player.velocity.y < 0);
+  assert.notEqual(player.velocity.x, 0);
+  water.update(1.1);
+  assert.equal(water.active, false);
+  water.update(1);
+  assert.equal(water.active, true);
+});
+
+test("brush hits respawn at the latest checkpoint and count as falls", () => {
+  const player = new Player();
+  const stats = new RunStats();
+  const input = new InputController();
+  stats.combo = 3;
+  input.right = true;
+  player.position = { x: 900, y: 600 };
+  respawnAtCheckpoint(player, { x: 250, y: 300 }, stats, input);
+  assert.deepEqual(player.position, { x: 250, y: 300 });
+  assert.deepEqual(player.velocity, { x: 0, y: 0 });
+  assert.equal(stats.falls, 1);
+  assert.equal(stats.combo, 0);
+  assert.equal(input.right, false);
+});
+
+test("advanced levels contain both hazard types", () => {
+  const hazardTypes = new Set(LEVELS.slice(1).flatMap((level) => level.hazards.map(([, , type]) => type)));
+  assert.deepEqual(hazardTypes, new Set(["brush", "water"]));
 });
 
 test("Royal Flush remains a tall vertical level", () => {

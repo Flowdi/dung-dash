@@ -33,6 +33,7 @@
     playerLeft: "./assets/sprites/player-left.png",
     playerRight: "./assets/sprites/player-right.png",
     fly: "./assets/sprites/fly.png",
+    hazardsAtlas: "./assets/sprites/hazards-atlas.png",
     toilet: "./assets/sprites/toilet.png",
     platform: "./assets/sprites/platform.png",
     bathroomBackground: "./assets/themes/bathroom-background.png",
@@ -422,7 +423,8 @@
         [4700, 20],
         [4800, 500]
       ],
-      checkpoints: [[1170, 80, 1], [2900, 330, 2], [4800, 80, 3]]
+      checkpoints: [[1170, 80, 1], [2900, 330, 2], [4800, 80, 3]],
+      hazards: [[2050, 630, "water", { phase: 0.4 }]]
     },
     {
       id: "sewer-shortcut",
@@ -466,7 +468,8 @@
         [2950, 230],
         [3300, 90, "gold"]
       ],
-      checkpoints: [[1050, 490, 1], [2300, 430, 2], [3400, 90, 3]]
+      checkpoints: [[1050, 490, 1], [2300, 430, 2], [3400, 90, 3]],
+      hazards: [[1680, 650, "brush"], [2750, 610, "water", { phase: 0.8 }]]
     },
     {
       id: "festival-flush",
@@ -512,7 +515,8 @@
         [3550, 310],
         [3900, 70, "gold"]
       ],
-      checkpoints: [[1500, 430, 1], [2950, 350, 2], [4e3, 70, 3]]
+      checkpoints: [[1500, 430, 1], [2950, 350, 2], [4e3, 70, 3]],
+      hazards: [[1620, 650, "brush"], [2670, 610, "water"], [3650, 650, "brush", { width: 70, height: 100 }]]
     },
     {
       id: "royal-flush",
@@ -568,7 +572,8 @@
         [550, 620],
         [810, 400, "gold"]
       ],
-      checkpoints: [[790, 2040, 1], [120, 830, 2], [470, 180, 3]]
+      checkpoints: [[790, 2040, 1], [120, 830, 2], [470, 180, 3]],
+      hazards: [[590, 2160, "brush"], [250, 1580, "water", { phase: 0.6 }], [600, 760, "brush"]]
     }
   ]);
   var getLevelDefinition = (levelId) => {
@@ -576,9 +581,84 @@
     return (_a = LEVELS.find((level) => level.id === levelId)) != null ? _a : LEVELS[0];
   };
 
+  // src/hazards.js
+  var HAZARD_CROPS = {
+    brush: [0, 0, 627, 1254],
+    water: [627, 0, 627, 1254]
+  };
+  var Hazard = class {
+    constructor(x, y, type, options = {}) {
+      var _a, _b, _c, _d, _e;
+      this.position = { x, y };
+      this.type = type;
+      this.width = (_a = options.width) != null ? _a : type === "brush" ? 80 : 70;
+      this.height = (_b = options.height) != null ? _b : type === "brush" ? 110 : 130;
+      this.phase = (_c = options.phase) != null ? _c : 0;
+      this.elapsed = 0;
+      this.activeDuration = (_d = options.activeDuration) != null ? _d : 1.5;
+      this.inactiveDuration = (_e = options.inactiveDuration) != null ? _e : 1.1;
+      this.active = true;
+      this.hitCooldown = 0;
+    }
+    update(deltaTime) {
+      this.elapsed += deltaTime;
+      this.hitCooldown = Math.max(0, this.hitCooldown - deltaTime);
+      if (this.type === "water") {
+        const cycle = this.activeDuration + this.inactiveDuration;
+        this.active = (this.elapsed + this.phase) % cycle < this.activeDuration;
+      }
+    }
+    touches(player) {
+      return this.active && this.hitCooldown === 0 && player.position.x < this.position.x + this.width && player.position.x + player.width > this.position.x && player.position.y < this.position.y + this.height && player.position.y + player.height > this.position.y;
+    }
+    applyTo(player) {
+      this.hitCooldown = 0.65;
+      if (this.type !== "water") return "respawn";
+      const playerCenter = player.position.x + player.width / 2;
+      const hazardCenter = this.position.x + this.width / 2;
+      const direction = playerCenter < hazardCenter ? -1 : 1;
+      player.position.x += direction * 35;
+      player.velocity.x = direction * 650;
+      player.velocity.y = -620;
+      player.isGrounded = false;
+      player.supportPlatform = null;
+      return "push";
+    }
+    draw(ctx, cameraX, sprites) {
+      if (this.type === "water" && !this.active) return;
+      const atlas = sprites.hazardsAtlas;
+      const crop = HAZARD_CROPS[this.type];
+      if (this.type === "brush") {
+        ctx.save();
+        ctx.translate(this.position.x - cameraX + this.width / 2, this.position.y + this.height / 2);
+        ctx.rotate(this.elapsed * 3.2);
+        ctx.drawImage(atlas, ...crop, -this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.restore();
+        return;
+      }
+      ctx.drawImage(
+        atlas,
+        ...crop,
+        this.position.x - cameraX,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    }
+  };
+  var respawnAtCheckpoint = (player, position, stats, input) => {
+    player.position = { ...position };
+    player.previousPosition = { ...position };
+    player.velocity = { x: 0, y: 0 };
+    player.supportPlatform = null;
+    player.isGrounded = false;
+    stats.registerFall();
+    input.reset();
+  };
+
   // src/level.js
   var createLevel = (levelId) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const definition = getLevelDefinition(levelId);
     return {
       id: definition.id,
@@ -597,7 +677,10 @@
       ),
       blockades: definition.blockades.map(([x, y]) => new Blockade(x, y)),
       flies: definition.flies.map(([x, y, type = "normal"]) => new Fly(x, y, type)),
-      checkpoints: definition.checkpoints.map(([x, y, order]) => new CheckPoint(x, y, order))
+      checkpoints: definition.checkpoints.map(([x, y, order]) => new CheckPoint(x, y, order)),
+      hazards: ((_d = definition.hazards) != null ? _d : []).map(
+        ([x, y, type, options = {}]) => new Hazard(x, y, type, options)
+      )
     };
   };
 
@@ -652,6 +735,11 @@
       const typeMultiplier = type === "gold" ? 3 : 1;
       this.flyScore += SCORE_PER_FLY * Math.min(this.combo, 4) * typeMultiplier;
       if (type === "time") this.elapsedSeconds = Math.max(0, this.elapsedSeconds - 5);
+    }
+    registerFall() {
+      this.falls += 1;
+      this.combo = 0;
+      this.comboRemaining = 0;
     }
     finish(totalFlies) {
       const result = {
@@ -927,6 +1015,7 @@
       this.totalFliesElement = documentObject.getElementById("total-flies");
       this.timerElement = documentObject.getElementById("run-time");
       this.runScoreElement = documentObject.getElementById("run-score");
+      this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image);
@@ -938,6 +1027,7 @@
       this.cameraY = 0;
       this.fliesCollected = 0;
       this.stats = new RunStats();
+      this.lastSafePosition = { x: 100, y: 400 };
       let storage = null;
       try {
         storage = windowObject.localStorage;
@@ -1056,6 +1146,7 @@
       this.cameraY = Math.max(0, this.level.height - this.viewport.viewportHeight);
       this.fliesCollected = 0;
       this.stats = new RunStats();
+      this.lastSafePosition = { ...this.level.player.position };
       this.fliesCollectedElement.textContent = "0";
       this.totalFliesElement.textContent = String(this.level.flies.length);
       this.updateHud();
@@ -1087,13 +1178,24 @@
       this.cameraY = Math.min(this.cameraY, Math.max(0, levelHeight - this.viewport.viewportHeight));
     }
     update(deltaTime) {
-      const { player, platforms, blockades, flies, checkpoints } = this.level;
+      const { player, platforms, blockades, flies, checkpoints, hazards } = this.level;
       this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
       platforms.forEach((platform) => platform.update(deltaTime));
       player.followSupportPlatform(deltaTime);
       player.update(deltaTime, this.input, this.state === GameState.PLAYING);
       resolvePlatformCollisions(player, platforms);
       resolveBlockadeCollisions(player, blockades);
+      hazards.forEach((hazard) => hazard.update(deltaTime));
+      for (const hazard of hazards) {
+        if (!hazard.touches(player)) continue;
+        const effect = hazard.applyTo(player);
+        if (effect === "respawn") {
+          respawnAtCheckpoint(player, this.lastSafePosition, this.stats, this.input);
+          this.showMessage("Autsch!", "Zur\xFCck zum letzten Checkpoint.");
+          this.updateHud();
+          return;
+        }
+      }
       flies.forEach((fly) => {
         if (fly.collectIfTouching(player)) {
           this.fliesCollected += 1;
@@ -1105,7 +1207,13 @@
       if (checkpoint) {
         checkpoint.claimed = true;
         if (checkpoint === checkpoints.at(-1)) this.finish();
-        else this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+        else {
+          this.lastSafePosition = {
+            x: Math.max(0, player.position.x - 60),
+            y: player.position.y
+          };
+          this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+        }
       }
       const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
       this.cameraX = Math.max(0, Math.min(targetX, this.level.width - this.viewport.viewportWidth));
@@ -1116,6 +1224,7 @@
     updateHud() {
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
       this.runScoreElement.textContent = String(this.stats.flyScore);
+      this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
     }
     finish() {
@@ -1131,7 +1240,7 @@
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : "") + ` \xB7 Missionen: ${missionResults.filter(({ completed }) => completed).length}/${missionResults.length}`,
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Score: ${result.score} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : "") + ` \xB7 Missionen: ${missionResults.filter(({ completed }) => completed).length}/${missionResults.length}`,
         false
       );
       this.restartButton.style.display = "inline-block";
@@ -1247,6 +1356,7 @@
         (item) => item.draw(this.ctx, this.cameraX, this.assets.sprites, this.level.theme)
       );
       this.level.flies.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
+      this.level.hazards.forEach((item) => item.draw(this.ctx, this.cameraX, this.assets.sprites));
       this.level.player.draw(this.ctx, this.cameraX, this.assets.sprites);
     }
     animate(timestamp) {

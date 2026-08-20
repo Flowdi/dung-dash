@@ -18,13 +18,27 @@ export const calculateMedal = ({ elapsedSeconds, fliesCollected, totalFlies, fal
   return "Bronze";
 };
 
-export const calculateFinalScore = ({ elapsedSeconds, fliesCollected, totalFlies, falls }) => {
-  const flyScore = fliesCollected * SCORE_PER_FLY;
+export const calculateScoreBreakdown = ({
+  elapsedSeconds,
+  fliesCollected,
+  totalFlies,
+  falls,
+  flyScore = fliesCollected * SCORE_PER_FLY,
+}) => {
   const timeBonus = Math.max(0, Math.round(MAX_TIME_BONUS - elapsedSeconds * TIME_BONUS_PER_SECOND));
   const collectionBonus = fliesCollected === totalFlies ? ALL_FLIES_BONUS : 0;
   const fallPenalty = falls * 250;
-  return Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty);
+  return {
+    flyScore,
+    timeBonus,
+    collectionBonus,
+    completionBonus: COMPLETION_BONUS,
+    fallPenalty,
+    total: Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty),
+  };
 };
+
+export const calculateFinalScore = (result) => calculateScoreBreakdown(result).total;
 
 export class RunStats {
   constructor() {
@@ -71,10 +85,12 @@ export class RunStats {
       bestCombo: this.bestCombo,
       flyScore: this.flyScore,
     };
+    const breakdown = calculateScoreBreakdown(result);
     return {
       ...result,
       medal: calculateMedal(result),
-      score: calculateFinalScore(result) - result.fliesCollected * SCORE_PER_FLY + result.flyScore,
+      score: breakdown.total,
+      breakdown,
     };
   }
 }

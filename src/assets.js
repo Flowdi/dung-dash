@@ -14,6 +14,10 @@ const spriteSources = {
   festivalAtlas: "./assets/themes/festival-atlas.png",
   royalBackground: "./assets/themes/royal-background.png",
   royalAtlas: "./assets/themes/royal-atlas.png",
+  porcelainBackground: "./assets/themes/porcelain-background.png",
+  porcelainAtlas: "./assets/themes/porcelain-atlas.png",
+  pipeBackground: "./assets/themes/pipe-background.png",
+  pipeAtlas: "./assets/themes/pipe-atlas.png",
 };
 
 export const loadSprites = (ImageConstructor = Image) => {

@@ -22,7 +22,7 @@ test("index loads the classic bundle for direct file usage", async () => {
 });
 
 test("all generated level theme assets are present", async () => {
-  const names = ["bathroom", "sewer", "festival", "royal"];
+  const names = ["bathroom", "sewer", "festival", "royal", "porcelain", "pipe"];
   await Promise.all(names.flatMap((name) => [
     access(new URL(`../assets/themes/${name}-background.png`, import.meta.url)),
     access(new URL(`../assets/themes/${name}-atlas.png`, import.meta.url)),

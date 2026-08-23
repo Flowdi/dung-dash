@@ -43,7 +43,11 @@
     festivalBackground: "./assets/themes/festival-background.png",
     festivalAtlas: "./assets/themes/festival-atlas.png",
     royalBackground: "./assets/themes/royal-background.png",
-    royalAtlas: "./assets/themes/royal-atlas.png"
+    royalAtlas: "./assets/themes/royal-atlas.png",
+    porcelainBackground: "./assets/themes/porcelain-background.png",
+    porcelainAtlas: "./assets/themes/porcelain-atlas.png",
+    pipeBackground: "./assets/themes/pipe-background.png",
+    pipeAtlas: "./assets/themes/pipe-atlas.png"
   };
   var loadSprites = (ImageConstructor = Image) => {
     const sprites = {};
@@ -574,6 +578,145 @@
       ],
       checkpoints: [[790, 2040, 1], [120, 830, 2], [470, 180, 3]],
       hazards: [[590, 2160, "brush"], [250, 1580, "water", { phase: 0.6 }], [600, 760, "brush"]]
+    },
+    {
+      id: "porcelain-panic",
+      name: "Porzellan-Panik",
+      description: "Ein langer Endspurt durch eine vollautomatische Sanit\xE4rfabrik.",
+      missions: [
+        { id: "porcelain-collector", label: "Sammle alle 16 Fliegen", type: "flies", target: 16 },
+        { id: "porcelain-speed", label: "Schaffe das Level in 125 Sekunden", type: "time", target: 125 },
+        { id: "porcelain-score", label: "Erreiche 24.000 Punkte", type: "score", target: 24e3 }
+      ],
+      theme: {
+        background: "porcelainBackground",
+        atlas: "porcelainAtlas",
+        platformCrop: [0, 420, 910, 360],
+        toiletCrop: [930, 260, 324, 570]
+      },
+      width: 5600,
+      spawn: { x: 80, y: 650 },
+      platforms: [
+        [300, 610, "conveyor-right", { surfaceSpeed: 210 }],
+        [620, 500, "moving-y", { range: 90, speed: 120 }],
+        [940, 350, "timed", { activeDuration: 2.1, inactiveDuration: 1.1 }],
+        [1260, 210, "fragile"],
+        [1590, 410, "moving-x", { range: 140, speed: 130 }],
+        [1940, 570, "bounce"],
+        [2290, 390, "timed", { activeDuration: 1.9, inactiveDuration: 1.2, phase: 0.6 }],
+        [2630, 230, "conveyor-left", { surfaceSpeed: 220 }],
+        [2980, 470, "fragile"],
+        [3330, 310, "moving-y", { range: 115, speed: 125 }],
+        [3700, 550, "bounce"],
+        [4060, 380, "timed", { activeDuration: 1.8, inactiveDuration: 1.2, phase: 0.9 }],
+        [4420, 220, "moving-x", { range: 150, speed: 140 }],
+        [4780, 430, "conveyor-right", { surfaceSpeed: 230 }],
+        [5140, 260, "fragile"],
+        [5380, 140]
+      ],
+      blockades: [[1440, 510], [2810, 500], [3900, 500], [5500, -10]],
+      flies: [
+        [370, 540],
+        [680, 420],
+        [1e3, 280, "gold"],
+        [1320, 140],
+        [1650, 340],
+        [2e3, 500, "time"],
+        [2350, 320],
+        [2690, 160, "gold"],
+        [3040, 400],
+        [3390, 240],
+        [3760, 480],
+        [4120, 310, "time"],
+        [4480, 150, "gold"],
+        [4840, 360],
+        [5200, 190],
+        [5420, 70, "gold"]
+      ],
+      checkpoints: [[1370, 440, 1], [3190, 580, 2], [5420, 70, 3]],
+      hazards: [
+        [760, 650, "brush"],
+        [1760, 630, "water", { phase: 0.4 }],
+        [2720, 650, "brush", { width: 70, height: 100 }],
+        [3510, 620, "water", { phase: 0.8 }],
+        [4610, 650, "brush"],
+        [5220, 610, "water", { phase: 0.2 }]
+      ]
+    },
+    {
+      id: "pipe-dream",
+      name: "Rohrbruch-Rausch",
+      description: "Der h\xE4rteste Aufstieg: ein instabiler Neon-Rohrschacht ohne Abk\xFCrzung.",
+      missions: [
+        { id: "pipe-collector", label: "Sammle alle 18 Fliegen", type: "flies", target: 18 },
+        { id: "pipe-speed", label: "Schaffe das Level in 210 Sekunden", type: "time", target: 210 },
+        { id: "pipe-score", label: "Erreiche 28.000 Punkte", type: "score", target: 28e3 }
+      ],
+      theme: {
+        background: "pipeBackground",
+        atlas: "pipeAtlas",
+        platformCrop: [0, 350, 900, 520],
+        toiletCrop: [900, 180, 354, 750]
+      },
+      mode: "vertical",
+      width: 1200,
+      height: 4200,
+      spawn: { x: 70, y: 4090 },
+      platforms: [
+        [60, 4140],
+        [390, 3970, "moving-x", { range: 170, speed: 135 }],
+        [760, 3800, "conveyor-left", { surfaceSpeed: 210 }],
+        [430, 3620, "fragile"],
+        [80, 3440, "moving-y", { range: 100, speed: 115 }],
+        [470, 3260, "timed", { activeDuration: 2.2, inactiveDuration: 1.1 }],
+        [820, 3080, "bounce"],
+        [480, 2890, "moving-x", { range: 180, speed: 140 }],
+        [110, 2700, "conveyor-right", { surfaceSpeed: 220 }],
+        [470, 2510, "fragile"],
+        [830, 2320, "timed", { activeDuration: 2, inactiveDuration: 1.2, phase: 0.7 }],
+        [500, 2130, "moving-y", { range: 110, speed: 125 }],
+        [120, 1940, "bounce"],
+        [500, 1750, "conveyor-left", { surfaceSpeed: 230 }],
+        [850, 1560, "fragile"],
+        [500, 1370, "timed", { activeDuration: 1.9, inactiveDuration: 1.2, phase: 0.4 }],
+        [100, 1180, "moving-x", { range: 170, speed: 145 }],
+        [470, 990, "bounce"],
+        [820, 800, "conveyor-right", { surfaceSpeed: 235 }],
+        [470, 610, "moving-y", { range: 100, speed: 130 }],
+        [100, 420],
+        [330, 330],
+        [470, 230]
+      ],
+      blockades: [],
+      flies: [
+        [490, 3900],
+        [860, 3730],
+        [520, 3550, "gold"],
+        [170, 3370],
+        [570, 3190, "time"],
+        [920, 3010],
+        [580, 2820],
+        [210, 2630, "gold"],
+        [570, 2440],
+        [930, 2250],
+        [600, 2060, "time"],
+        [220, 1870],
+        [600, 1680, "gold"],
+        [950, 1490],
+        [600, 1300],
+        [200, 1110],
+        [570, 920, "gold"],
+        [560, 160, "time"]
+      ],
+      checkpoints: [[900, 3010, 1], [180, 1870, 2], [540, 160, 3]],
+      hazards: [
+        [650, 3690, "water", { phase: 0.2 }],
+        [300, 3180, "brush"],
+        [700, 2610, "water", { phase: 0.7 }],
+        [270, 2050, "brush"],
+        [700, 1490, "water", { phase: 0.4 }],
+        [300, 730, "brush"]
+      ]
     }
   ]);
   var getLevelDefinition = (levelId) => {
@@ -807,6 +950,23 @@
     levelRecords: {},
     achievements: []
   });
+  var LEVEL_ORDER = [
+    "bathroom-run",
+    "sewer-shortcut",
+    "festival-flush",
+    "royal-flush",
+    "porcelain-panic",
+    "pipe-dream"
+  ];
+  var migrateUnlockedLevels = (progress) => {
+    var _a;
+    const unlocked = new Set((_a = progress.unlockedLevels) != null ? _a : [LEVEL_ORDER[0]]);
+    LEVEL_ORDER.slice(0, -1).forEach((levelId, index) => {
+      var _a2;
+      if ((_a2 = progress.levelRecords) == null ? void 0 : _a2[levelId]) unlocked.add(LEVEL_ORDER[index + 1]);
+    });
+    return [...unlocked];
+  };
   var ProgressStore = class {
     constructor(storage) {
       this.storage = storage;
@@ -815,7 +975,8 @@
       var _a, _b;
       try {
         const saved = JSON.parse((_b = (_a = this.storage) == null ? void 0 : _a.getItem(STORAGE_KEY)) != null ? _b : "null");
-        return saved ? { ...emptyProgress(), ...saved } : emptyProgress();
+        const progress = saved ? { ...emptyProgress(), ...saved } : emptyProgress();
+        return { ...progress, unlockedLevels: migrateUnlockedLevels(progress) };
       } catch (e) {
         return emptyProgress();
       }

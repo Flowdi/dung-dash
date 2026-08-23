@@ -230,6 +230,15 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("existing completions unlock newly appended campaign levels", () => {
+  const saved = {
+    unlockedLevels: ["bathroom-run", "sewer-shortcut", "festival-flush", "royal-flush"],
+    levelRecords: { "royal-flush": { bestScore: 15000, bestTime: 120, medal: "Gold" } },
+  };
+  const storage = { getItem: () => JSON.stringify(saved) };
+  assert.ok(new ProgressStore(storage).load().unlockedLevels.includes("porcelain-panic"));
+});
+
 test("score breakdown explains every part of the final total", () => {
   const breakdown = calculateScoreBreakdown({
     elapsedSeconds: 50,
@@ -348,6 +357,18 @@ test("every level has its own complete visual theme", () => {
     assert.ok(level.theme.platformCrop.every(Number.isFinite));
     assert.ok(level.theme.toiletCrop.every(Number.isFinite));
   });
+});
+
+test("the campaign ends with two substantial expert levels", () => {
+  const expertLevels = LEVELS.slice(-2);
+  assert.deepEqual(expertLevels.map(({ id }) => id), ["porcelain-panic", "pipe-dream"]);
+  assert.equal(expertLevels.every((level) => level.platforms.length >= 16), true);
+  assert.equal(expertLevels.every((level) => level.hazards.length >= 6), true);
+  assert.equal(expertLevels[1].mode, "vertical");
+  assert.ok(expertLevels[1].height > 4000);
+  const finalPlatforms = expertLevels[1].platforms.slice(-3);
+  assert.ok(finalPlatforms[1][1] - finalPlatforms[2][1] <= 100);
+  assert.equal(finalPlatforms.every((platform) => platform[2] === undefined), true);
 });
 
 test("every level defines three unique missions", () => {

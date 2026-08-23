@@ -13,6 +13,19 @@ const emptyProgress = () => ({
   achievements: [],
 });
 
+const LEVEL_ORDER = [
+  "bathroom-run", "sewer-shortcut", "festival-flush", "royal-flush",
+  "porcelain-panic", "pipe-dream",
+];
+
+const migrateUnlockedLevels = (progress) => {
+  const unlocked = new Set(progress.unlockedLevels ?? [LEVEL_ORDER[0]]);
+  LEVEL_ORDER.slice(0, -1).forEach((levelId, index) => {
+    if (progress.levelRecords?.[levelId]) unlocked.add(LEVEL_ORDER[index + 1]);
+  });
+  return [...unlocked];
+};
+
 export class ProgressStore {
   constructor(storage) {
     this.storage = storage;
@@ -21,7 +34,8 @@ export class ProgressStore {
   load() {
     try {
       const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? "null");
-      return saved ? { ...emptyProgress(), ...saved } : emptyProgress();
+      const progress = saved ? { ...emptyProgress(), ...saved } : emptyProgress();
+      return { ...progress, unlockedLevels: migrateUnlockedLevels(progress) };
     } catch {
       return emptyProgress();
     }

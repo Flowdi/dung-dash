@@ -88,7 +88,10 @@ export const resolvePlatformCollisions = (player, platforms) => {
         player.isGrounded = true;
         player.supportPlatform = platform;
       }
-      if (platform.type === "fragile") platform.active = false;
+      if (platform.type === "fragile") {
+        platform.active = false;
+        platform.inactiveRemaining = platform.respawnDuration ?? 2.5;
+      }
     } else if (impact.side === "bottom") {
       player.position.y = platform.position.y + platform.height;
       if (platform.type === "moving-y" && platform.movementVelocity?.y > 0) {

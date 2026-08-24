@@ -1,4 +1,5 @@
 import { findNewAchievements } from "./achievements.js";
+import { LEVELS } from "./levels.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -13,10 +14,7 @@ const emptyProgress = () => ({
   achievements: [],
 });
 
-const LEVEL_ORDER = [
-  "bathroom-run", "sewer-shortcut", "festival-flush", "royal-flush",
-  "porcelain-panic", "pipe-dream",
-];
+const LEVEL_ORDER = LEVELS.map(({ id }) => id);
 
 const migrateUnlockedLevels = (progress) => {
   const unlocked = new Set(progress.unlockedLevels ?? [LEVEL_ORDER[0]]);

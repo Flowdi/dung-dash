@@ -107,6 +107,8 @@ export class Platform {
     this.elapsed = 0;
     this.activeDuration = options.activeDuration ?? 2.4;
     this.inactiveDuration = options.inactiveDuration ?? 1.2;
+    this.respawnDuration = options.respawnDuration ?? 2.5;
+    this.inactiveRemaining = 0;
     this.surfaceSpeed = type === "conveyor-left"
       ? -(options.surfaceSpeed ?? 150)
       : type === "conveyor-right"
@@ -119,6 +121,13 @@ export class Platform {
   update(deltaTime) {
     this.previousPosition = { ...this.position };
     this.elapsed += deltaTime;
+    if (this.type === "fragile" && !this.active) {
+      this.inactiveRemaining = Math.max(0, this.inactiveRemaining - deltaTime);
+      this.active = this.inactiveRemaining === 0;
+      this.movementDelta = { x: 0, y: 0 };
+      this.movementVelocity = { x: 0, y: 0 };
+      return;
+    }
     if (this.type === "timed") {
       const cycleDuration = this.activeDuration + this.inactiveDuration;
       this.active = (this.elapsed + this.phase) % cycleDuration < this.activeDuration;

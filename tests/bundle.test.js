@@ -13,6 +13,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.doesNotMatch(bundle, /^\s*(?:import|export)\s/m);
   assert.match(html, /aria-label="Spielfeld von Dung Dash"/);
   assert.match(html, /id="pause-btn"/);
+  assert.match(html, /id="reset-run-btn"/);
   assert.match(html, /id="level-select"/);
   assert.doesNotMatch(html, /id="jump-charge"/);
   assert.match(html, /id="level-menu-btn"/);

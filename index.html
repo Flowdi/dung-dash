@@ -17,7 +17,7 @@
       <p class="instructions">
         Mit den Pfeiltasten bewegen.
       </p>
-      <p class="instructions">Mit der Leertaste springen. Mit P oder Escape pausieren.</p>
+      <p class="instructions">Mit der Leertaste springen. Mit P oder Escape pausieren, mit R neu starten.</p>
 
       <label class="level-picker" for="level-select">
         Level
@@ -45,6 +45,7 @@
       <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
       <p class="combo" id="combo" aria-live="polite"></p>
       <button class="hud-button" id="pause-btn" type="button" aria-pressed="false" hidden>Pause</button>
+      <button class="hud-button secondary-btn" id="reset-run-btn" type="button" hidden>Level neu starten</button>
     </div>
     <!-- Checkpoint-Bereich -->
     <section class="checkpoint-screen" role="status" aria-live="assertive" aria-atomic="true">

@@ -163,7 +163,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P and Escape invoke the pause callback without repeating", () => {
+test("P, Escape and R expose pause and restart controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -172,7 +172,11 @@ test("P and Escape invoke the pause callback without repeating", () => {
   };
   const input = new InputController();
   let pauseCalls = 0;
-  input.bind(windowObject, [], { onPause: () => pauseCalls += 1 });
+  let restartCalls = 0;
+  input.bind(windowObject, [], {
+    onPause: () => pauseCalls += 1,
+    onRestart: () => restartCalls += 1,
+  });
 
   const event = (key, repeat = false) => ({
     code: key,
@@ -183,7 +187,10 @@ test("P and Escape invoke the pause callback without repeating", () => {
   listeners.get("keydown")(event("p"));
   listeners.get("keydown")(event("Escape"));
   listeners.get("keydown")(event("p", true));
+  listeners.get("keydown")(event("r"));
+  listeners.get("keydown")(event("r", true));
   assert.equal(pauseCalls, 2);
+  assert.equal(restartCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {
@@ -433,6 +440,16 @@ test("bounce and fragile platforms expose their gameplay behavior", () => {
   player.velocity.y = 200;
   resolvePlatformCollisions(player, [fragile]);
   assert.equal(fragile.active, false);
+});
+
+test("fragile platforms return so they cannot permanently block a route", () => {
+  const fragile = new Platform(100, 500, "fragile", { respawnDuration: 2 });
+  fragile.active = false;
+  fragile.inactiveRemaining = 2;
+  fragile.update(1.5);
+  assert.equal(fragile.active, false);
+  fragile.update(0.5);
+  assert.equal(fragile.active, true);
 });
 
 test("moving platforms follow their configured axis and range", () => {

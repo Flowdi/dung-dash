@@ -94,6 +94,7 @@
       this.jumpBufferRemaining = 0;
     }
     bind(windowObject, touchControls = [], { onPause = () => {
+    }, onRestart = () => {
     } } = {}) {
       windowObject.addEventListener("keydown", (event) => {
         if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key)) {
@@ -104,6 +105,7 @@
         if (!event.repeat && (event.key === "Escape" || event.key.toLowerCase() === "p")) {
           onPause();
         }
+        if (!event.repeat && event.key.toLowerCase() === "r") onRestart();
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
           this.queueJump();
         }
@@ -210,7 +212,7 @@
   };
   var Platform = class {
     constructor(x, y, type = "normal", options = {}) {
-      var _a, _b, _c, _d, _e, _f, _g;
+      var _a, _b, _c, _d, _e, _f, _g, _h;
       this.position = { x, y };
       this.previousPosition = { ...this.position };
       this.origin = { ...this.position };
@@ -224,13 +226,22 @@
       this.elapsed = 0;
       this.activeDuration = (_d = options.activeDuration) != null ? _d : 2.4;
       this.inactiveDuration = (_e = options.inactiveDuration) != null ? _e : 1.2;
-      this.surfaceSpeed = type === "conveyor-left" ? -((_f = options.surfaceSpeed) != null ? _f : 150) : type === "conveyor-right" ? (_g = options.surfaceSpeed) != null ? _g : 150 : 0;
+      this.respawnDuration = (_f = options.respawnDuration) != null ? _f : 2.5;
+      this.inactiveRemaining = 0;
+      this.surfaceSpeed = type === "conveyor-left" ? -((_g = options.surfaceSpeed) != null ? _g : 150) : type === "conveyor-right" ? (_h = options.surfaceSpeed) != null ? _h : 150 : 0;
       this.movementDelta = { x: 0, y: 0 };
       this.movementVelocity = { x: 0, y: 0 };
     }
     update(deltaTime) {
       this.previousPosition = { ...this.position };
       this.elapsed += deltaTime;
+      if (this.type === "fragile" && !this.active) {
+        this.inactiveRemaining = Math.max(0, this.inactiveRemaining - deltaTime);
+        this.active = this.inactiveRemaining === 0;
+        this.movementDelta = { x: 0, y: 0 };
+        this.movementVelocity = { x: 0, y: 0 };
+        return;
+      }
       if (this.type === "timed") {
         const cycleDuration = this.activeDuration + this.inactiveDuration;
         this.active = (this.elapsed + this.phase) % cycleDuration < this.activeDuration;
@@ -950,14 +961,7 @@
     levelRecords: {},
     achievements: []
   });
-  var LEVEL_ORDER = [
-    "bathroom-run",
-    "sewer-shortcut",
-    "festival-flush",
-    "royal-flush",
-    "porcelain-panic",
-    "pipe-dream"
-  ];
+  var LEVEL_ORDER = LEVELS.map(({ id }) => id);
   var migrateUnlockedLevels = (progress) => {
     var _a;
     const unlocked = new Set((_a = progress.unlockedLevels) != null ? _a : [LEVEL_ORDER[0]]);
@@ -1100,7 +1104,7 @@
     );
   };
   var resolvePlatformCollisions = (player, platforms) => {
-    var _a;
+    var _a, _b;
     player.supportPlatform = null;
     for (const platform of platforms) {
       if (!platform.active) continue;
@@ -1116,10 +1120,13 @@
           player.isGrounded = true;
           player.supportPlatform = platform;
         }
-        if (platform.type === "fragile") platform.active = false;
+        if (platform.type === "fragile") {
+          platform.active = false;
+          platform.inactiveRemaining = (_a = platform.respawnDuration) != null ? _a : 2.5;
+        }
       } else if (impact.side === "bottom") {
         player.position.y = platform.position.y + platform.height;
-        if (platform.type === "moving-y" && ((_a = platform.movementVelocity) == null ? void 0 : _a.y) > 0) {
+        if (platform.type === "moving-y" && ((_b = platform.movementVelocity) == null ? void 0 : _b.y) > 0) {
           player.position.y += 0.01;
           player.velocity.y = platform.movementVelocity.y + 180;
         } else {
@@ -1189,6 +1196,7 @@
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.pauseButton = documentObject.getElementById("pause-btn");
+      this.resetRunButton = documentObject.getElementById("reset-run-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
       this.timerElement = documentObject.getElementById("run-time");
@@ -1220,7 +1228,7 @@
       this.input.bind(
         this.window,
         [...this.document.querySelectorAll("[data-control]")],
-        { onPause: () => this.togglePause() }
+        { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
       );
       this.startButton.addEventListener("click", () => this.start());
       this.levelSelect.addEventListener("change", () => {
@@ -1232,6 +1240,7 @@
       this.nextLevelButton.addEventListener("click", () => this.startNextLevel());
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
+      this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();
@@ -1339,6 +1348,7 @@
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
+      this.resetRunButton.hidden = false;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
@@ -1437,6 +1447,7 @@
       this.nextLevelButton.style.display = nextLevelId ? "inline-block" : "none";
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
+      this.resetRunButton.hidden = true;
       this.restartButton.focus();
       this.renderLevelOptions();
       this.renderProgress();
@@ -1465,6 +1476,10 @@
       this.selectedLevelId = this.nextLevelId;
       this.reset();
     }
+    restartCurrentLevel() {
+      if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
+      this.reset();
+    }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
         this.window.cancelAnimationFrame(this.animationFrameId);
@@ -1483,6 +1498,7 @@
       this.resultMissions.hidden = true;
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
+      this.resetRunButton.hidden = true;
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";

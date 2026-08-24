@@ -44,6 +44,7 @@ export class Game {
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
     this.resultMissions = documentObject.getElementById("result-missions");
     this.pauseButton = documentObject.getElementById("pause-btn");
+    this.resetRunButton = documentObject.getElementById("reset-run-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
     this.timerElement = documentObject.getElementById("run-time");
@@ -77,7 +78,7 @@ export class Game {
     this.input.bind(
       this.window,
       [...this.document.querySelectorAll("[data-control]")],
-      { onPause: () => this.togglePause() }
+      { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
     );
     this.startButton.addEventListener("click", () => this.start());
     this.levelSelect.addEventListener("change", () => {
@@ -89,6 +90,7 @@ export class Game {
     this.nextLevelButton.addEventListener("click", () => this.startNextLevel());
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
+    this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
     this.renderLevelOptions();
@@ -200,6 +202,7 @@ export class Game {
     this.nextLevelButton.style.display = "none";
     this.levelMenuButton.style.display = "none";
     this.pauseButton.hidden = false;
+    this.resetRunButton.hidden = false;
     this.pauseButton.textContent = "Pause";
     this.pauseButton.setAttribute("aria-pressed", "false");
     this.previousFrameTime = null;
@@ -308,6 +311,7 @@ export class Game {
     this.nextLevelButton.style.display = nextLevelId ? "inline-block" : "none";
     this.levelMenuButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
+    this.resetRunButton.hidden = true;
     this.restartButton.focus();
     this.renderLevelOptions();
     this.renderProgress();
@@ -339,6 +343,11 @@ export class Game {
     this.reset();
   }
 
+  restartCurrentLevel() {
+    if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
+    this.reset();
+  }
+
   returnToLevelSelect() {
     if (this.animationFrameId !== null) {
       this.window.cancelAnimationFrame(this.animationFrameId);
@@ -357,6 +366,7 @@ export class Game {
     this.resultMissions.hidden = true;
     this.score.style.display = "none";
     this.pauseButton.hidden = true;
+    this.resetRunButton.hidden = true;
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";
     this.levelMenuButton.style.display = "none";

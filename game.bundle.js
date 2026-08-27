@@ -212,7 +212,7 @@
   };
   var Platform = class {
     constructor(x, y, type = "normal", options = {}) {
-      var _a, _b, _c, _d, _e, _f, _g, _h;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i;
       this.position = { x, y };
       this.previousPosition = { ...this.position };
       this.origin = { ...this.position };
@@ -227,8 +227,10 @@
       this.activeDuration = (_d = options.activeDuration) != null ? _d : 2.4;
       this.inactiveDuration = (_e = options.inactiveDuration) != null ? _e : 1.2;
       this.respawnDuration = (_f = options.respawnDuration) != null ? _f : 2.5;
+      this.breakDelay = (_g = options.breakDelay) != null ? _g : 0.45;
+      this.breakRemaining = 0;
       this.inactiveRemaining = 0;
-      this.surfaceSpeed = type === "conveyor-left" ? -((_g = options.surfaceSpeed) != null ? _g : 150) : type === "conveyor-right" ? (_h = options.surfaceSpeed) != null ? _h : 150 : 0;
+      this.surfaceSpeed = type === "conveyor-left" ? -((_h = options.surfaceSpeed) != null ? _h : 150) : type === "conveyor-right" ? (_i = options.surfaceSpeed) != null ? _i : 150 : 0;
       this.movementDelta = { x: 0, y: 0 };
       this.movementVelocity = { x: 0, y: 0 };
     }
@@ -238,6 +240,16 @@
       if (this.type === "fragile" && !this.active) {
         this.inactiveRemaining = Math.max(0, this.inactiveRemaining - deltaTime);
         this.active = this.inactiveRemaining === 0;
+        this.movementDelta = { x: 0, y: 0 };
+        this.movementVelocity = { x: 0, y: 0 };
+        return;
+      }
+      if (this.type === "fragile" && this.breakRemaining > 0) {
+        this.breakRemaining = Math.max(0, this.breakRemaining - deltaTime);
+        if (this.breakRemaining === 0) {
+          this.active = false;
+          this.inactiveRemaining = this.respawnDuration;
+        }
         this.movementDelta = { x: 0, y: 0 };
         this.movementVelocity = { x: 0, y: 0 };
         return;
@@ -288,8 +300,9 @@
       if (this.type === "timed") ctx.restore();
       if (this.type === "bounce" || this.type === "fragile") {
         ctx.save();
-        ctx.globalAlpha = 0.36;
-        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
+        const breakProgress = this.type === "fragile" && this.breakRemaining > 0 ? 1 - this.breakRemaining / this.breakDelay : 0;
+        ctx.globalAlpha = this.type === "fragile" ? 0.3 + breakProgress * 0.45 : 0.36;
+        ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : breakProgress > 0.5 ? "#ff6b35" : "#fff3a0";
         ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
         ctx.restore();
       }
@@ -1121,8 +1134,7 @@
           player.supportPlatform = platform;
         }
         if (platform.type === "fragile") {
-          platform.active = false;
-          platform.inactiveRemaining = (_a = platform.respawnDuration) != null ? _a : 2.5;
+          platform.breakRemaining || (platform.breakRemaining = (_a = platform.breakDelay) != null ? _a : 0.45);
         }
       } else if (impact.side === "bottom") {
         player.position.y = platform.position.y + platform.height;

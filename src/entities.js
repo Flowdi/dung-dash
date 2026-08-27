@@ -108,6 +108,8 @@ export class Platform {
     this.activeDuration = options.activeDuration ?? 2.4;
     this.inactiveDuration = options.inactiveDuration ?? 1.2;
     this.respawnDuration = options.respawnDuration ?? 2.5;
+    this.breakDelay = options.breakDelay ?? 0.45;
+    this.breakRemaining = 0;
     this.inactiveRemaining = 0;
     this.surfaceSpeed = type === "conveyor-left"
       ? -(options.surfaceSpeed ?? 150)
@@ -124,6 +126,16 @@ export class Platform {
     if (this.type === "fragile" && !this.active) {
       this.inactiveRemaining = Math.max(0, this.inactiveRemaining - deltaTime);
       this.active = this.inactiveRemaining === 0;
+      this.movementDelta = { x: 0, y: 0 };
+      this.movementVelocity = { x: 0, y: 0 };
+      return;
+    }
+    if (this.type === "fragile" && this.breakRemaining > 0) {
+      this.breakRemaining = Math.max(0, this.breakRemaining - deltaTime);
+      if (this.breakRemaining === 0) {
+        this.active = false;
+        this.inactiveRemaining = this.respawnDuration;
+      }
       this.movementDelta = { x: 0, y: 0 };
       this.movementVelocity = { x: 0, y: 0 };
       return;
@@ -175,8 +187,11 @@ export class Platform {
     if (this.type === "timed") ctx.restore();
     if (this.type === "bounce" || this.type === "fragile") {
       ctx.save();
-      ctx.globalAlpha = 0.36;
-      ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : "#fff3a0";
+      const breakProgress = this.type === "fragile" && this.breakRemaining > 0
+        ? 1 - this.breakRemaining / this.breakDelay
+        : 0;
+      ctx.globalAlpha = this.type === "fragile" ? 0.3 + breakProgress * 0.45 : 0.36;
+      ctx.fillStyle = this.type === "bounce" ? "#55e6ff" : breakProgress > 0.5 ? "#ff6b35" : "#fff3a0";
       ctx.fillRect(this.position.x - cameraX, this.position.y, this.width, this.height);
       ctx.restore();
     }

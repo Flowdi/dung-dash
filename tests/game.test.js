@@ -434,18 +434,23 @@ test("bounce and fragile platforms expose their gameplay behavior", () => {
   resolvePlatformCollisions(player, [bounce]);
   assert.ok(player.velocity.y < 0);
 
-  const fragile = { ...bounce, type: "fragile", active: true };
+  const fragile = new Platform(100, 500, "fragile");
   player.position = { x: 120, y: 470 };
   player.previousPosition = { x: 120, y: 450 };
   player.velocity.y = 200;
   resolvePlatformCollisions(player, [fragile]);
-  assert.equal(fragile.active, false);
+  assert.equal(fragile.active, true);
+  assert.ok(fragile.breakRemaining > 0);
 });
 
 test("fragile platforms return so they cannot permanently block a route", () => {
-  const fragile = new Platform(100, 500, "fragile", { respawnDuration: 2 });
-  fragile.active = false;
-  fragile.inactiveRemaining = 2;
+  const fragile = new Platform(100, 500, "fragile", { breakDelay: 0.4, respawnDuration: 2 });
+  fragile.breakRemaining = 0.4;
+  fragile.update(0.2);
+  assert.equal(fragile.active, true);
+  fragile.update(0.2);
+  assert.equal(fragile.active, false);
+  assert.equal(fragile.inactiveRemaining, 2);
   fragile.update(1.5);
   assert.equal(fragile.active, false);
   fragile.update(0.5);

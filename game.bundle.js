@@ -394,8 +394,47 @@
     }
   };
 
+  // src/level-validation.js
+  var PLATFORM_TYPES = /* @__PURE__ */ new Set([
+    void 0,
+    "normal",
+    "bounce",
+    "fragile",
+    "moving-x",
+    "moving-y",
+    "timed",
+    "conveyor-left",
+    "conveyor-right",
+    "one-way"
+  ]);
+  var validateLevelDefinitions = (levels) => {
+    const ids = /* @__PURE__ */ new Set();
+    levels.forEach((level) => {
+      var _a, _b, _c;
+      if (!level.id || ids.has(level.id)) throw new Error(`Ung\xFCltige oder doppelte Level-ID: ${level.id}`);
+      ids.add(level.id);
+      if (!(level.width > 0) || !(((_a = level.height) != null ? _a : 800) > 0)) {
+        throw new Error(`Ung\xFCltige Levelgr\xF6\xDFe: ${level.id}`);
+      }
+      if (!((_b = level.theme) == null ? void 0 : _b.background) || !((_c = level.theme) == null ? void 0 : _c.atlas)) {
+        throw new Error(`Unvollst\xE4ndiges Levelthema: ${level.id}`);
+      }
+      if (!Array.isArray(level.missions) || level.missions.length !== 3) {
+        throw new Error(`Jedes Level ben\xF6tigt drei Missionen: ${level.id}`);
+      }
+      if (level.platforms.some((platform) => !PLATFORM_TYPES.has(platform[2]))) {
+        throw new Error(`Unbekannter Plattformtyp: ${level.id}`);
+      }
+      const checkpointOrders = level.checkpoints.map((checkpoint) => checkpoint[2]);
+      if (checkpointOrders.some((order, index) => order !== index + 1)) {
+        throw new Error(`Checkpoint-Reihenfolge ist ung\xFCltig: ${level.id}`);
+      }
+    });
+    return levels;
+  };
+
   // src/levels.js
-  var LEVELS = Object.freeze([
+  var LEVELS = Object.freeze(validateLevelDefinitions([
     {
       id: "bathroom-run",
       name: "Badezimmer-Sprint",
@@ -742,7 +781,7 @@
         [300, 730, "brush"]
       ]
     }
-  ]);
+  ]));
   var getLevelDefinition = (levelId) => {
     var _a;
     return (_a = LEVELS.find((level) => level.id === levelId)) != null ? _a : LEVELS[0];

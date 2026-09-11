@@ -1,4 +1,6 @@
-export const LEVELS = Object.freeze([
+import { validateLevelDefinitions } from "./level-validation.js";
+
+export const LEVELS = Object.freeze(validateLevelDefinitions([
   {
     id: "bathroom-run",
     name: "Badezimmer-Sprint",
@@ -213,7 +215,7 @@ export const LEVELS = Object.freeze([
       [270, 2050, "brush"], [700, 1490, "water", { phase: 0.4 }], [300, 730, "brush"],
     ],
   },
-]);
+]));
 
 export const getLevelDefinition = (levelId) =>
   LEVELS.find((level) => level.id === levelId) ?? LEVELS[0];

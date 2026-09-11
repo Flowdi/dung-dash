@@ -14,6 +14,7 @@ import { findNewAchievements } from "../src/achievements.js";
 import { completedMissionIds, evaluateMissions } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
+import { validateLevelDefinitions } from "../src/level-validation.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -376,6 +377,14 @@ test("the campaign ends with two substantial expert levels", () => {
   const finalPlatforms = expertLevels[1].platforms.slice(-3);
   assert.ok(finalPlatforms[1][1] - finalPlatforms[2][1] <= 100);
   assert.equal(finalPlatforms.every((platform) => platform[2] === undefined), true);
+});
+
+test("invalid level data fails fast with a useful error", () => {
+  const invalid = [{
+    id: "broken", width: 800, theme: { background: "bg", atlas: "atlas" },
+    missions: [{}, {}, {}], platforms: [[0, 0, "mystery"]], checkpoints: [[0, 0, 2]],
+  }];
+  assert.throws(() => validateLevelDefinitions(invalid), /Unbekannter Plattformtyp/);
 });
 
 test("every level defines three unique missions", () => {

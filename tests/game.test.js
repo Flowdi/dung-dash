@@ -606,6 +606,11 @@ test("brush hits respawn at the latest checkpoint and count as falls", () => {
   assert.equal(stats.falls, 1);
   assert.equal(stats.combo, 0);
   assert.equal(input.right, false);
+  assert.ok(player.hazardGraceRemaining > 0);
+  const brush = new Hazard(250, 300, "brush");
+  assert.equal(brush.touches(player), false);
+  player.update(1, input);
+  assert.equal(brush.touches(player), true);
 });
 
 test("advanced levels contain both hazard types", () => {

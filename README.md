@@ -10,14 +10,14 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - pausierbarer Spiellauf und vollständiger Neustart
 - responsive Tastatur- und Touchsteuerung
-- drei datengetriebene Level mit Auswahl und Freischaltung
-- goldene Fliegen, Zeitfliegen, Sprungplattformen und zerbrechliche Plattformen
+- sechs datengetriebene Level mit Auswahl und Freischaltung
+- goldene Fliegen, Zeitfliegen, Sprungplattformen und warnend zerbrechende Plattformen, die wiederkehren
 - vertikaler „Royal Flush“-Modus mit Kamerafahrt und derselben direkten Sprungsteuerung wie die normalen Level
 - Rückkehr zur Levelauswahl nach jedem Lauf
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 - eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
 - nahtlose, proportional skalierte Levelhintergründe mit kamerageführtem Bildausschnitt
-- Karriereübersicht mit Gesamtstatistik und sechs dauerhaft gespeicherten Achievements
+- Karriereübersicht mit Gesamtstatistik und sieben dauerhaft gespeicherten Achievements
 - drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
@@ -31,6 +31,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Pfeiltasten links/rechts: bewegen
 - Leertaste oder Pfeiltaste hoch: springen
 - P oder Escape: pausieren/fortsetzen
+- R: aktuelles Level sofort neu starten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.
 
 ## Entwicklung
@@ -53,6 +54,7 @@ npm test
 - `src/physics.js` – Kollisionen
 - `src/input.js` – Tastatur- und Touchsteuerung
 - `src/level.js` – Leveldaten
+- `src/level-validation.js` – frühzeitige Prüfung des vollständigen Levelkatalogs
 - `src/levels.js` – unabhängiger Levelkatalog
 - `src/assets.js` – Sprite-Ladevorgang
 - `src/rendering.js` – skalierte Hintergrundausschnitte ohne Bildwiederholung

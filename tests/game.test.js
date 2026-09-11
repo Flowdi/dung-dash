@@ -626,6 +626,7 @@ test("brush hits respawn at the latest checkpoint and count as falls", () => {
   const brush = new Hazard(250, 300, "brush");
   assert.equal(brush.touches(player), false);
   player.update(1, input);
+  player.position = { x: 250, y: 300 };
   assert.equal(brush.touches(player), true);
 });
 

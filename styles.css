@@ -443,6 +443,23 @@ button:focus-visible {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .checkpoint-screen.toast {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .btn,
+  .hud-button,
+  .touch-controls button,
+  .score,
+  .start-screen,
+  .checkpoint-screen {
+    border: 2px solid ButtonText;
+  }
+}
+
 @media (max-width: 540px) {
   .result-breakdown {
     grid-template-columns: 1fr;

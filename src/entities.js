@@ -30,6 +30,7 @@ export class Player {
     this.worldWidth = options.worldWidth ?? LEVEL_WIDTH;
     this.groundY = options.groundY ?? GROUND_Y;
     this.supportPlatform = null;
+    this.hazardGraceRemaining = 0;
   }
 
   followSupportPlatform(deltaTime = 0) {
@@ -42,6 +43,7 @@ export class Player {
 
   update(deltaTime, input, canMove = true) {
     this.previousPosition = { ...this.position };
+    this.hazardGraceRemaining = Math.max(0, this.hazardGraceRemaining - deltaTime);
 
     const horizontalInput = Number(input.right) - Number(input.left);
     this.velocity.x = canMove ? horizontalInput * MOVE_SPEED : 0;

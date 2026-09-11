@@ -14,6 +14,8 @@ import { findNewAchievements } from "../src/achievements.js";
 import { completedMissionIds, evaluateMissions } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
+import { validateLevelDefinitions } from "../src/level-validation.js";
+import { shouldPauseWhenHidden } from "../src/game.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -237,6 +239,12 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("a running game pauses when its browser tab becomes hidden", () => {
+  assert.equal(shouldPauseWhenHidden(GameState.PLAYING, true), true);
+  assert.equal(shouldPauseWhenHidden(GameState.PAUSED, true), false);
+  assert.equal(shouldPauseWhenHidden(GameState.PLAYING, false), false);
+});
+
 test("existing completions unlock newly appended campaign levels", () => {
   const saved = {
     unlockedLevels: ["bathroom-run", "sewer-shortcut", "festival-flush", "royal-flush"],
@@ -300,6 +308,15 @@ test("achievements unlock from run and career progress", () => {
     achievements.map(({ id }) => id),
     ["first-flush", "fly-hunter", "combo-master", "golden-pile", "speed-runner", "sure-footed"]
   );
+});
+
+test("finishing every level unlocks the campaign achievement", () => {
+  const levelRecords = Object.fromEntries(LEVELS.map(({ id }) => [id, { bestScore: 1 }]));
+  const achievements = findNewAchievements(
+    { totalRuns: LEVELS.length, totalFlies: 0, achievements: [], levelRecords },
+    { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 }
+  );
+  assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
 });
 
 test("progress store persists achievements only once", () => {
@@ -376,6 +393,14 @@ test("the campaign ends with two substantial expert levels", () => {
   const finalPlatforms = expertLevels[1].platforms.slice(-3);
   assert.ok(finalPlatforms[1][1] - finalPlatforms[2][1] <= 100);
   assert.equal(finalPlatforms.every((platform) => platform[2] === undefined), true);
+});
+
+test("invalid level data fails fast with a useful error", () => {
+  const invalid = [{
+    id: "broken", width: 800, theme: { background: "bg", atlas: "atlas" },
+    missions: [{}, {}, {}], platforms: [[0, 0, "mystery"]], checkpoints: [[0, 0, 2]],
+  }];
+  assert.throws(() => validateLevelDefinitions(invalid), /Unbekannter Plattformtyp/);
 });
 
 test("every level defines three unique missions", () => {
@@ -597,6 +622,12 @@ test("brush hits respawn at the latest checkpoint and count as falls", () => {
   assert.equal(stats.falls, 1);
   assert.equal(stats.combo, 0);
   assert.equal(input.right, false);
+  assert.ok(player.hazardGraceRemaining > 0);
+  const brush = new Hazard(250, 300, "brush");
+  assert.equal(brush.touches(player), false);
+  player.update(1, input);
+  player.position = { x: 250, y: 300 };
+  assert.equal(brush.touches(player), true);
 });
 
 test("advanced levels contain both hazard types", () => {

@@ -1,3 +1,5 @@
+import { LEVELS } from "./levels.js";
+
 export const ACHIEVEMENTS = Object.freeze([
   { id: "first-flush", name: "Erste Spülung", description: "Schließe dein erstes Level ab." },
   { id: "fly-hunter", name: "Fliegenjäger", description: "Sammle insgesamt 50 Fliegen." },
@@ -5,6 +7,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "golden-pile", name: "Goldstück", description: "Verdiene eine Goldmedaille." },
   { id: "speed-runner", name: "Ab durch die Schüssel", description: "Beende ein Level in höchstens 60 Sekunden." },
   { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." },
+  { id: "campaign-complete", name: "König der Keramik", description: "Schließe die gesamte Kampagne ab." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -16,6 +19,7 @@ export const findNewAchievements = (progress, result) => {
     "golden-pile": result.medal === "Gold",
     "speed-runner": result.elapsedSeconds <= 60,
     "sure-footed": result.falls === 0,
+    "campaign-complete": LEVELS.every(({ id }) => progress.levelRecords?.[id]),
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };

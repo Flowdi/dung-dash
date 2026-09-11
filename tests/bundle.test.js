@@ -54,6 +54,12 @@ test("HUD and transient checkpoint messages use separate screen corners", async 
   assert.match(styles, /\.checkpoint-screen\.toast\s*\{[\s\S]*?right:\s*max\(12px/);
 });
 
+test("system accessibility preferences disable incidental motion", async () => {
+  const styles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /@media \(forced-colors: active\)/);
+});
+
 test("start screen exposes career stats and achievements", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="career-stats"/);

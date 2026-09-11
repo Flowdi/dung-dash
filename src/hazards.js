@@ -27,7 +27,7 @@ export class Hazard {
   }
 
   touches(player) {
-    return this.active && this.hitCooldown === 0 &&
+    return this.active && this.hitCooldown === 0 && !(player.hazardGraceRemaining > 0) &&
       player.position.x < this.position.x + this.width &&
       player.position.x + player.width > this.position.x &&
       player.position.y < this.position.y + this.height &&
@@ -77,6 +77,7 @@ export const respawnAtCheckpoint = (player, position, stats, input) => {
   player.velocity = { x: 0, y: 0 };
   player.supportPlatform = null;
   player.isGrounded = false;
+  player.hazardGraceRemaining = 0.9;
   stats.registerFall();
   input.reset();
 };

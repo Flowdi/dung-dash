@@ -310,6 +310,15 @@ test("achievements unlock from run and career progress", () => {
   );
 });
 
+test("finishing every level unlocks the campaign achievement", () => {
+  const levelRecords = Object.fromEntries(LEVELS.map(({ id }) => [id, { bestScore: 1 }]));
+  const achievements = findNewAchievements(
+    { totalRuns: LEVELS.length, totalFlies: 0, achievements: [], levelRecords },
+    { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 }
+  );
+  assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

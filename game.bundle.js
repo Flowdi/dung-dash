@@ -988,7 +988,8 @@
     { id: "combo-master", name: "Combo-Meister", description: "Erreiche eine \xD74-Combo." },
     { id: "golden-pile", name: "Goldst\xFCck", description: "Verdiene eine Goldmedaille." },
     { id: "speed-runner", name: "Ab durch die Sch\xFCssel", description: "Beende ein Level in h\xF6chstens 60 Sekunden." },
-    { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." }
+    { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." },
+    { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a;
@@ -999,7 +1000,11 @@
       "combo-master": result.bestCombo >= 4,
       "golden-pile": result.medal === "Gold",
       "speed-runner": result.elapsedSeconds <= 60,
-      "sure-footed": result.falls === 0
+      "sure-footed": result.falls === 0,
+      "campaign-complete": LEVELS.every(({ id }) => {
+        var _a2;
+        return (_a2 = progress.levelRecords) == null ? void 0 : _a2[id];
+      })
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };

@@ -20,6 +20,8 @@ import {
   resolvePlatformCollisions,
 } from "./physics.js";
 
+export const shouldPauseWhenHidden = (state, hidden) => hidden && state === GameState.PLAYING;
+
 export class Game {
   constructor(documentObject, windowObject) {
     this.document = documentObject;
@@ -91,6 +93,9 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.document.addEventListener?.("visibilitychange", () => {
+      if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
+    });
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
     this.renderLevelOptions();

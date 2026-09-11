@@ -15,6 +15,7 @@ import { completedMissionIds, evaluateMissions } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
+import { shouldPauseWhenHidden } from "../src/game.js";
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();
@@ -236,6 +237,12 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("a running game pauses when its browser tab becomes hidden", () => {
+  assert.equal(shouldPauseWhenHidden(GameState.PLAYING, true), true);
+  assert.equal(shouldPauseWhenHidden(GameState.PAUSED, true), false);
+  assert.equal(shouldPauseWhenHidden(GameState.PLAYING, false), false);
 });
 
 test("existing completions unlock newly appended campaign levels", () => {

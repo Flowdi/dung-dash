@@ -1226,6 +1226,7 @@
   };
 
   // src/game.js
+  var shouldPauseWhenHidden = (state, hidden) => hidden && state === GameState.PLAYING;
   var Game = class {
     constructor(documentObject, windowObject) {
       this.document = documentObject;
@@ -1279,6 +1280,7 @@
       this.selectedLevelId = LEVELS[0].id;
     }
     initialize() {
+      var _a, _b;
       this.input.bind(
         this.window,
         [...this.document.querySelectorAll("[data-control]")],
@@ -1295,6 +1297,9 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
+        if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
+      });
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();

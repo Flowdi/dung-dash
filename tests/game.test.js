@@ -239,6 +239,15 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("checkpoint splits track total and section times", () => {
+  const stats = new RunStats();
+  stats.started = true;
+  stats.update(12.5, false);
+  assert.deepEqual(stats.recordCheckpoint(1), { order: 1, elapsedSeconds: 12.5, sectionSeconds: 12.5 });
+  stats.update(7.5, false);
+  assert.deepEqual(stats.recordCheckpoint(2), { order: 2, elapsedSeconds: 20, sectionSeconds: 7.5 });
+});
+
 test("WASD mirrors arrow-key movement and jumping", () => {
   const listeners = new Map();
   const windowObject = { addEventListener: (type, listener) => listeners.set(type, listener) };

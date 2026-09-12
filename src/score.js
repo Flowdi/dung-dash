@@ -50,6 +50,7 @@ export class RunStats {
     this.bestCombo = 0;
     this.comboRemaining = 0;
     this.falls = 0;
+    this.checkpointSplits = [];
   }
 
   update(deltaTime, hasPlayerInput) {
@@ -74,6 +75,17 @@ export class RunStats {
     this.falls += 1;
     this.combo = 0;
     this.comboRemaining = 0;
+  }
+
+  recordCheckpoint(order) {
+    const previousTime = this.checkpointSplits.at(-1)?.elapsedSeconds ?? 0;
+    const split = {
+      order,
+      elapsedSeconds: this.elapsedSeconds,
+      sectionSeconds: Math.max(0, this.elapsedSeconds - previousTime),
+    };
+    this.checkpointSplits.push(split);
+    return split;
   }
 
   finish(totalFlies) {

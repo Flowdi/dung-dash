@@ -263,13 +263,17 @@ export class Game {
     const checkpoint = findReachedCheckpoint(player, checkpoints);
     if (checkpoint) {
       checkpoint.claimed = true;
+      const split = this.stats.recordCheckpoint(checkpoint.order);
       if (checkpoint === checkpoints.at(-1)) this.finish();
       else {
         this.lastSafePosition = {
           x: Math.max(0, player.position.x - 60),
           y: player.position.y,
         };
-        this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+        this.showMessage(
+          `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
+          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}`
+        );
       }
     }
 

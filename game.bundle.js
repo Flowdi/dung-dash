@@ -962,6 +962,7 @@
       this.bestCombo = 0;
       this.comboRemaining = 0;
       this.falls = 0;
+      this.checkpointSplits = [];
     }
     update(deltaTime, hasPlayerInput) {
       if (hasPlayerInput) this.started = true;
@@ -983,6 +984,17 @@
       this.falls += 1;
       this.combo = 0;
       this.comboRemaining = 0;
+    }
+    recordCheckpoint(order) {
+      var _a, _b;
+      const previousTime = (_b = (_a = this.checkpointSplits.at(-1)) == null ? void 0 : _a.elapsedSeconds) != null ? _b : 0;
+      const split = {
+        order,
+        elapsedSeconds: this.elapsedSeconds,
+        sectionSeconds: Math.max(0, this.elapsedSeconds - previousTime)
+      };
+      this.checkpointSplits.push(split);
+      return split;
     }
     finish(totalFlies) {
       const result = {
@@ -1486,13 +1498,17 @@
       const checkpoint = findReachedCheckpoint(player, checkpoints);
       if (checkpoint) {
         checkpoint.claimed = true;
+        const split = this.stats.recordCheckpoint(checkpoint.order);
         if (checkpoint === checkpoints.at(-1)) this.finish();
         else {
           this.lastSafePosition = {
             x: Math.max(0, player.position.x - 60),
             y: player.position.y
           };
-          this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+          this.showMessage(
+            `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
+            `Zwischenzeit ${formatTime(split.elapsedSeconds)} \xB7 Abschnitt ${formatTime(split.sectionSeconds)}`
+          );
         }
       }
       const targetX = player.position.x - this.viewport.viewportWidth * 0.4;

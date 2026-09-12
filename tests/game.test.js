@@ -397,10 +397,27 @@ test("the campaign ends with two substantial expert levels", () => {
 
 test("invalid level data fails fast with a useful error", () => {
   const invalid = [{
-    id: "broken", width: 800, theme: { background: "bg", atlas: "atlas" },
-    missions: [{}, {}, {}], platforms: [[0, 0, "mystery"]], checkpoints: [[0, 0, 2]],
+    id: "broken", width: 800, spawn: { x: 0, y: 0 }, theme: { background: "bg", atlas: "atlas" },
+    missions: [
+      { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
+      { id: "c", type: "score", target: 1 },
+    ],
+    platforms: [[0, 0, "mystery"]], flies: [], checkpoints: [[0, 0, 1]], hazards: [],
   }];
   assert.throws(() => validateLevelDefinitions(invalid), /Unbekannter Plattformtyp/);
+});
+
+test("level validation rejects gameplay objects outside the world", () => {
+  const invalid = [{
+    id: "outside", width: 800, height: 800, spawn: { x: 10, y: 700 },
+    theme: { background: "bg", atlas: "atlas" },
+    missions: [
+      { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
+      { id: "c", type: "score", target: 1 },
+    ],
+    platforms: [[900, 400]], flies: [], checkpoints: [[700, 700, 1]], hazards: [],
+  }];
+  assert.throws(() => validateLevelDefinitions(invalid), /Plattform liegt außerhalb/);
 });
 
 test("every level defines three unique missions", () => {

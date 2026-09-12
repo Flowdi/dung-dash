@@ -248,6 +248,13 @@ button:focus-visible {
   width: min(92%, 360px);
 }
 
+.current-missions {
+  margin-top: 3px;
+  color: #d8d8d8;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
 .checkpoint-screen.toast {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));

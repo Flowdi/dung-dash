@@ -31,23 +31,25 @@ export class InputController {
 
   bind(windowObject, touchControls = [], { onPause = () => {}, onRestart = () => {} } = {}) {
     windowObject.addEventListener("keydown", (event) => {
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key)) {
+      const key = event.key.toLowerCase();
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key) || ["a", "d", "w"].includes(key)) {
         event.preventDefault();
       }
-      if (event.key === "ArrowLeft") this.left = true;
-      if (event.key === "ArrowRight") this.right = true;
-      if (!event.repeat && (event.key === "Escape" || event.key.toLowerCase() === "p")) {
+      if (event.key === "ArrowLeft" || key === "a") this.left = true;
+      if (event.key === "ArrowRight" || key === "d") this.right = true;
+      if (!event.repeat && (event.key === "Escape" || key === "p")) {
         onPause();
       }
-      if (!event.repeat && event.key.toLowerCase() === "r") onRestart();
-      if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
+      if (!event.repeat && key === "r") onRestart();
+      if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
         this.queueJump();
       }
     });
 
     windowObject.addEventListener("keyup", (event) => {
-      if (event.key === "ArrowLeft") this.left = false;
-      if (event.key === "ArrowRight") this.right = false;
+      const key = event.key.toLowerCase();
+      if (event.key === "ArrowLeft" || key === "a") this.left = false;
+      if (event.key === "ArrowRight" || key === "d") this.right = false;
     });
     windowObject.addEventListener("blur", () => this.reset());
 

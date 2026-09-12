@@ -97,22 +97,24 @@
     }, onRestart = () => {
     } } = {}) {
       windowObject.addEventListener("keydown", (event) => {
-        if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key)) {
+        const key = event.key.toLowerCase();
+        if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key) || ["a", "d", "w"].includes(key)) {
           event.preventDefault();
         }
-        if (event.key === "ArrowLeft") this.left = true;
-        if (event.key === "ArrowRight") this.right = true;
-        if (!event.repeat && (event.key === "Escape" || event.key.toLowerCase() === "p")) {
+        if (event.key === "ArrowLeft" || key === "a") this.left = true;
+        if (event.key === "ArrowRight" || key === "d") this.right = true;
+        if (!event.repeat && (event.key === "Escape" || key === "p")) {
           onPause();
         }
-        if (!event.repeat && event.key.toLowerCase() === "r") onRestart();
-        if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space")) {
+        if (!event.repeat && key === "r") onRestart();
+        if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
           this.queueJump();
         }
       });
       windowObject.addEventListener("keyup", (event) => {
-        if (event.key === "ArrowLeft") this.left = false;
-        if (event.key === "ArrowRight") this.right = false;
+        const key = event.key.toLowerCase();
+        if (event.key === "ArrowLeft" || key === "a") this.left = false;
+        if (event.key === "ArrowRight" || key === "d") this.right = false;
       });
       windowObject.addEventListener("blur", () => this.reset());
       touchControls.forEach((button) => {
@@ -409,10 +411,19 @@
     "conveyor-right",
     "one-way"
   ]);
+  var MISSION_TYPES = /* @__PURE__ */ new Set(["time", "flies", "combo", "score"]);
+  var assertPointInLevel = (level, point, label) => {
+    var _a;
+    const [x, y] = point;
+    const height = (_a = level.height) != null ? _a : 800;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > level.width || y < 0 || y > height) {
+      throw new Error(`${label} liegt au\xDFerhalb des Levels: ${level.id}`);
+    }
+  };
   var validateLevelDefinitions = (levels) => {
     const ids = /* @__PURE__ */ new Set();
     levels.forEach((level) => {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       if (!level.id || ids.has(level.id)) throw new Error(`Ung\xFCltige oder doppelte Level-ID: ${level.id}`);
       ids.add(level.id);
       if (!(level.width > 0) || !(((_a = level.height) != null ? _a : 800) > 0)) {
@@ -424,9 +435,20 @@
       if (!Array.isArray(level.missions) || level.missions.length !== 3) {
         throw new Error(`Jedes Level ben\xF6tigt drei Missionen: ${level.id}`);
       }
+      const missionIds = new Set(level.missions.map(({ id }) => id));
+      if (missionIds.size !== level.missions.length || level.missions.some(
+        ({ type, target }) => !MISSION_TYPES.has(type) || !(target > 0)
+      )) {
+        throw new Error(`Ung\xFCltige Missionen: ${level.id}`);
+      }
       if (level.platforms.some((platform) => !PLATFORM_TYPES.has(platform[2]))) {
         throw new Error(`Unbekannter Plattformtyp: ${level.id}`);
       }
+      assertPointInLevel(level, [level.spawn.x, level.spawn.y], "Spawnpunkt");
+      level.platforms.forEach((point) => assertPointInLevel(level, point, "Plattform"));
+      level.flies.forEach((point) => assertPointInLevel(level, point, "Fliege"));
+      level.checkpoints.forEach((point) => assertPointInLevel(level, point, "Checkpoint"));
+      ((_d = level.hazards) != null ? _d : []).forEach((point) => assertPointInLevel(level, point, "Gefahr"));
       const checkpointOrders = level.checkpoints.map((checkpoint) => checkpoint[2]);
       if (checkpointOrders.some((order, index) => order !== index + 1)) {
         throw new Error(`Checkpoint-Reihenfolge ist ung\xFCltig: ${level.id}`);
@@ -940,6 +962,7 @@
       this.bestCombo = 0;
       this.comboRemaining = 0;
       this.falls = 0;
+      this.checkpointSplits = [];
     }
     update(deltaTime, hasPlayerInput) {
       if (hasPlayerInput) this.started = true;
@@ -961,6 +984,17 @@
       this.falls += 1;
       this.combo = 0;
       this.comboRemaining = 0;
+    }
+    recordCheckpoint(order) {
+      var _a, _b;
+      const previousTime = (_b = (_a = this.checkpointSplits.at(-1)) == null ? void 0 : _a.elapsedSeconds) != null ? _b : 0;
+      const split = {
+        order,
+        elapsedSeconds: this.elapsedSeconds,
+        sectionSeconds: Math.max(0, this.elapsedSeconds - previousTime)
+      };
+      this.checkpointSplits.push(split);
+      return split;
     }
     finish(totalFlies) {
       const result = {
@@ -1096,6 +1130,13 @@
     completed: mission.type === "time" ? result.elapsedSeconds <= mission.target : mission.type === "flies" ? result.fliesCollected >= mission.target : mission.type === "combo" ? result.bestCombo >= mission.target : mission.type === "score" ? result.score >= mission.target : false
   }));
   var completedMissionIds = (missions, result) => evaluateMissions(missions, result).filter(({ completed }) => completed).map(({ id }) => id);
+  var formatMissionProgress = (mission, stats) => {
+    if (mission.type === "flies") return `${stats.fliesCollected}/${mission.target} Fliegen`;
+    if (mission.type === "time") return `${formatTime(stats.elapsedSeconds)}/${formatTime(mission.target)}`;
+    if (mission.type === "combo") return `\xD7${stats.bestCombo}/\xD7${mission.target}`;
+    if (mission.type === "score") return `${stats.flyScore}/${mission.target} Punkte`;
+    return mission.label;
+  };
 
   // src/rendering.js
   var clamp01 = (value) => Math.max(0, Math.min(1, value));
@@ -1263,6 +1304,7 @@
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
+      this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image);
       this.state = GameState.READY;
@@ -1464,13 +1506,17 @@
       const checkpoint = findReachedCheckpoint(player, checkpoints);
       if (checkpoint) {
         checkpoint.claimed = true;
+        const split = this.stats.recordCheckpoint(checkpoint.order);
         if (checkpoint === checkpoints.at(-1)) this.finish();
         else {
           this.lastSafePosition = {
             x: Math.max(0, player.position.x - 60),
             y: player.position.y
           };
-          this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+          this.showMessage(
+            `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
+            `Zwischenzeit ${formatTime(split.elapsedSeconds)} \xB7 Abschnitt ${formatTime(split.sectionSeconds)}`
+          );
         }
       }
       const targetX = player.position.x - this.viewport.viewportWidth * 0.4;
@@ -1484,6 +1530,9 @@
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
+      if (this.level) {
+        this.currentMissionsElement.textContent = this.level.missions.map((mission) => formatMissionProgress(mission, this.stats)).join(" \xB7 ");
+      }
     }
     finish() {
       var _a, _b, _c, _d, _e;

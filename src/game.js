@@ -11,7 +11,7 @@ import { formatTime, RunStats } from "./score.js";
 import { ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
-import { completedMissionIds, evaluateMissions } from "./missions.js";
+import { completedMissionIds, evaluateMissions, formatMissionProgress } from "./missions.js";
 import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
 import {
@@ -53,6 +53,7 @@ export class Game {
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
     this.comboElement = documentObject.getElementById("combo");
+    this.currentMissionsElement = documentObject.getElementById("current-missions");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image);
     this.state = GameState.READY;
@@ -263,13 +264,17 @@ export class Game {
     const checkpoint = findReachedCheckpoint(player, checkpoints);
     if (checkpoint) {
       checkpoint.claimed = true;
+      const split = this.stats.recordCheckpoint(checkpoint.order);
       if (checkpoint === checkpoints.at(-1)) this.finish();
       else {
         this.lastSafePosition = {
           x: Math.max(0, player.position.x - 60),
           y: player.position.y,
         };
-        this.showMessage("Checkpoint", "Du hast eine Toilette erreicht!");
+        this.showMessage(
+          `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
+          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}`
+        );
       }
     }
 
@@ -285,6 +290,11 @@ export class Game {
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
+    if (this.level) {
+      this.currentMissionsElement.textContent = this.level.missions
+        .map((mission) => formatMissionProgress(mission, this.stats))
+        .join(" · ");
+    }
   }
 
   finish() {

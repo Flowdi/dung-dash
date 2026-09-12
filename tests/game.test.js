@@ -11,7 +11,7 @@ import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTim
 import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
-import { completedMissionIds, evaluateMissions } from "../src/missions.js";
+import { completedMissionIds, evaluateMissions, formatMissionProgress } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
@@ -239,6 +239,33 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("checkpoint splits track total and section times", () => {
+  const stats = new RunStats();
+  stats.started = true;
+  stats.update(12.5, false);
+  assert.deepEqual(stats.recordCheckpoint(1), { order: 1, elapsedSeconds: 12.5, sectionSeconds: 12.5 });
+  stats.update(7.5, false);
+  assert.deepEqual(stats.recordCheckpoint(2), { order: 2, elapsedSeconds: 20, sectionSeconds: 7.5 });
+});
+
+test("WASD mirrors arrow-key movement and jumping", () => {
+  const listeners = new Map();
+  const windowObject = { addEventListener: (type, listener) => listeners.set(type, listener) };
+  const input = new InputController();
+  input.bind(windowObject);
+  const event = (key) => ({ key, code: `Key${key.toUpperCase()}`, repeat: false, preventDefault() {} });
+  listeners.get("keydown")(event("a"));
+  listeners.get("keydown")(event("d"));
+  listeners.get("keydown")(event("w"));
+  assert.equal(input.left, true);
+  assert.equal(input.right, true);
+  assert.equal(input.hasBufferedJump, true);
+  listeners.get("keyup")(event("a"));
+  listeners.get("keyup")(event("d"));
+  assert.equal(input.left, false);
+  assert.equal(input.right, false);
+});
+
 test("a running game pauses when its browser tab becomes hidden", () => {
   assert.equal(shouldPauseWhenHidden(GameState.PLAYING, true), true);
   assert.equal(shouldPauseWhenHidden(GameState.PAUSED, true), false);
@@ -346,6 +373,14 @@ test("level missions evaluate time, collection, combo and score goals", () => {
   assert.equal(evaluateMissions(missions, result)[1].completed, false);
 });
 
+test("live mission progress formats every supported goal", () => {
+  const stats = { fliesCollected: 7, elapsedSeconds: 42.5, bestCombo: 3, flyScore: 8500 };
+  assert.equal(formatMissionProgress({ type: "flies", target: 10 }, stats), "7/10 Fliegen");
+  assert.equal(formatMissionProgress({ type: "time", target: 75 }, stats), "00:42.5/01:15.0");
+  assert.equal(formatMissionProgress({ type: "combo", target: 4 }, stats), "×3/×4");
+  assert.equal(formatMissionProgress({ type: "score", target: 12000 }, stats), "8500/12000 Punkte");
+});
+
 test("completed level missions accumulate without duplicates", () => {
   const values = new Map();
   const storage = {
@@ -397,10 +432,27 @@ test("the campaign ends with two substantial expert levels", () => {
 
 test("invalid level data fails fast with a useful error", () => {
   const invalid = [{
-    id: "broken", width: 800, theme: { background: "bg", atlas: "atlas" },
-    missions: [{}, {}, {}], platforms: [[0, 0, "mystery"]], checkpoints: [[0, 0, 2]],
+    id: "broken", width: 800, spawn: { x: 0, y: 0 }, theme: { background: "bg", atlas: "atlas" },
+    missions: [
+      { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
+      { id: "c", type: "score", target: 1 },
+    ],
+    platforms: [[0, 0, "mystery"]], flies: [], checkpoints: [[0, 0, 1]], hazards: [],
   }];
   assert.throws(() => validateLevelDefinitions(invalid), /Unbekannter Plattformtyp/);
+});
+
+test("level validation rejects gameplay objects outside the world", () => {
+  const invalid = [{
+    id: "outside", width: 800, height: 800, spawn: { x: 10, y: 700 },
+    theme: { background: "bg", atlas: "atlas" },
+    missions: [
+      { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
+      { id: "c", type: "score", target: 1 },
+    ],
+    platforms: [[900, 400]], flies: [], checkpoints: [[700, 700, 1]], hazards: [],
+  }];
+  assert.throws(() => validateLevelDefinitions(invalid), /Plattform liegt außerhalb/);
 });
 
 test("every level defines three unique missions", () => {

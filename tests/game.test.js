@@ -11,7 +11,7 @@ import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTim
 import { ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
-import { completedMissionIds, evaluateMissions } from "../src/missions.js";
+import { completedMissionIds, evaluateMissions, formatMissionProgress } from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
@@ -371,6 +371,14 @@ test("level missions evaluate time, collection, combo and score goals", () => {
   const result = { elapsedSeconds: 59, fliesCollected: 9, bestCombo: 4, score: 12500 };
   assert.deepEqual(completedMissionIds(missions, result), ["fast", "combo", "score"]);
   assert.equal(evaluateMissions(missions, result)[1].completed, false);
+});
+
+test("live mission progress formats every supported goal", () => {
+  const stats = { fliesCollected: 7, elapsedSeconds: 42.5, bestCombo: 3, flyScore: 8500 };
+  assert.equal(formatMissionProgress({ type: "flies", target: 10 }, stats), "7/10 Fliegen");
+  assert.equal(formatMissionProgress({ type: "time", target: 75 }, stats), "00:42.5/01:15.0");
+  assert.equal(formatMissionProgress({ type: "combo", target: 4 }, stats), "×3/×4");
+  assert.equal(formatMissionProgress({ type: "score", target: 12000 }, stats), "8500/12000 Punkte");
 });
 
 test("completed level missions accumulate without duplicates", () => {

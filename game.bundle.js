@@ -1130,6 +1130,13 @@
     completed: mission.type === "time" ? result.elapsedSeconds <= mission.target : mission.type === "flies" ? result.fliesCollected >= mission.target : mission.type === "combo" ? result.bestCombo >= mission.target : mission.type === "score" ? result.score >= mission.target : false
   }));
   var completedMissionIds = (missions, result) => evaluateMissions(missions, result).filter(({ completed }) => completed).map(({ id }) => id);
+  var formatMissionProgress = (mission, stats) => {
+    if (mission.type === "flies") return `${stats.fliesCollected}/${mission.target} Fliegen`;
+    if (mission.type === "time") return `${formatTime(stats.elapsedSeconds)}/${formatTime(mission.target)}`;
+    if (mission.type === "combo") return `\xD7${stats.bestCombo}/\xD7${mission.target}`;
+    if (mission.type === "score") return `${stats.flyScore}/${mission.target} Punkte`;
+    return mission.label;
+  };
 
   // src/rendering.js
   var clamp01 = (value) => Math.max(0, Math.min(1, value));
@@ -1297,6 +1304,7 @@
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
+      this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image);
       this.state = GameState.READY;
@@ -1522,6 +1530,9 @@
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
+      if (this.level) {
+        this.currentMissionsElement.textContent = this.level.missions.map((mission) => formatMissionProgress(mission, this.stats)).join(" \xB7 ");
+      }
     }
     finish() {
       var _a, _b, _c, _d, _e;

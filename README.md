@@ -28,8 +28,8 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 
 `index.html` kann direkt im Browser geöffnet werden. Alternativ kann der Ordner über einen lokalen Webserver bereitgestellt werden.
 
-- Pfeiltasten links/rechts: bewegen
-- Leertaste oder Pfeiltaste hoch: springen
+- Pfeiltasten links/rechts oder A/D: bewegen
+- Leertaste, Pfeiltaste hoch oder W: springen
 - P oder Escape: pausieren/fortsetzen
 - R: aktuelles Level sofort neu starten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.

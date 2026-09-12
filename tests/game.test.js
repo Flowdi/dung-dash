@@ -239,6 +239,24 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("WASD mirrors arrow-key movement and jumping", () => {
+  const listeners = new Map();
+  const windowObject = { addEventListener: (type, listener) => listeners.set(type, listener) };
+  const input = new InputController();
+  input.bind(windowObject);
+  const event = (key) => ({ key, code: `Key${key.toUpperCase()}`, repeat: false, preventDefault() {} });
+  listeners.get("keydown")(event("a"));
+  listeners.get("keydown")(event("d"));
+  listeners.get("keydown")(event("w"));
+  assert.equal(input.left, true);
+  assert.equal(input.right, true);
+  assert.equal(input.hasBufferedJump, true);
+  listeners.get("keyup")(event("a"));
+  listeners.get("keyup")(event("d"));
+  assert.equal(input.left, false);
+  assert.equal(input.right, false);
+});
+
 test("a running game pauses when its browser tab becomes hidden", () => {
   assert.equal(shouldPauseWhenHidden(GameState.PLAYING, true), true);
   assert.equal(shouldPauseWhenHidden(GameState.PAUSED, true), false);

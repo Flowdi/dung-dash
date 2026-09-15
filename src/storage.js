@@ -24,6 +24,9 @@ const migrateUnlockedLevels = (progress) => {
   return [...unlocked];
 };
 
+export const countCompletedMissions = (progress) => Object.values(progress.levelRecords ?? {})
+  .reduce((total, record) => total + new Set(record.missions ?? []).size, 0);
+
 export class ProgressStore {
   constructor(storage) {
     this.storage = storage;

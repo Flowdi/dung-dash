@@ -160,7 +160,7 @@ body {
 
 .career-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
@@ -504,5 +504,11 @@ button:focus-visible {
 
   .checkpoint-screen.toast p {
     font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .career-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

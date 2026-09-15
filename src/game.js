@@ -8,7 +8,7 @@ import { loadSprites } from "./assets.js";
 import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
 import { formatTime, RunStats } from "./score.js";
-import { ProgressStore } from "./storage.js";
+import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
 import { completedMissionIds, evaluateMissions, formatMissionProgress } from "./missions.js";
@@ -128,7 +128,7 @@ export class Game {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = record
-      ? `${definition.description} Bestwert: ${record.bestScore} Punkte.`
+      ? `${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
       : definition.description;
   }
 
@@ -152,6 +152,7 @@ export class Game {
       ["Fliegen", progress.totalFlies],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
+      ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
     ];
     this.careerStats.replaceChildren(...stats.map(([label, value]) => {
       const item = this.document.createElement("p");

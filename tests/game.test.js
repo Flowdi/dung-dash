@@ -8,7 +8,7 @@ import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
 import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTime, RunStats } from "../src/score.js";
-import { ProgressStore } from "../src/storage.js";
+import { countCompletedMissions, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
 import { completedMissionIds, evaluateMissions, formatMissionProgress } from "../src/missions.js";
@@ -237,6 +237,14 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+});
+
+test("career progress counts unique mission stars", () => {
+  const progress = { levelRecords: {
+    first: { missions: ["a", "b", "b"] },
+    second: { missions: ["c"] },
+  } };
+  assert.equal(countCompletedMissions(progress), 3);
 });
 
 test("checkpoint splits track total and section times", () => {

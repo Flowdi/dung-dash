@@ -1065,6 +1065,13 @@
     });
     return [...unlocked];
   };
+  var countCompletedMissions = (progress) => {
+    var _a;
+    return Object.values((_a = progress.levelRecords) != null ? _a : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
+  };
   var ProgressStore = class {
     constructor(storage) {
       this.storage = storage;
@@ -1378,7 +1385,7 @@
       var _a, _b;
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
-      this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte.` : definition.description;
+      this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : definition.description;
     }
     renderMissions() {
       var _a, _b, _c, _d;
@@ -1400,7 +1407,8 @@
         ["L\xE4ufe", progress.totalRuns],
         ["Fliegen", progress.totalFlies],
         ["Highscore", progress.bestScore],
-        ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)]
+        ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
+        ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
       ];
       this.careerStats.replaceChildren(...stats.map(([label, value]) => {
         const item = this.document.createElement("p");

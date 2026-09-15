@@ -400,12 +400,16 @@ export class Game {
       this.input.reset();
       this.pauseButton.textContent = "Fortsetzen";
       this.pauseButton.setAttribute("aria-pressed", "true");
+      this.restartButton.style.display = "inline-block";
+      this.levelMenuButton.style.display = "inline-block";
       this.showMessage("Pause", "Drücke P, Escape oder Fortsetzen.", false);
     } else if (this.state === GameState.PAUSED) {
       this.state = GameState.PLAYING;
       this.previousFrameTime = null;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
+      this.restartButton.style.display = "none";
+      this.levelMenuButton.style.display = "none";
       this.checkpointScreen.style.display = "none";
       this.pauseButton.focus();
     }

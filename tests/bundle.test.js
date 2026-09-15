@@ -72,3 +72,9 @@ test("start screen exposes persistent level missions", async () => {
   assert.match(html, /id="mission-stars"/);
   assert.match(html, /id="mission-list"/);
 });
+
+test("pause mode exposes restart and level-selection actions", async () => {
+  const gameSource = await readFile(new URL("../src/game.js", import.meta.url), "utf8");
+  assert.match(gameSource, /GameState\.PAUSED[\s\S]*?restartButton\.style\.display = "inline-block"/);
+  assert.match(gameSource, /GameState\.PAUSED[\s\S]*?levelMenuButton\.style\.display = "inline-block"/);
+});

@@ -1086,6 +1086,14 @@
         return emptyProgress();
       }
     }
+    clear() {
+      var _a;
+      try {
+        (_a = this.storage) == null ? void 0 : _a.removeItem(STORAGE_KEY);
+      } catch (e) {
+      }
+      return emptyProgress();
+    }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
       const progress = this.load();
@@ -1298,6 +1306,8 @@
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
       this.achievementList = documentObject.getElementById("achievement-list");
+      this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+      this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
@@ -1351,6 +1361,7 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.resetProgressButton.addEventListener("click", () => this.resetProgress());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1424,6 +1435,16 @@
         item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
         return item;
       }));
+    }
+    resetProgress() {
+      if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;
+      this.progressStore.clear();
+      this.selectedLevelId = LEVELS[0].id;
+      this.renderLevelOptions();
+      this.renderProgress();
+      this.renderMissions();
+      this.progressResetStatus.textContent = "Fortschritt wurde zur\xFCckgesetzt.";
+      this.levelSelect.focus();
     }
     async start() {
       if (this.state !== GameState.READY && this.state !== GameState.ERROR) return;

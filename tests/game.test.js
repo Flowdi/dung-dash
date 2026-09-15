@@ -239,6 +239,20 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("progress can be cleared back to a fresh campaign", () => {
+  const values = new Map([["dung-dash-progress-v1", JSON.stringify({ totalRuns: 5 })]]);
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    removeItem: (key) => values.delete(key),
+  };
+  const store = new ProgressStore(storage);
+  assert.equal(store.load().totalRuns, 5);
+  const cleared = store.clear();
+  assert.equal(cleared.totalRuns, 0);
+  assert.deepEqual(cleared.unlockedLevels, ["bathroom-run"]);
+  assert.equal(values.size, 0);
+});
+
 test("career progress counts unique mission stars", () => {
   const progress = { levelRecords: {
     first: { missions: ["a", "b", "b"] },

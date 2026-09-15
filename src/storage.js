@@ -42,6 +42,15 @@ export class ProgressStore {
     }
   }
 
+  clear() {
+    try {
+      this.storage?.removeItem(STORAGE_KEY);
+    } catch {
+      // Auch ohne verfügbaren Speicher kann mit einem leeren Fortschritt weitergespielt werden.
+    }
+    return emptyProgress();
+  }
+
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
     const next = {

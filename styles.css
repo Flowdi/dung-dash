@@ -209,6 +209,19 @@ body {
   display: block;
 }
 
+.reset-progress-btn {
+  min-height: 36px;
+  margin: 12px 0 0;
+  font-size: 0.78rem;
+}
+
+.progress-reset-status {
+  min-height: 1.2em;
+  margin-top: 5px;
+  color: var(--focus);
+  font-size: 0.75rem;
+}
+
 .achievement strong {
   font-size: 0.76rem;
 }

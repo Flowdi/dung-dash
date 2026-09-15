@@ -40,6 +40,8 @@ export class Game {
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
     this.achievementList = documentObject.getElementById("achievement-list");
+    this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+    this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
@@ -94,6 +96,7 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.resetProgressButton.addEventListener("click", () => this.resetProgress());
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -169,6 +172,17 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
       return item;
     }));
+  }
+
+  resetProgress() {
+    if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen löschen?")) return;
+    this.progressStore.clear();
+    this.selectedLevelId = LEVELS[0].id;
+    this.renderLevelOptions();
+    this.renderProgress();
+    this.renderMissions();
+    this.progressResetStatus.textContent = "Fortschritt wurde zurückgesetzt.";
+    this.levelSelect.focus();
   }
 
   async start() {

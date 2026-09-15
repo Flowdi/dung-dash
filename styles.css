@@ -262,10 +262,23 @@ button:focus-visible {
 }
 
 .current-missions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 8px;
   margin-top: 3px;
   color: #d8d8d8;
   font-size: 0.68rem;
   line-height: 1.3;
+}
+
+.current-missions .complete {
+  color: #8ff0a4;
+  font-weight: 700;
+}
+
+.current-missions .failed {
+  color: #ff8b8b;
+  font-weight: 700;
 }
 
 .checkpoint-screen.toast {

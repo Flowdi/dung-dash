@@ -1152,6 +1152,13 @@
     if (mission.type === "score") return `${stats.flyScore}/${mission.target} Punkte`;
     return mission.label;
   };
+  var getMissionProgressState = (mission, stats) => {
+    if (mission.type === "time") return stats.elapsedSeconds > mission.target ? "failed" : "active";
+    if (mission.type === "flies") return stats.fliesCollected >= mission.target ? "complete" : "active";
+    if (mission.type === "combo") return stats.bestCombo >= mission.target ? "complete" : "active";
+    if (mission.type === "score") return stats.flyScore >= mission.target ? "complete" : "active";
+    return "active";
+  };
 
   // src/rendering.js
   var clamp01 = (value) => Math.max(0, Math.min(1, value));
@@ -1560,7 +1567,13 @@
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       if (this.level) {
-        this.currentMissionsElement.textContent = this.level.missions.map((mission) => formatMissionProgress(mission, this.stats)).join(" \xB7 ");
+        const missionMarkup = this.level.missions.map((mission) => {
+          const state = getMissionProgressState(mission, this.stats);
+          return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;
+        }).join("");
+        if (this.currentMissionsElement.innerHTML !== missionMarkup) {
+          this.currentMissionsElement.innerHTML = missionMarkup;
+        }
       }
     }
     finish() {

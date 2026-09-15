@@ -11,7 +11,12 @@ import { formatTime, RunStats } from "./score.js";
 import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
-import { completedMissionIds, evaluateMissions, formatMissionProgress } from "./missions.js";
+import {
+  completedMissionIds,
+  evaluateMissions,
+  formatMissionProgress,
+  getMissionProgressState,
+} from "./missions.js";
 import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
 import {
@@ -306,9 +311,13 @@ export class Game {
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
     if (this.level) {
-      this.currentMissionsElement.textContent = this.level.missions
-        .map((mission) => formatMissionProgress(mission, this.stats))
-        .join(" · ");
+      const missionMarkup = this.level.missions.map((mission) => {
+        const state = getMissionProgressState(mission, this.stats);
+        return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;
+      }).join("");
+      if (this.currentMissionsElement.innerHTML !== missionMarkup) {
+        this.currentMissionsElement.innerHTML = missionMarkup;
+      }
     }
   }
 

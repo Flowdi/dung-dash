@@ -1065,6 +1065,13 @@
     });
     return [...unlocked];
   };
+  var countCompletedMissions = (progress) => {
+    var _a;
+    return Object.values((_a = progress.levelRecords) != null ? _a : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
+  };
   var ProgressStore = class {
     constructor(storage) {
       this.storage = storage;
@@ -1078,6 +1085,14 @@
       } catch (e) {
         return emptyProgress();
       }
+    }
+    clear() {
+      var _a;
+      try {
+        (_a = this.storage) == null ? void 0 : _a.removeItem(STORAGE_KEY);
+      } catch (e) {
+      }
+      return emptyProgress();
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
@@ -1136,6 +1151,13 @@
     if (mission.type === "combo") return `\xD7${stats.bestCombo}/\xD7${mission.target}`;
     if (mission.type === "score") return `${stats.flyScore}/${mission.target} Punkte`;
     return mission.label;
+  };
+  var getMissionProgressState = (mission, stats) => {
+    if (mission.type === "time") return stats.elapsedSeconds > mission.target ? "failed" : "active";
+    if (mission.type === "flies") return stats.fliesCollected >= mission.target ? "complete" : "active";
+    if (mission.type === "combo") return stats.bestCombo >= mission.target ? "complete" : "active";
+    if (mission.type === "score") return stats.flyScore >= mission.target ? "complete" : "active";
+    return "active";
   };
 
   // src/rendering.js
@@ -1291,6 +1313,8 @@
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
       this.achievementList = documentObject.getElementById("achievement-list");
+      this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+      this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
@@ -1344,6 +1368,7 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.resetProgressButton.addEventListener("click", () => this.resetProgress());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1378,7 +1403,7 @@
       var _a, _b;
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
-      this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte.` : definition.description;
+      this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : definition.description;
     }
     renderMissions() {
       var _a, _b, _c, _d;
@@ -1400,7 +1425,8 @@
         ["L\xE4ufe", progress.totalRuns],
         ["Fliegen", progress.totalFlies],
         ["Highscore", progress.bestScore],
-        ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)]
+        ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
+        ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
       ];
       this.careerStats.replaceChildren(...stats.map(([label, value]) => {
         const item = this.document.createElement("p");
@@ -1416,6 +1442,16 @@
         item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
         return item;
       }));
+    }
+    resetProgress() {
+      if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;
+      this.progressStore.clear();
+      this.selectedLevelId = LEVELS[0].id;
+      this.renderLevelOptions();
+      this.renderProgress();
+      this.renderMissions();
+      this.progressResetStatus.textContent = "Fortschritt wurde zur\xFCckgesetzt.";
+      this.levelSelect.focus();
     }
     async start() {
       if (this.state !== GameState.READY && this.state !== GameState.ERROR) return;
@@ -1531,7 +1567,13 @@
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       if (this.level) {
-        this.currentMissionsElement.textContent = this.level.missions.map((mission) => formatMissionProgress(mission, this.stats)).join(" \xB7 ");
+        const missionMarkup = this.level.missions.map((mission) => {
+          const state = getMissionProgressState(mission, this.stats);
+          return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;
+        }).join("");
+        if (this.currentMissionsElement.innerHTML !== missionMarkup) {
+          this.currentMissionsElement.innerHTML = missionMarkup;
+        }
       }
     }
     finish() {
@@ -1628,12 +1670,16 @@
         this.input.reset();
         this.pauseButton.textContent = "Fortsetzen";
         this.pauseButton.setAttribute("aria-pressed", "true");
+        this.restartButton.style.display = "inline-block";
+        this.levelMenuButton.style.display = "inline-block";
         this.showMessage("Pause", "Dr\xFCcke P, Escape oder Fortsetzen.", false);
       } else if (this.state === GameState.PAUSED) {
         this.state = GameState.PLAYING;
         this.previousFrameTime = null;
         this.pauseButton.textContent = "Pause";
         this.pauseButton.setAttribute("aria-pressed", "false");
+        this.restartButton.style.display = "none";
+        this.levelMenuButton.style.display = "none";
         this.checkpointScreen.style.display = "none";
         this.pauseButton.focus();
       }

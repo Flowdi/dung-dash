@@ -23,3 +23,11 @@ export const formatMissionProgress = (mission, stats) => {
   if (mission.type === "score") return `${stats.flyScore}/${mission.target} Punkte`;
   return mission.label;
 };
+
+export const getMissionProgressState = (mission, stats) => {
+  if (mission.type === "time") return stats.elapsedSeconds > mission.target ? "failed" : "active";
+  if (mission.type === "flies") return stats.fliesCollected >= mission.target ? "complete" : "active";
+  if (mission.type === "combo") return stats.bestCombo >= mission.target ? "complete" : "active";
+  if (mission.type === "score") return stats.flyScore >= mission.target ? "complete" : "active";
+  return "active";
+};

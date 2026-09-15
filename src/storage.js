@@ -24,6 +24,9 @@ const migrateUnlockedLevels = (progress) => {
   return [...unlocked];
 };
 
+export const countCompletedMissions = (progress) => Object.values(progress.levelRecords ?? {})
+  .reduce((total, record) => total + new Set(record.missions ?? []).size, 0);
+
 export class ProgressStore {
   constructor(storage) {
     this.storage = storage;
@@ -37,6 +40,15 @@ export class ProgressStore {
     } catch {
       return emptyProgress();
     }
+  }
+
+  clear() {
+    try {
+      this.storage?.removeItem(STORAGE_KEY);
+    } catch {
+      // Auch ohne verfügbaren Speicher kann mit einem leeren Fortschritt weitergespielt werden.
+    }
+    return emptyProgress();
   }
 
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {

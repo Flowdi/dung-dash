@@ -8,10 +8,15 @@ import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
 import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTime, RunStats } from "../src/score.js";
-import { ProgressStore } from "../src/storage.js";
+import { countCompletedMissions, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
-import { completedMissionIds, evaluateMissions, formatMissionProgress } from "../src/missions.js";
+import {
+  completedMissionIds,
+  evaluateMissions,
+  formatMissionProgress,
+  getMissionProgressState,
+} from "../src/missions.js";
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
@@ -239,6 +244,28 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFlies, 30);
 });
 
+test("progress can be cleared back to a fresh campaign", () => {
+  const values = new Map([["dung-dash-progress-v1", JSON.stringify({ totalRuns: 5 })]]);
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    removeItem: (key) => values.delete(key),
+  };
+  const store = new ProgressStore(storage);
+  assert.equal(store.load().totalRuns, 5);
+  const cleared = store.clear();
+  assert.equal(cleared.totalRuns, 0);
+  assert.deepEqual(cleared.unlockedLevels, ["bathroom-run"]);
+  assert.equal(values.size, 0);
+});
+
+test("career progress counts unique mission stars", () => {
+  const progress = { levelRecords: {
+    first: { missions: ["a", "b", "b"] },
+    second: { missions: ["c"] },
+  } };
+  assert.equal(countCompletedMissions(progress), 3);
+});
+
 test("checkpoint splits track total and section times", () => {
   const stats = new RunStats();
   stats.started = true;
@@ -379,6 +406,13 @@ test("live mission progress formats every supported goal", () => {
   assert.equal(formatMissionProgress({ type: "time", target: 75 }, stats), "00:42.5/01:15.0");
   assert.equal(formatMissionProgress({ type: "combo", target: 4 }, stats), "×3/×4");
   assert.equal(formatMissionProgress({ type: "score", target: 12000 }, stats), "8500/12000 Punkte");
+});
+
+test("live missions distinguish completed goals and missed time limits", () => {
+  const stats = { fliesCollected: 10, elapsedSeconds: 76, bestCombo: 3, flyScore: 8500 };
+  assert.equal(getMissionProgressState({ type: "flies", target: 10 }, stats), "complete");
+  assert.equal(getMissionProgressState({ type: "combo", target: 4 }, stats), "active");
+  assert.equal(getMissionProgressState({ type: "time", target: 75 }, stats), "failed");
 });
 
 test("completed level missions accumulate without duplicates", () => {

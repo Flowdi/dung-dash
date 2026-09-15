@@ -65,10 +65,18 @@ test("start screen exposes career stats and achievements", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="career-stats"/);
   assert.match(html, /id="achievement-list"/);
+  assert.match(html, /id="reset-progress-btn"/);
+  assert.match(html, /id="progress-reset-status"/);
 });
 
 test("start screen exposes persistent level missions", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="mission-stars"/);
   assert.match(html, /id="mission-list"/);
+});
+
+test("pause mode exposes restart and level-selection actions", async () => {
+  const gameSource = await readFile(new URL("../src/game.js", import.meta.url), "utf8");
+  assert.match(gameSource, /GameState\.PAUSED[\s\S]*?restartButton\.style\.display = "inline-block"/);
+  assert.match(gameSource, /GameState\.PAUSED[\s\S]*?levelMenuButton\.style\.display = "inline-block"/);
 });

@@ -8,10 +8,15 @@ import { loadSprites } from "./assets.js";
 import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
 import { formatTime, RunStats } from "./score.js";
-import { ProgressStore } from "./storage.js";
+import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
-import { completedMissionIds, evaluateMissions, formatMissionProgress } from "./missions.js";
+import {
+  completedMissionIds,
+  evaluateMissions,
+  formatMissionProgress,
+  getMissionProgressState,
+} from "./missions.js";
 import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
 import {
@@ -40,6 +45,8 @@ export class Game {
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
     this.achievementList = documentObject.getElementById("achievement-list");
+    this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+    this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
@@ -94,6 +101,7 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.resetProgressButton.addEventListener("click", () => this.resetProgress());
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -128,7 +136,7 @@ export class Game {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = record
-      ? `${definition.description} Bestwert: ${record.bestScore} Punkte.`
+      ? `${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
       : definition.description;
   }
 
@@ -152,6 +160,7 @@ export class Game {
       ["Fliegen", progress.totalFlies],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
+      ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
     ];
     this.careerStats.replaceChildren(...stats.map(([label, value]) => {
       const item = this.document.createElement("p");
@@ -168,6 +177,17 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
       return item;
     }));
+  }
+
+  resetProgress() {
+    if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen löschen?")) return;
+    this.progressStore.clear();
+    this.selectedLevelId = LEVELS[0].id;
+    this.renderLevelOptions();
+    this.renderProgress();
+    this.renderMissions();
+    this.progressResetStatus.textContent = "Fortschritt wurde zurückgesetzt.";
+    this.levelSelect.focus();
   }
 
   async start() {
@@ -291,9 +311,13 @@ export class Game {
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
     if (this.level) {
-      this.currentMissionsElement.textContent = this.level.missions
-        .map((mission) => formatMissionProgress(mission, this.stats))
-        .join(" · ");
+      const missionMarkup = this.level.missions.map((mission) => {
+        const state = getMissionProgressState(mission, this.stats);
+        return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;
+      }).join("");
+      if (this.currentMissionsElement.innerHTML !== missionMarkup) {
+        this.currentMissionsElement.innerHTML = missionMarkup;
+      }
     }
   }
 
@@ -399,12 +423,16 @@ export class Game {
       this.input.reset();
       this.pauseButton.textContent = "Fortsetzen";
       this.pauseButton.setAttribute("aria-pressed", "true");
+      this.restartButton.style.display = "inline-block";
+      this.levelMenuButton.style.display = "inline-block";
       this.showMessage("Pause", "Drücke P, Escape oder Fortsetzen.", false);
     } else if (this.state === GameState.PAUSED) {
       this.state = GameState.PLAYING;
       this.previousFrameTime = null;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
+      this.restartButton.style.display = "none";
+      this.levelMenuButton.style.display = "none";
       this.checkpointScreen.style.display = "none";
       this.pauseButton.focus();
     }

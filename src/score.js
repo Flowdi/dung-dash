@@ -96,6 +96,7 @@ export class RunStats {
       falls: this.falls,
       bestCombo: this.bestCombo,
       flyScore: this.flyScore,
+      checkpointSplits: this.checkpointSplits.map((split) => ({ ...split })),
     };
     const breakdown = calculateScoreBreakdown(result);
     return {

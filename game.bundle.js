@@ -1003,7 +1003,8 @@
         totalFlies,
         falls: this.falls,
         bestCombo: this.bestCombo,
-        flyScore: this.flyScore
+        flyScore: this.flyScore,
+        checkpointSplits: this.checkpointSplits.map((split) => ({ ...split }))
       };
       const breakdown = calculateScoreBreakdown(result);
       return {
@@ -1095,8 +1096,10 @@
       return emptyProgress();
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
       const progress = this.load();
+      const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
+      const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1105,29 +1108,30 @@
         totalFlies: progress.totalFlies + result.fliesCollected,
         medals: {
           ...progress.medals,
-          [result.medal]: ((_a = progress.medals[result.medal]) != null ? _a : 0) + 1
+          [result.medal]: ((_b = progress.medals[result.medal]) != null ? _b : 0) + 1
         },
         unlockedLevels: [.../* @__PURE__ */ new Set([
-          ...(_b = progress.unlockedLevels) != null ? _b : ["bathroom-run"],
+          ...(_c = progress.unlockedLevels) != null ? _c : ["bathroom-run"],
           ...nextLevelId ? [nextLevelId] : []
         ])],
         levelRecords: {
-          ...(_c = progress.levelRecords) != null ? _c : {},
+          ...(_d = progress.levelRecords) != null ? _d : {},
           [levelId]: {
-            bestScore: Math.max((_f = (_e = (_d = progress.levelRecords) == null ? void 0 : _d[levelId]) == null ? void 0 : _e.bestScore) != null ? _f : 0, result.score),
-            bestTime: ((_h = (_g = progress.levelRecords) == null ? void 0 : _g[levelId]) == null ? void 0 : _h.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            medal: this.bestMedal((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.medal, result.medal),
+            bestScore: Math.max((_g = (_f = (_e = progress.levelRecords) == null ? void 0 : _e[levelId]) == null ? void 0 : _f.bestScore) != null ? _g : 0, result.score),
+            bestTime: ((_i = (_h = progress.levelRecords) == null ? void 0 : _h[levelId]) == null ? void 0 : _i.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_j = result.checkpointSplits) != null ? _j : []).map((split) => ({ ...split })) : (_k = previousLevelRecord.bestSplits) != null ? _k : [],
+            medal: this.bestMedal((_m = (_l = progress.levelRecords) == null ? void 0 : _l[levelId]) == null ? void 0 : _m.medal, result.medal),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_m = (_l = (_k = progress.levelRecords) == null ? void 0 : _k[levelId]) == null ? void 0 : _l.missions) != null ? _m : [],
+              ...(_p = (_o = (_n = progress.levelRecords) == null ? void 0 : _n[levelId]) == null ? void 0 : _o.missions) != null ? _p : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_n = progress.achievements) != null ? _n : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_q = progress.achievements) != null ? _q : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_o = this.storage) == null ? void 0 : _o.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_r = this.storage) == null ? void 0 : _r.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return { ...next, newAchievements };

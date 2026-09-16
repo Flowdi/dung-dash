@@ -53,6 +53,8 @@ export class ProgressStore {
 
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
+    const previousLevelRecord = progress.levelRecords?.[levelId];
+    const isNewBestTime = previousLevelRecord?.bestTime == null || result.elapsedSeconds < previousLevelRecord.bestTime;
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -74,6 +76,9 @@ export class ProgressStore {
           bestTime: progress.levelRecords?.[levelId]?.bestTime == null
             ? result.elapsedSeconds
             : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+          bestSplits: isNewBestTime
+            ? (result.checkpointSplits ?? []).map((split) => ({ ...split }))
+            : (previousLevelRecord.bestSplits ?? []),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
           missions: [...new Set([
             ...(progress.levelRecords?.[levelId]?.missions ?? []),

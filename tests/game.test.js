@@ -275,6 +275,16 @@ test("checkpoint splits track total and section times", () => {
   assert.deepEqual(stats.recordCheckpoint(2), { order: 2, elapsedSeconds: 20, sectionSeconds: 7.5 });
 });
 
+test("checkpoint splits are included in a finished run", () => {
+  const stats = new RunStats();
+  stats.started = true;
+  stats.update(10, false);
+  stats.recordCheckpoint(1);
+  assert.deepEqual(stats.finish(1).checkpointSplits, [
+    { order: 1, elapsedSeconds: 10, sectionSeconds: 10 },
+  ]);
+});
+
 test("WASD mirrors arrow-key movement and jumping", () => {
   const listeners = new Map();
   const windowObject = { addEventListener: (type, listener) => listeners.set(type, listener) };
@@ -552,6 +562,21 @@ test("bounce and fragile platforms expose their gameplay behavior", () => {
   resolvePlatformCollisions(player, [fragile]);
   assert.equal(fragile.active, true);
   assert.ok(fragile.breakRemaining > 0);
+});
+
+test("only the fastest run replaces stored checkpoint splits", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const base = { score: 1000, fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 };
+  store.record({ ...base, elapsedSeconds: 50, checkpointSplits: [{ order: 1, elapsedSeconds: 20 }] });
+  const slower = store.record({ ...base, elapsedSeconds: 60, checkpointSplits: [{ order: 1, elapsedSeconds: 30 }] });
+  assert.equal(slower.levelRecords["bathroom-run"].bestSplits[0].elapsedSeconds, 20);
+  const faster = store.record({ ...base, elapsedSeconds: 40, checkpointSplits: [{ order: 1, elapsedSeconds: 15 }] });
+  assert.equal(faster.levelRecords["bathroom-run"].bestSplits[0].elapsedSeconds, 15);
 });
 
 test("fragile platforms return so they cannot permanently block a route", () => {

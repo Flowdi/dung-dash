@@ -249,6 +249,20 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+  assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
+});
+
+test("slower lower-scoring runs do not claim new level records", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const base = { fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 };
+  store.record({ ...base, score: 2000, elapsedSeconds: 40 });
+  const result = store.record({ ...base, score: 1000, elapsedSeconds: 50 });
+  assert.deepEqual(result.recordFlags, { levelScore: false, levelTime: false });
 });
 
 test("progress can be cleared back to a fresh campaign", () => {

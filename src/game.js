@@ -122,7 +122,9 @@ export class Game {
       option.value = definition.id;
       option.disabled = !unlocked;
       const stars = record?.missions?.length ?? 0;
-      option.textContent = `${index + 1}. ${definition.name}${record ? ` · ${record.medal}` : ""}${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
+      option.textContent = `${index + 1}. ${definition.name}` +
+        `${record ? ` · ${record.medal} · ${formatTime(record.bestTime)}` : ""}` +
+        `${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
     });
     if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -344,6 +346,8 @@ export class Game {
       `${result.medal}-Medaille!`,
       `Zeit: ${formatTime(result.elapsedSeconds)} · Fliegen: ${result.fliesCollected}/${result.totalFlies} · ` +
         `Treffer: ${result.falls} · Rekord: ${progress.bestScore}` +
+        (progress.recordFlags.levelScore ? " · Neuer Level-Highscore!" : "") +
+        (progress.recordFlags.levelTime ? " · Neue Level-Bestzeit!" : "") +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
           : ""),

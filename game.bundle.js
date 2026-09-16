@@ -1097,10 +1097,11 @@
       return emptyProgress();
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
+      const isNewBestScore = result.score > ((_b = previousLevelRecord == null ? void 0 : previousLevelRecord.bestScore) != null ? _b : 0);
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1109,33 +1110,37 @@
         totalFlies: progress.totalFlies + result.fliesCollected,
         medals: {
           ...progress.medals,
-          [result.medal]: ((_b = progress.medals[result.medal]) != null ? _b : 0) + 1
+          [result.medal]: ((_c = progress.medals[result.medal]) != null ? _c : 0) + 1
         },
         unlockedLevels: [.../* @__PURE__ */ new Set([
-          ...(_c = progress.unlockedLevels) != null ? _c : ["bathroom-run"],
+          ...(_d = progress.unlockedLevels) != null ? _d : ["bathroom-run"],
           ...nextLevelId ? [nextLevelId] : []
         ])],
         levelRecords: {
-          ...(_d = progress.levelRecords) != null ? _d : {},
+          ...(_e = progress.levelRecords) != null ? _e : {},
           [levelId]: {
-            bestScore: Math.max((_g = (_f = (_e = progress.levelRecords) == null ? void 0 : _e[levelId]) == null ? void 0 : _f.bestScore) != null ? _g : 0, result.score),
-            bestTime: ((_i = (_h = progress.levelRecords) == null ? void 0 : _h[levelId]) == null ? void 0 : _i.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            bestSplits: isNewBestTime ? ((_j = result.checkpointSplits) != null ? _j : []).map((split) => ({ ...split })) : (_k = previousLevelRecord.bestSplits) != null ? _k : [],
-            medal: this.bestMedal((_m = (_l = progress.levelRecords) == null ? void 0 : _l[levelId]) == null ? void 0 : _m.medal, result.medal),
+            bestScore: Math.max((_h = (_g = (_f = progress.levelRecords) == null ? void 0 : _f[levelId]) == null ? void 0 : _g.bestScore) != null ? _h : 0, result.score),
+            bestTime: ((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_k = result.checkpointSplits) != null ? _k : []).map((split) => ({ ...split })) : (_l = previousLevelRecord.bestSplits) != null ? _l : [],
+            medal: this.bestMedal((_n = (_m = progress.levelRecords) == null ? void 0 : _m[levelId]) == null ? void 0 : _n.medal, result.medal),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_p = (_o = (_n = progress.levelRecords) == null ? void 0 : _n[levelId]) == null ? void 0 : _o.missions) != null ? _p : [],
+              ...(_q = (_p = (_o = progress.levelRecords) == null ? void 0 : _o[levelId]) == null ? void 0 : _p.missions) != null ? _q : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_q = progress.achievements) != null ? _q : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_r = progress.achievements) != null ? _r : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_r = this.storage) == null ? void 0 : _r.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_s = this.storage) == null ? void 0 : _s.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
-      return { ...next, newAchievements };
+      return {
+        ...next,
+        newAchievements,
+        recordFlags: { levelScore: isNewBestScore, levelTime: isNewBestTime }
+      };
     }
     bestMedal(current, candidate) {
       var _a, _b;
@@ -1395,7 +1400,7 @@
         option.value = definition.id;
         option.disabled = !unlocked;
         const stars = (_c = (_b = record == null ? void 0 : record.missions) == null ? void 0 : _b.length) != null ? _c : 0;
-        option.textContent = `${index + 1}. ${definition.name}${record ? ` \xB7 ${record.medal}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
+        option.textContent = `${index + 1}. ${definition.name}${record ? ` \xB7 ${record.medal} \xB7 ${formatTime(record.bestTime)}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
         this.levelSelect.append(option);
       });
       if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -1601,7 +1606,7 @@
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.recordFlags.levelScore ? " \xB7 Neuer Level-Highscore!" : "") + (progress.recordFlags.levelTime ? " \xB7 Neue Level-Bestzeit!" : "") + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
         false
       );
       this.renderRunResult(result, missionResults, newMissions);

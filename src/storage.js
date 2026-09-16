@@ -55,6 +55,7 @@ export class ProgressStore {
     const progress = this.load();
     const previousLevelRecord = progress.levelRecords?.[levelId];
     const isNewBestTime = previousLevelRecord?.bestTime == null || result.elapsedSeconds < previousLevelRecord.bestTime;
+    const isNewBestScore = result.score > (previousLevelRecord?.bestScore ?? 0);
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -94,7 +95,11 @@ export class ProgressStore {
     } catch {
       // Das Spiel bleibt auch bei deaktiviertem oder vollem Speicher spielbar.
     }
-    return { ...next, newAchievements };
+    return {
+      ...next,
+      newAchievements,
+      recordFlags: { levelScore: isNewBestScore, levelTime: isNewBestTime },
+    };
   }
 
   bestMedal(current, candidate) {

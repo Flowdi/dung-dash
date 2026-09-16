@@ -7,7 +7,14 @@ import { CheckPoint, Platform, Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
-import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTime, RunStats } from "../src/score.js";
+import {
+  calculateFinalScore,
+  calculateMedal,
+  calculateScoreBreakdown,
+  formatTime,
+  formatTimeDelta,
+  RunStats,
+} from "../src/score.js";
 import { countCompletedMissions, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
@@ -242,6 +249,20 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+  assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
+});
+
+test("slower lower-scoring runs do not claim new level records", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const base = { fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 };
+  store.record({ ...base, score: 2000, elapsedSeconds: 40 });
+  const result = store.record({ ...base, score: 1000, elapsedSeconds: 50 });
+  assert.deepEqual(result.recordFlags, { levelScore: false, levelTime: false });
 });
 
 test("progress can be cleared back to a fresh campaign", () => {
@@ -273,6 +294,21 @@ test("checkpoint splits track total and section times", () => {
   assert.deepEqual(stats.recordCheckpoint(1), { order: 1, elapsedSeconds: 12.5, sectionSeconds: 12.5 });
   stats.update(7.5, false);
   assert.deepEqual(stats.recordCheckpoint(2), { order: 2, elapsedSeconds: 20, sectionSeconds: 7.5 });
+});
+
+test("checkpoint comparisons format gains and losses against a personal best", () => {
+  assert.equal(formatTimeDelta(-1.2), "−00:01.2");
+  assert.equal(formatTimeDelta(2.5), "+00:02.5");
+});
+
+test("checkpoint splits are included in a finished run", () => {
+  const stats = new RunStats();
+  stats.started = true;
+  stats.update(10, false);
+  stats.recordCheckpoint(1);
+  assert.deepEqual(stats.finish(1).checkpointSplits, [
+    { order: 1, elapsedSeconds: 10, sectionSeconds: 10 },
+  ]);
 });
 
 test("WASD mirrors arrow-key movement and jumping", () => {
@@ -552,6 +588,21 @@ test("bounce and fragile platforms expose their gameplay behavior", () => {
   resolvePlatformCollisions(player, [fragile]);
   assert.equal(fragile.active, true);
   assert.ok(fragile.breakRemaining > 0);
+});
+
+test("only the fastest run replaces stored checkpoint splits", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  const base = { score: 1000, fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 };
+  store.record({ ...base, elapsedSeconds: 50, checkpointSplits: [{ order: 1, elapsedSeconds: 20 }] });
+  const slower = store.record({ ...base, elapsedSeconds: 60, checkpointSplits: [{ order: 1, elapsedSeconds: 30 }] });
+  assert.equal(slower.levelRecords["bathroom-run"].bestSplits[0].elapsedSeconds, 20);
+  const faster = store.record({ ...base, elapsedSeconds: 40, checkpointSplits: [{ order: 1, elapsedSeconds: 15 }] });
+  assert.equal(faster.levelRecords["bathroom-run"].bestSplits[0].elapsedSeconds, 15);
 });
 
 test("fragile platforms return so they cannot permanently block a route", () => {

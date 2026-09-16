@@ -7,7 +7,7 @@ import {
 import { loadSprites } from "./assets.js";
 import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
-import { formatTime, RunStats } from "./score.js";
+import { formatTime, formatTimeDelta, RunStats } from "./score.js";
 import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
@@ -122,7 +122,9 @@ export class Game {
       option.value = definition.id;
       option.disabled = !unlocked;
       const stars = record?.missions?.length ?? 0;
-      option.textContent = `${index + 1}. ${definition.name}${record ? ` · ${record.medal}` : ""}${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
+      option.textContent = `${index + 1}. ${definition.name}` +
+        `${record ? ` · ${record.medal} · ${formatTime(record.bestTime)}` : ""}` +
+        `${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
     });
     if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -287,13 +289,18 @@ export class Game {
       const split = this.stats.recordCheckpoint(checkpoint.order);
       if (checkpoint === checkpoints.at(-1)) this.finish();
       else {
+        const bestSplit = this.progressStore.load().levelRecords?.[this.level.id]?.bestSplits
+          ?.find(({ order }) => order === checkpoint.order);
+        const comparison = bestSplit
+          ? ` · PB ${formatTimeDelta(split.elapsedSeconds - bestSplit.elapsedSeconds)}`
+          : "";
         this.lastSafePosition = {
           x: Math.max(0, player.position.x - 60),
           y: player.position.y,
         };
         this.showMessage(
           `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
-          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}`
+          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}${comparison}`
         );
       }
     }
@@ -339,6 +346,8 @@ export class Game {
       `${result.medal}-Medaille!`,
       `Zeit: ${formatTime(result.elapsedSeconds)} · Fliegen: ${result.fliesCollected}/${result.totalFlies} · ` +
         `Treffer: ${result.falls} · Rekord: ${progress.bestScore}` +
+        (progress.recordFlags.levelScore ? " · Neuer Level-Highscore!" : "") +
+        (progress.recordFlags.levelTime ? " · Neue Level-Bestzeit!" : "") +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
           : ""),

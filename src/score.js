@@ -38,6 +38,9 @@ export const calculateScoreBreakdown = ({
   };
 };
 
+export const formatTimeDelta = (seconds) =>
+  `${seconds <= 0 ? "−" : "+"}${formatTime(Math.abs(seconds))}`;
+
 export const calculateFinalScore = (result) => calculateScoreBreakdown(result).total;
 
 export class RunStats {
@@ -96,6 +99,7 @@ export class RunStats {
       falls: this.falls,
       bestCombo: this.bestCombo,
       flyScore: this.flyScore,
+      checkpointSplits: this.checkpointSplits.map((split) => ({ ...split })),
     };
     const breakdown = calculateScoreBreakdown(result);
     return {

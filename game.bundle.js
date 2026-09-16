@@ -952,6 +952,7 @@
       total: Math.max(0, flyScore + timeBonus + collectionBonus + COMPLETION_BONUS - fallPenalty)
     };
   };
+  var formatTimeDelta = (seconds) => `${seconds <= 0 ? "\u2212" : "+"}${formatTime(Math.abs(seconds))}`;
   var RunStats = class {
     constructor() {
       this.elapsedSeconds = 0;
@@ -1518,6 +1519,7 @@
       this.cameraY = Math.min(this.cameraY, Math.max(0, levelHeight - this.viewport.viewportHeight));
     }
     update(deltaTime) {
+      var _a, _b, _c;
       const { player, platforms, blockades, flies, checkpoints, hazards } = this.level;
       this.stats.update(deltaTime, this.input.left || this.input.right || this.input.hasBufferedJump);
       platforms.forEach((platform) => platform.update(deltaTime));
@@ -1549,13 +1551,15 @@
         const split = this.stats.recordCheckpoint(checkpoint.order);
         if (checkpoint === checkpoints.at(-1)) this.finish();
         else {
+          const bestSplit = (_c = (_b = (_a = this.progressStore.load().levelRecords) == null ? void 0 : _a[this.level.id]) == null ? void 0 : _b.bestSplits) == null ? void 0 : _c.find(({ order }) => order === checkpoint.order);
+          const comparison = bestSplit ? ` \xB7 PB ${formatTimeDelta(split.elapsedSeconds - bestSplit.elapsedSeconds)}` : "";
           this.lastSafePosition = {
             x: Math.max(0, player.position.x - 60),
             y: player.position.y
           };
           this.showMessage(
             `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
-            `Zwischenzeit ${formatTime(split.elapsedSeconds)} \xB7 Abschnitt ${formatTime(split.sectionSeconds)}`
+            `Zwischenzeit ${formatTime(split.elapsedSeconds)} \xB7 Abschnitt ${formatTime(split.sectionSeconds)}${comparison}`
           );
         }
       }

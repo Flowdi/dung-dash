@@ -7,7 +7,7 @@ import {
 import { loadSprites } from "./assets.js";
 import { InputController } from "./input.js";
 import { createLevel } from "./level.js";
-import { formatTime, RunStats } from "./score.js";
+import { formatTime, formatTimeDelta, RunStats } from "./score.js";
 import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
 import { ACHIEVEMENTS } from "./achievements.js";
@@ -287,13 +287,18 @@ export class Game {
       const split = this.stats.recordCheckpoint(checkpoint.order);
       if (checkpoint === checkpoints.at(-1)) this.finish();
       else {
+        const bestSplit = this.progressStore.load().levelRecords?.[this.level.id]?.bestSplits
+          ?.find(({ order }) => order === checkpoint.order);
+        const comparison = bestSplit
+          ? ` · PB ${formatTimeDelta(split.elapsedSeconds - bestSplit.elapsedSeconds)}`
+          : "";
         this.lastSafePosition = {
           x: Math.max(0, player.position.x - 60),
           y: player.position.y,
         };
         this.showMessage(
           `Checkpoint ${checkpoint.order}/${checkpoints.length}`,
-          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}`
+          `Zwischenzeit ${formatTime(split.elapsedSeconds)} · Abschnitt ${formatTime(split.sectionSeconds)}${comparison}`
         );
       }
     }

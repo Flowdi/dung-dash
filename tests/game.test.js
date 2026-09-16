@@ -7,7 +7,14 @@ import { CheckPoint, Platform, Player } from "../src/entities.js";
 import { InputController } from "../src/input.js";
 import { createLevel } from "../src/level.js";
 import { findReachedCheckpoint, resolvePlatformCollisions } from "../src/physics.js";
-import { calculateFinalScore, calculateMedal, calculateScoreBreakdown, formatTime, RunStats } from "../src/score.js";
+import {
+  calculateFinalScore,
+  calculateMedal,
+  calculateScoreBreakdown,
+  formatTime,
+  formatTimeDelta,
+  RunStats,
+} from "../src/score.js";
 import { countCompletedMissions, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
@@ -273,6 +280,11 @@ test("checkpoint splits track total and section times", () => {
   assert.deepEqual(stats.recordCheckpoint(1), { order: 1, elapsedSeconds: 12.5, sectionSeconds: 12.5 });
   stats.update(7.5, false);
   assert.deepEqual(stats.recordCheckpoint(2), { order: 2, elapsedSeconds: 20, sectionSeconds: 7.5 });
+});
+
+test("checkpoint comparisons format gains and losses against a personal best", () => {
+  assert.equal(formatTimeDelta(-1.2), "−00:01.2");
+  assert.equal(formatTimeDelta(2.5), "+00:02.5");
 });
 
 test("checkpoint splits are included in a finished run", () => {

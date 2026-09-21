@@ -119,16 +119,19 @@
       windowObject.addEventListener("blur", () => this.reset());
       touchControls.forEach((button) => {
         const control = button.dataset.control;
+        button.setAttribute("aria-pressed", "false");
         const press = (event) => {
           var _a;
           event.preventDefault();
           (_a = button.setPointerCapture) == null ? void 0 : _a.call(button, event.pointerId);
+          button.setAttribute("aria-pressed", "true");
           if (control === "left") this.left = true;
           if (control === "right") this.right = true;
           if (control === "jump") this.queueJump();
         };
         const release = (event) => {
           event.preventDefault();
+          button.setAttribute("aria-pressed", "false");
           if (control === "left") this.left = false;
           if (control === "right") this.right = false;
         };

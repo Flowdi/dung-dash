@@ -347,6 +347,27 @@ test("WASD mirrors arrow-key movement and jumping", () => {
   assert.equal(input.right, false);
 });
 
+test("touch controls expose their pressed state", () => {
+  const windowObject = { addEventListener() {} };
+  const listeners = new Map();
+  const attributes = new Map();
+  const button = {
+    dataset: { control: "left" },
+    addEventListener: (type, listener) => listeners.set(type, listener),
+    setAttribute: (name, value) => attributes.set(name, value),
+    setPointerCapture() {},
+  };
+  const input = new InputController();
+  input.bind(windowObject, [button]);
+  const event = { pointerId: 1, preventDefault() {} };
+  listeners.get("pointerdown")(event);
+  assert.equal(input.left, true);
+  assert.equal(attributes.get("aria-pressed"), "true");
+  listeners.get("pointerup")(event);
+  assert.equal(input.left, false);
+  assert.equal(attributes.get("aria-pressed"), "false");
+});
+
 test("a running game pauses when its browser tab becomes hidden", () => {
   assert.equal(shouldPauseWhenHidden(GameState.PLAYING, true), true);
   assert.equal(shouldPauseWhenHidden(GameState.PAUSED, true), false);

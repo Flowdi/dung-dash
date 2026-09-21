@@ -461,6 +461,12 @@ button:focus-visible {
   user-select: none;
 }
 
+.touch-controls button[aria-pressed="true"] {
+  border-color: var(--focus);
+  background: rgba(229, 62, 62, 0.96);
+  transform: scale(0.9);
+}
+
 @media (pointer: coarse) {
   body.game-running .touch-controls {
     display: flex;

@@ -55,15 +55,18 @@ export class InputController {
 
     touchControls.forEach((button) => {
       const control = button.dataset.control;
+      button.setAttribute("aria-pressed", "false");
       const press = (event) => {
         event.preventDefault();
         button.setPointerCapture?.(event.pointerId);
+        button.setAttribute("aria-pressed", "true");
         if (control === "left") this.left = true;
         if (control === "right") this.right = true;
         if (control === "jump") this.queueJump();
       };
       const release = (event) => {
         event.preventDefault();
+        button.setAttribute("aria-pressed", "false");
         if (control === "left") this.left = false;
         if (control === "right") this.right = false;
       };

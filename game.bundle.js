@@ -119,16 +119,19 @@
       windowObject.addEventListener("blur", () => this.reset());
       touchControls.forEach((button) => {
         const control = button.dataset.control;
+        button.setAttribute("aria-pressed", "false");
         const press = (event) => {
           var _a;
           event.preventDefault();
           (_a = button.setPointerCapture) == null ? void 0 : _a.call(button, event.pointerId);
+          button.setAttribute("aria-pressed", "true");
           if (control === "left") this.left = true;
           if (control === "right") this.right = true;
           if (control === "jump") this.queueJump();
         };
         const release = (event) => {
           event.preventDefault();
+          button.setAttribute("aria-pressed", "false");
           if (control === "left") this.left = false;
           if (control === "right") this.right = false;
         };
@@ -1055,7 +1058,8 @@
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
-    achievements: []
+    achievements: [],
+    selectedLevelId: "bathroom-run"
   });
   var LEVEL_ORDER = LEVELS.map(({ id }) => id);
   var migrateUnlockedLevels = (progress) => {
@@ -1095,6 +1099,17 @@
       } catch (e) {
       }
       return emptyProgress();
+    }
+    selectLevel(levelId) {
+      var _a;
+      const progress = this.load();
+      if (!LEVEL_ORDER.includes(levelId) || !progress.unlockedLevels.includes(levelId)) return progress;
+      const next = { ...progress, selectedLevelId: levelId };
+      try {
+        (_a = this.storage) == null ? void 0 : _a.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+      }
+      return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
@@ -1329,6 +1344,7 @@
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
+      this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -1362,6 +1378,10 @@
     }
     initialize() {
       var _a, _b;
+      const savedProgress = this.progressStore.load();
+      if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
+        this.selectedLevelId = savedProgress.selectedLevelId;
+      }
       this.input.bind(
         this.window,
         [...this.document.querySelectorAll("[data-control]")],
@@ -1370,6 +1390,7 @@
       this.startButton.addEventListener("click", () => this.start());
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
+        this.progressStore.selectLevel(this.selectedLevelId);
         this.updateLevelDescription();
         this.renderMissions();
       });
@@ -1495,6 +1516,7 @@
       this.checkpointScreen.classList.remove("toast");
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
@@ -1634,6 +1656,10 @@
       this.resultBreakdown.innerHTML = rows.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
       ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+      this.resultSplits.hidden = result.checkpointSplits.length === 0;
+      this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
+        (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+      ).join("")}` : "";
       this.resultMissions.hidden = false;
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
         (mission) => `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "\u2605" : "\u2606"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " \xB7 Neu!" : ""}</p>`
@@ -1642,6 +1668,7 @@
     startNextLevel() {
       if (!this.nextLevelId) return;
       this.selectedLevelId = this.nextLevelId;
+      this.progressStore.selectLevel(this.selectedLevelId);
       this.reset();
     }
     restartCurrentLevel() {
@@ -1663,6 +1690,7 @@
       this.checkpointScreen.style.display = "none";
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.score.style.display = "none";
       this.pauseButton.hidden = true;

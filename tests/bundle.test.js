@@ -20,6 +20,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="level-menu-btn"/);
   assert.match(html, /id="next-level-btn"/);
   assert.match(html, /id="result-breakdown"/);
+  assert.match(html, /id="result-splits"/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);
 });
 

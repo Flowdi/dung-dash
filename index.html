@@ -55,6 +55,7 @@
       <h2 id="checkpoint-title">Gratuliere</h2>
       <p id="checkpoint-message">Dein Kothaufen hat die Toilette erreicht!</p>
         <div class="result-breakdown" id="result-breakdown" hidden></div>
+        <div class="result-splits" id="result-splits" hidden></div>
         <div class="result-missions" id="result-missions" hidden></div>
         <button class="btn" id="next-level-btn" type="button">Nächstes Level</button>
         <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
@@ -66,9 +67,9 @@
     </canvas>
 
     <div class="touch-controls" aria-label="Touch-Steuerung">
-      <button type="button" data-control="left" aria-label="Nach links">◀</button>
-      <button type="button" data-control="jump" aria-label="Springen">▲</button>
-      <button type="button" data-control="right" aria-label="Nach rechts">▶</button>
+      <button type="button" data-control="left" aria-label="Nach links" aria-pressed="false">◀</button>
+      <button type="button" data-control="jump" aria-label="Springen" aria-pressed="false">▲</button>
+      <button type="button" data-control="right" aria-label="Nach rechts" aria-pressed="false">▶</button>
     </div>
 
     <noscript>Für Dung Dash muss JavaScript aktiviert sein.</noscript>

@@ -51,6 +51,7 @@ export class Game {
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
+    this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -85,6 +86,10 @@ export class Game {
   }
 
   initialize() {
+    const savedProgress = this.progressStore.load();
+    if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
+      this.selectedLevelId = savedProgress.selectedLevelId;
+    }
     this.input.bind(
       this.window,
       [...this.document.querySelectorAll("[data-control]")],
@@ -93,6 +98,7 @@ export class Game {
     this.startButton.addEventListener("click", () => this.start());
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
+      this.progressStore.selectLevel(this.selectedLevelId);
       this.updateLevelDescription();
       this.renderMissions();
     });
@@ -225,6 +231,7 @@ export class Game {
     this.checkpointScreen.classList.remove("toast");
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
+    this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";
@@ -379,6 +386,12 @@ export class Game {
     this.resultBreakdown.innerHTML = rows.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
     ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+    this.resultSplits.hidden = result.checkpointSplits.length === 0;
+    this.resultSplits.innerHTML = result.checkpointSplits.length
+      ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map((split) =>
+          `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+        ).join("")}`
+      : "";
     this.resultMissions.hidden = false;
     this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map((mission) =>
       `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "★" : "☆"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " · Neu!" : ""}</p>`
@@ -388,6 +401,7 @@ export class Game {
   startNextLevel() {
     if (!this.nextLevelId) return;
     this.selectedLevelId = this.nextLevelId;
+    this.progressStore.selectLevel(this.selectedLevelId);
     this.reset();
   }
 
@@ -411,6 +425,7 @@ export class Game {
     this.checkpointScreen.style.display = "none";
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
+    this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.score.style.display = "none";
     this.pauseButton.hidden = true;

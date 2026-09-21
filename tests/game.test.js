@@ -279,6 +279,24 @@ test("progress can be cleared back to a fresh campaign", () => {
   assert.equal(values.size, 0);
 });
 
+test("the last unlocked level selection persists between sessions", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.record(
+    { score: 1000, elapsedSeconds: 50, fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 },
+    "bathroom-run",
+    "sewer-shortcut"
+  );
+  store.selectLevel("sewer-shortcut");
+  assert.equal(new ProgressStore(storage).load().selectedLevelId, "sewer-shortcut");
+  store.selectLevel("pipe-dream");
+  assert.equal(store.load().selectedLevelId, "sewer-shortcut");
+});
+
 test("career progress counts unique mission stars", () => {
   const progress = { levelRecords: {
     first: { missions: ["a", "b", "b"] },
@@ -327,6 +345,27 @@ test("WASD mirrors arrow-key movement and jumping", () => {
   listeners.get("keyup")(event("d"));
   assert.equal(input.left, false);
   assert.equal(input.right, false);
+});
+
+test("touch controls expose their pressed state", () => {
+  const windowObject = { addEventListener() {} };
+  const listeners = new Map();
+  const attributes = new Map();
+  const button = {
+    dataset: { control: "left" },
+    addEventListener: (type, listener) => listeners.set(type, listener),
+    setAttribute: (name, value) => attributes.set(name, value),
+    setPointerCapture() {},
+  };
+  const input = new InputController();
+  input.bind(windowObject, [button]);
+  const event = { pointerId: 1, preventDefault() {} };
+  listeners.get("pointerdown")(event);
+  assert.equal(input.left, true);
+  assert.equal(attributes.get("aria-pressed"), "true");
+  listeners.get("pointerup")(event);
+  assert.equal(input.left, false);
+  assert.equal(attributes.get("aria-pressed"), "false");
 });
 
 test("a running game pauses when its browser tab becomes hidden", () => {

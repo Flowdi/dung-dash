@@ -279,6 +279,24 @@ test("progress can be cleared back to a fresh campaign", () => {
   assert.equal(values.size, 0);
 });
 
+test("the last unlocked level selection persists between sessions", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.record(
+    { score: 1000, elapsedSeconds: 50, fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 },
+    "bathroom-run",
+    "sewer-shortcut"
+  );
+  store.selectLevel("sewer-shortcut");
+  assert.equal(new ProgressStore(storage).load().selectedLevelId, "sewer-shortcut");
+  store.selectLevel("pipe-dream");
+  assert.equal(store.load().selectedLevelId, "sewer-shortcut");
+});
+
 test("career progress counts unique mission stars", () => {
   const progress = { levelRecords: {
     first: { missions: ["a", "b", "b"] },

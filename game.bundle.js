@@ -1055,7 +1055,8 @@
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
-    achievements: []
+    achievements: [],
+    selectedLevelId: "bathroom-run"
   });
   var LEVEL_ORDER = LEVELS.map(({ id }) => id);
   var migrateUnlockedLevels = (progress) => {
@@ -1095,6 +1096,17 @@
       } catch (e) {
       }
       return emptyProgress();
+    }
+    selectLevel(levelId) {
+      var _a;
+      const progress = this.load();
+      if (!LEVEL_ORDER.includes(levelId) || !progress.unlockedLevels.includes(levelId)) return progress;
+      const next = { ...progress, selectedLevelId: levelId };
+      try {
+        (_a = this.storage) == null ? void 0 : _a.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+      }
+      return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
@@ -1362,6 +1374,10 @@
     }
     initialize() {
       var _a, _b;
+      const savedProgress = this.progressStore.load();
+      if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
+        this.selectedLevelId = savedProgress.selectedLevelId;
+      }
       this.input.bind(
         this.window,
         [...this.document.querySelectorAll("[data-control]")],
@@ -1370,6 +1386,7 @@
       this.startButton.addEventListener("click", () => this.start());
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
+        this.progressStore.selectLevel(this.selectedLevelId);
         this.updateLevelDescription();
         this.renderMissions();
       });
@@ -1642,6 +1659,7 @@
     startNextLevel() {
       if (!this.nextLevelId) return;
       this.selectedLevelId = this.nextLevelId;
+      this.progressStore.selectLevel(this.selectedLevelId);
       this.reset();
     }
     restartCurrentLevel() {

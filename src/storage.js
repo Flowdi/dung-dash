@@ -12,6 +12,7 @@ const emptyProgress = () => ({
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
   achievements: [],
+  selectedLevelId: "bathroom-run",
 });
 
 const LEVEL_ORDER = LEVELS.map(({ id }) => id);
@@ -49,6 +50,18 @@ export class ProgressStore {
       // Auch ohne verfügbaren Speicher kann mit einem leeren Fortschritt weitergespielt werden.
     }
     return emptyProgress();
+  }
+
+  selectLevel(levelId) {
+    const progress = this.load();
+    if (!LEVEL_ORDER.includes(levelId) || !progress.unlockedLevels.includes(levelId)) return progress;
+    const next = { ...progress, selectedLevelId: levelId };
+    try {
+      this.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Die Auswahl bleibt für die aktuelle Sitzung trotzdem im Game-Objekt erhalten.
+    }
+    return next;
   }
 
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {

@@ -85,6 +85,10 @@ export class Game {
   }
 
   initialize() {
+    const savedProgress = this.progressStore.load();
+    if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
+      this.selectedLevelId = savedProgress.selectedLevelId;
+    }
     this.input.bind(
       this.window,
       [...this.document.querySelectorAll("[data-control]")],
@@ -93,6 +97,7 @@ export class Game {
     this.startButton.addEventListener("click", () => this.start());
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
+      this.progressStore.selectLevel(this.selectedLevelId);
       this.updateLevelDescription();
       this.renderMissions();
     });
@@ -388,6 +393,7 @@ export class Game {
   startNextLevel() {
     if (!this.nextLevelId) return;
     this.selectedLevelId = this.nextLevelId;
+    this.progressStore.selectLevel(this.selectedLevelId);
     this.reset();
   }
 

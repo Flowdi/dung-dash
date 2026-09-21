@@ -1341,6 +1341,7 @@
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
+      this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -1512,6 +1513,7 @@
       this.checkpointScreen.classList.remove("toast");
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
@@ -1651,6 +1653,10 @@
       this.resultBreakdown.innerHTML = rows.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
       ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+      this.resultSplits.hidden = result.checkpointSplits.length === 0;
+      this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
+        (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+      ).join("")}` : "";
       this.resultMissions.hidden = false;
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
         (mission) => `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "\u2605" : "\u2606"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " \xB7 Neu!" : ""}</p>`
@@ -1681,6 +1687,7 @@
       this.checkpointScreen.style.display = "none";
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.score.style.display = "none";
       this.pauseButton.hidden = true;

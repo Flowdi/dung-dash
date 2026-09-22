@@ -44,6 +44,7 @@ export class Game {
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
+    this.medalSummary = documentObject.getElementById("medal-summary");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -173,6 +174,13 @@ export class Game {
     this.careerStats.replaceChildren(...stats.map(([label, value]) => {
       const item = this.document.createElement("p");
       item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      return item;
+    }));
+    const medalIcons = { Bronze: "🥉", Silber: "🥈", Gold: "🥇" };
+    this.medalSummary.replaceChildren(...Object.entries(medalIcons).map(([medal, icon]) => {
+      const item = this.document.createElement("p");
+      item.setAttribute("aria-label", `${medal}: ${progress.medals[medal] ?? 0}`);
+      item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${progress.medals[medal] ?? 0}</strong>`;
       return item;
     }));
 

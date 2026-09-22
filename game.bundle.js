@@ -1362,6 +1362,7 @@
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
+      this.medalSummary = documentObject.getElementById("medal-summary");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -1487,6 +1488,14 @@
       this.careerStats.replaceChildren(...stats.map(([label, value]) => {
         const item = this.document.createElement("p");
         item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
+      const medalIcons = { Bronze: "\u{1F949}", Silber: "\u{1F948}", Gold: "\u{1F947}" };
+      this.medalSummary.replaceChildren(...Object.entries(medalIcons).map(([medal, icon]) => {
+        var _a2, _b;
+        const item = this.document.createElement("p");
+        item.setAttribute("aria-label", `${medal}: ${(_a2 = progress.medals[medal]) != null ? _a2 : 0}`);
+        item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b = progress.medals[medal]) != null ? _b : 0}</strong>`;
         return item;
       }));
       const unlocked = new Set((_a = progress.achievements) != null ? _a : []);

@@ -178,6 +178,24 @@ body {
   font-size: 1rem;
 }
 
+.medal-summary {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 9px;
+}
+
+.medal-summary p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.medal-summary strong {
+  color: var(--focus);
+}
+
 .achievement-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -23,3 +23,19 @@ export const findNewAchievements = (progress, result) => {
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
+
+export const achievementProgressText = (achievementId, progress) => {
+  const completedLevels = Object.keys(progress.levelRecords ?? {}).length;
+  const fastestTime = Object.values(progress.levelRecords ?? {})
+    .reduce((fastest, record) => Math.min(fastest, record.bestTime ?? Infinity), Infinity);
+  const values = {
+    "first-flush": `${Math.min(progress.totalRuns ?? 0, 1)}/1 Level`,
+    "fly-hunter": `${Math.min(progress.totalFlies ?? 0, 50)}/50 Fliegen`,
+    "combo-master": "In einem Lauf ×4 erreichen",
+    "golden-pile": `${Math.min(progress.medals?.Gold ?? 0, 1)}/1 Goldmedaille`,
+    "speed-runner": fastestTime <= 60 ? "1/1 Speedrun" : "0/1 unter 60 Sekunden",
+    "sure-footed": "Ein Level ohne Treffer",
+    "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`,
+  };
+  return values[achievementId] ?? "";
+};

@@ -17,7 +17,7 @@ import {
 } from "../src/score.js";
 import { countCompletedMissions, normalizeProgress, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
-import { findNewAchievements } from "../src/achievements.js";
+import { achievementProgressText, findNewAchievements } from "../src/achievements.js";
 import {
   completedMissionIds,
   evaluateMissions,
@@ -461,6 +461,18 @@ test("finishing every level unlocks the campaign achievement", () => {
     { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 }
   );
   assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
+});
+
+test("locked achievements expose useful progress text", () => {
+  const progress = {
+    totalRuns: 0,
+    totalFlies: 23,
+    medals: { Gold: 0 },
+    levelRecords: { first: { bestTime: 72 }, second: { bestTime: 90 } },
+  };
+  assert.equal(achievementProgressText("fly-hunter", progress), "23/50 Fliegen");
+  assert.equal(achievementProgressText("speed-runner", progress), "0/1 unter 60 Sekunden");
+  assert.equal(achievementProgressText("campaign-complete", progress), "2/6 Level");
 });
 
 test("progress store persists achievements only once", () => {

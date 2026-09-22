@@ -227,6 +227,11 @@ body {
   display: block;
 }
 
+.achievement .achievement-progress {
+  color: var(--focus);
+  font-weight: 700;
+}
+
 .reset-progress-btn {
   min-height: 36px;
   margin: 12px 0 0;

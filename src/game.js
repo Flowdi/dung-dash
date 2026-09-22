@@ -10,7 +10,7 @@ import { createLevel } from "./level.js";
 import { formatTime, formatTimeDelta, RunStats } from "./score.js";
 import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
-import { ACHIEVEMENTS } from "./achievements.js";
+import { achievementProgressText, ACHIEVEMENTS } from "./achievements.js";
 import {
   completedMissionIds,
   evaluateMissions,
@@ -190,7 +190,8 @@ export class Game {
       const isUnlocked = unlocked.has(achievement.id);
       item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
       item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
-      item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+      const progressText = isUnlocked ? "Abgeschlossen" : achievementProgressText(achievement.id, progress);
+      item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
       return item;
     }));
   }

@@ -1047,6 +1047,24 @@
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
+  var achievementProgressText = (achievementId, progress) => {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
+    const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
+      var _a2;
+      return Math.min(fastest, (_a2 = record.bestTime) != null ? _a2 : Infinity);
+    }, Infinity);
+    const values = {
+      "first-flush": `${Math.min((_c = progress.totalRuns) != null ? _c : 0, 1)}/1 Level`,
+      "fly-hunter": `${Math.min((_d = progress.totalFlies) != null ? _d : 0, 50)}/50 Fliegen`,
+      "combo-master": "In einem Lauf \xD74 erreichen",
+      "golden-pile": `${Math.min((_f = (_e = progress.medals) == null ? void 0 : _e.Gold) != null ? _f : 0, 1)}/1 Goldmedaille`,
+      "speed-runner": fastestTime <= 60 ? "1/1 Speedrun" : "0/1 unter 60 Sekunden",
+      "sure-footed": "Ein Level ohne Treffer",
+      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`
+    };
+    return (_g = values[achievementId]) != null ? _g : "";
+  };
 
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
@@ -1504,7 +1522,8 @@
         const isUnlocked = unlocked.has(achievement.id);
         item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
         item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
-        item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+        const progressText = isUnlocked ? "Abgeschlossen" : achievementProgressText(achievement.id, progress);
+        item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
         return item;
       }));
     }

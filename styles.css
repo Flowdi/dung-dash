@@ -97,6 +97,44 @@ body {
   line-height: 1.4;
 }
 
+.control-guide {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(100%, 620px);
+  margin: 12px auto;
+}
+
+.control-guide p {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.75rem;
+}
+
+.control-guide span {
+  color: #d8d8d8;
+}
+
+.control-guide kbd {
+  display: inline-block;
+  min-width: 24px;
+  margin: 0 2px;
+  padding: 2px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  background: #303030;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+
+.control-guide .touch-hint {
+  display: none;
+}
+
 .mission-panel {
   width: min(100%, 620px);
   margin: 10px auto;
@@ -178,6 +216,24 @@ body {
   font-size: 1rem;
 }
 
+.medal-summary {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 9px;
+}
+
+.medal-summary p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.medal-summary strong {
+  color: var(--focus);
+}
+
 .achievement-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -207,6 +263,11 @@ body {
 .achievement strong,
 .achievement small {
   display: block;
+}
+
+.achievement .achievement-progress {
+  color: var(--focus);
+  font-weight: 700;
 }
 
 .reset-progress-btn {
@@ -495,6 +556,14 @@ button:focus-visible {
   .mission-list {
     margin-top: 5px;
   }
+
+  .control-guide .touch-hint {
+    display: grid;
+  }
+
+  .control-guide {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -532,6 +601,10 @@ button:focus-visible {
   .achievement-list,
   .mission-list {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .control-guide {
+    grid-template-columns: 1fr;
   }
 
   .score {

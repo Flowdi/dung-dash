@@ -10,7 +10,7 @@ import { createLevel } from "./level.js";
 import { formatTime, formatTimeDelta, RunStats } from "./score.js";
 import { countCompletedMissions, ProgressStore } from "./storage.js";
 import { LEVELS } from "./levels.js";
-import { ACHIEVEMENTS } from "./achievements.js";
+import { achievementProgressText, ACHIEVEMENTS } from "./achievements.js";
 import {
   completedMissionIds,
   evaluateMissions,
@@ -44,6 +44,7 @@ export class Game {
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
+    this.medalSummary = documentObject.getElementById("medal-summary");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -175,6 +176,13 @@ export class Game {
       item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
       return item;
     }));
+    const medalIcons = { Bronze: "🥉", Silber: "🥈", Gold: "🥇" };
+    this.medalSummary.replaceChildren(...Object.entries(medalIcons).map(([medal, icon]) => {
+      const item = this.document.createElement("p");
+      item.setAttribute("aria-label", `${medal}: ${progress.medals[medal] ?? 0}`);
+      item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${progress.medals[medal] ?? 0}</strong>`;
+      return item;
+    }));
 
     const unlocked = new Set(progress.achievements ?? []);
     this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
@@ -182,7 +190,8 @@ export class Game {
       const isUnlocked = unlocked.has(achievement.id);
       item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
       item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
-      item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+      const progressText = isUnlocked ? "Abgeschlossen" : achievementProgressText(achievement.id, progress);
+      item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
       return item;
     }));
   }

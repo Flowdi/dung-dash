@@ -1047,6 +1047,24 @@
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
+  var achievementProgressText = (achievementId, progress) => {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
+    const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
+      var _a2;
+      return Math.min(fastest, (_a2 = record.bestTime) != null ? _a2 : Infinity);
+    }, Infinity);
+    const values = {
+      "first-flush": `${Math.min((_c = progress.totalRuns) != null ? _c : 0, 1)}/1 Level`,
+      "fly-hunter": `${Math.min((_d = progress.totalFlies) != null ? _d : 0, 50)}/50 Fliegen`,
+      "combo-master": "In einem Lauf \xD74 erreichen",
+      "golden-pile": `${Math.min((_f = (_e = progress.medals) == null ? void 0 : _e.Gold) != null ? _f : 0, 1)}/1 Goldmedaille`,
+      "speed-runner": fastestTime <= 60 ? "1/1 Speedrun" : "0/1 unter 60 Sekunden",
+      "sure-footed": "Ein Level ohne Treffer",
+      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`
+    };
+    return (_g = values[achievementId]) != null ? _g : "";
+  };
 
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
@@ -1062,6 +1080,7 @@
     selectedLevelId: "bathroom-run"
   });
   var LEVEL_ORDER = LEVELS.map(({ id }) => id);
+  var ACHIEVEMENT_IDS = new Set(ACHIEVEMENTS.map(({ id }) => id));
   var migrateUnlockedLevels = (progress) => {
     var _a;
     const unlocked = new Set((_a = progress.unlockedLevels) != null ? _a : [LEVEL_ORDER[0]]);
@@ -1078,6 +1097,31 @@
       return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
     }, 0);
   };
+  var normalizeProgress = (saved) => {
+    var _a, _b, _c;
+    const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
+    const base = {
+      ...emptyProgress(),
+      ...source,
+      levelRecords,
+      achievements: [...new Set(((_b = source.achievements) != null ? _b : []).filter((id) => ACHIEVEMENT_IDS.has(id)))],
+      unlockedLevels: [.../* @__PURE__ */ new Set([
+        LEVEL_ORDER[0],
+        ...((_c = source.unlockedLevels) != null ? _c : []).filter((id) => LEVEL_ORDER.includes(id))
+      ])],
+      medals: Object.fromEntries(["Bronze", "Silber", "Gold"].map((medal) => {
+        var _a2;
+        return [
+          medal,
+          Math.max(0, Number((_a2 = source.medals) == null ? void 0 : _a2[medal]) || 0)
+        ];
+      }))
+    };
+    base.unlockedLevels = migrateUnlockedLevels(base);
+    base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
+    return base;
+  };
   var ProgressStore = class {
     constructor(storage) {
       this.storage = storage;
@@ -1086,8 +1130,7 @@
       var _a, _b;
       try {
         const saved = JSON.parse((_b = (_a = this.storage) == null ? void 0 : _a.getItem(STORAGE_KEY)) != null ? _b : "null");
-        const progress = saved ? { ...emptyProgress(), ...saved } : emptyProgress();
-        return { ...progress, unlockedLevels: migrateUnlockedLevels(progress) };
+        return normalizeProgress(saved);
       } catch (e) {
         return emptyProgress();
       }
@@ -1337,6 +1380,7 @@
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
+      this.medalSummary = documentObject.getElementById("medal-summary");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -1464,13 +1508,22 @@
         item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
         return item;
       }));
+      const medalIcons = { Bronze: "\u{1F949}", Silber: "\u{1F948}", Gold: "\u{1F947}" };
+      this.medalSummary.replaceChildren(...Object.entries(medalIcons).map(([medal, icon]) => {
+        var _a2, _b;
+        const item = this.document.createElement("p");
+        item.setAttribute("aria-label", `${medal}: ${(_a2 = progress.medals[medal]) != null ? _a2 : 0}`);
+        item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b = progress.medals[medal]) != null ? _b : 0}</strong>`;
+        return item;
+      }));
       const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);
         item.className = `achievement${isUnlocked ? " unlocked" : ""}`;
         item.setAttribute("aria-label", `${achievement.name}: ${isUnlocked ? "freigeschaltet" : "gesperrt"}`);
-        item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small></div>`;
+        const progressText = isUnlocked ? "Abgeschlossen" : achievementProgressText(achievement.id, progress);
+        item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
         return item;
       }));
     }

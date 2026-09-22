@@ -16,6 +16,8 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="current-missions"/);
   assert.match(html, /id="reset-run-btn"/);
   assert.match(html, /id="level-select"/);
+  assert.match(html, /class="control-guide"/);
+  assert.match(html, /<kbd>Leertaste<\/kbd>/);
   assert.doesNotMatch(html, /id="jump-charge"/);
   assert.match(html, /id="level-menu-btn"/);
   assert.match(html, /id="next-level-btn"/);
@@ -65,6 +67,7 @@ test("system accessibility preferences disable incidental motion", async () => {
 test("start screen exposes career stats and achievements", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="career-stats"/);
+  assert.match(html, /id="medal-summary"/);
   assert.match(html, /id="achievement-list"/);
   assert.match(html, /id="reset-progress-btn"/);
   assert.match(html, /id="progress-reset-status"/);

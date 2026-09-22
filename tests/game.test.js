@@ -15,9 +15,9 @@ import {
   formatTimeDelta,
   RunStats,
 } from "../src/score.js";
-import { countCompletedMissions, ProgressStore } from "../src/storage.js";
+import { countCompletedMissions, normalizeProgress, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
-import { findNewAchievements } from "../src/achievements.js";
+import { achievementProgressText, findNewAchievements } from "../src/achievements.js";
 import {
   completedMissionIds,
   evaluateMissions,
@@ -297,6 +297,21 @@ test("the last unlocked level selection persists between sessions", () => {
   assert.equal(store.load().selectedLevelId, "sewer-shortcut");
 });
 
+test("malformed progress is normalized without leaking unknown ids", () => {
+  const progress = normalizeProgress({
+    unlockedLevels: ["unknown", "sewer-shortcut"],
+    selectedLevelId: "unknown",
+    achievements: ["first-flush", "fake-achievement", "first-flush"],
+    medals: { Bronze: -2, Gold: "3" },
+    levelRecords: { unknown: { bestScore: 99 }, "bathroom-run": { bestScore: 10 } },
+  });
+  assert.deepEqual(progress.unlockedLevels, ["bathroom-run", "sewer-shortcut"]);
+  assert.equal(progress.selectedLevelId, "bathroom-run");
+  assert.deepEqual(progress.achievements, ["first-flush"]);
+  assert.deepEqual(progress.medals, { Bronze: 0, Silber: 0, Gold: 3 });
+  assert.deepEqual(Object.keys(progress.levelRecords), ["bathroom-run"]);
+});
+
 test("career progress counts unique mission stars", () => {
   const progress = { levelRecords: {
     first: { missions: ["a", "b", "b"] },
@@ -446,6 +461,18 @@ test("finishing every level unlocks the campaign achievement", () => {
     { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 }
   );
   assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
+});
+
+test("locked achievements expose useful progress text", () => {
+  const progress = {
+    totalRuns: 0,
+    totalFlies: 23,
+    medals: { Gold: 0 },
+    levelRecords: { first: { bestTime: 72 }, second: { bestTime: 90 } },
+  };
+  assert.equal(achievementProgressText("fly-hunter", progress), "23/50 Fliegen");
+  assert.equal(achievementProgressText("speed-runner", progress), "0/1 unter 60 Sekunden");
+  assert.equal(achievementProgressText("campaign-complete", progress), "2/6 Level");
 });
 
 test("progress store persists achievements only once", () => {

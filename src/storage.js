@@ -1,4 +1,4 @@
-import { findNewAchievements } from "./achievements.js";
+import { ACHIEVEMENTS, findNewAchievements } from "./achievements.js";
 import { LEVELS } from "./levels.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
@@ -16,6 +16,7 @@ const emptyProgress = () => ({
 });
 
 const LEVEL_ORDER = LEVELS.map(({ id }) => id);
+const ACHIEVEMENT_IDS = new Set(ACHIEVEMENTS.map(({ id }) => id));
 
 const migrateUnlockedLevels = (progress) => {
   const unlocked = new Set(progress.unlockedLevels ?? [LEVEL_ORDER[0]]);
@@ -28,6 +29,31 @@ const migrateUnlockedLevels = (progress) => {
 export const countCompletedMissions = (progress) => Object.values(progress.levelRecords ?? {})
   .reduce((total, record) => total + new Set(record.missions ?? []).size, 0);
 
+export const normalizeProgress = (saved) => {
+  const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  const levelRecords = Object.fromEntries(Object.entries(source.levelRecords ?? {})
+    .filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
+  const base = {
+    ...emptyProgress(),
+    ...source,
+    levelRecords,
+    achievements: [...new Set((source.achievements ?? []).filter((id) => ACHIEVEMENT_IDS.has(id)))],
+    unlockedLevels: [...new Set([
+      LEVEL_ORDER[0],
+      ...(source.unlockedLevels ?? []).filter((id) => LEVEL_ORDER.includes(id)),
+    ])],
+    medals: Object.fromEntries(["Bronze", "Silber", "Gold"].map((medal) => [
+      medal,
+      Math.max(0, Number(source.medals?.[medal]) || 0),
+    ])),
+  };
+  base.unlockedLevels = migrateUnlockedLevels(base);
+  base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
+    ? source.selectedLevelId
+    : base.unlockedLevels[0];
+  return base;
+};
+
 export class ProgressStore {
   constructor(storage) {
     this.storage = storage;
@@ -36,8 +62,7 @@ export class ProgressStore {
   load() {
     try {
       const saved = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? "null");
-      const progress = saved ? { ...emptyProgress(), ...saved } : emptyProgress();
-      return { ...progress, unlockedLevels: migrateUnlockedLevels(progress) };
+      return normalizeProgress(saved);
     } catch {
       return emptyProgress();
     }

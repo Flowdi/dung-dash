@@ -15,7 +15,7 @@ import {
   formatTimeDelta,
   RunStats,
 } from "../src/score.js";
-import { countCompletedMissions, ProgressStore } from "../src/storage.js";
+import { countCompletedMissions, normalizeProgress, ProgressStore } from "../src/storage.js";
 import { LEVELS } from "../src/levels.js";
 import { findNewAchievements } from "../src/achievements.js";
 import {
@@ -295,6 +295,21 @@ test("the last unlocked level selection persists between sessions", () => {
   assert.equal(new ProgressStore(storage).load().selectedLevelId, "sewer-shortcut");
   store.selectLevel("pipe-dream");
   assert.equal(store.load().selectedLevelId, "sewer-shortcut");
+});
+
+test("malformed progress is normalized without leaking unknown ids", () => {
+  const progress = normalizeProgress({
+    unlockedLevels: ["unknown", "sewer-shortcut"],
+    selectedLevelId: "unknown",
+    achievements: ["first-flush", "fake-achievement", "first-flush"],
+    medals: { Bronze: -2, Gold: "3" },
+    levelRecords: { unknown: { bestScore: 99 }, "bathroom-run": { bestScore: 10 } },
+  });
+  assert.deepEqual(progress.unlockedLevels, ["bathroom-run", "sewer-shortcut"]);
+  assert.equal(progress.selectedLevelId, "bathroom-run");
+  assert.deepEqual(progress.achievements, ["first-flush"]);
+  assert.deepEqual(progress.medals, { Bronze: 0, Silber: 0, Gold: 3 });
+  assert.deepEqual(Object.keys(progress.levelRecords), ["bathroom-run"]);
 });
 
 test("career progress counts unique mission stars", () => {

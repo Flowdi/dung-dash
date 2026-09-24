@@ -28,6 +28,7 @@ import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
 import { formatDifficulty } from "../src/difficulty.js";
+import { chooseRandomUnlockedLevel } from "../src/level-selection.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
 
 test("a jump starts only while the player is grounded", () => {
@@ -603,6 +604,12 @@ test("every level exposes a valid readable difficulty", () => {
   assert.equal(LEVELS.every(({ difficulty }) => difficulty >= 1 && difficulty <= 5), true);
   assert.equal(formatDifficulty(1), "Einfach ●○○○○");
   assert.equal(formatDifficulty(5), "Extrem ●●●●●");
+});
+
+test("random level selection only uses unlocked alternatives", () => {
+  const levels = [{ id: "first" }, { id: "second" }, { id: "locked" }];
+  assert.equal(chooseRandomUnlockedLevel(levels, ["first", "second"], "first", () => 0), "second");
+  assert.equal(chooseRandomUnlockedLevel(levels, ["first"], "first", () => 0.9), "first");
 });
 
 test("platforms and toilets render from the selected theme atlas", () => {

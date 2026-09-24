@@ -20,6 +20,7 @@ import {
 import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
 import { formatDifficulty } from "./difficulty.js";
+import { chooseRandomUnlockedLevel } from "./level-selection.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -41,6 +42,7 @@ export class Game {
     this.score = documentObject.querySelector(".score");
     this.startButton = documentObject.getElementById("start-btn");
     this.levelSelect = documentObject.getElementById("level-select");
+    this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -113,6 +115,7 @@ export class Game {
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
+    this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
     this.renderLevelOptions();
@@ -149,6 +152,20 @@ export class Game {
     this.levelDescription.textContent = record
       ? `${formatDifficulty(definition.difficulty)} · ${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
       : `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+  }
+
+  selectRandomLevel() {
+    const progress = this.progressStore.load();
+    this.selectedLevelId = chooseRandomUnlockedLevel(
+      LEVELS,
+      progress.unlockedLevels,
+      this.selectedLevelId
+    );
+    this.progressStore.selectLevel(this.selectedLevelId);
+    this.levelSelect.value = this.selectedLevelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.levelSelect.focus();
   }
 
   renderMissions() {

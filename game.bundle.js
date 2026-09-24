@@ -1260,6 +1260,15 @@
     return `${(_a = LABELS[difficulty - 1]) != null ? _a : LABELS[0]} ${"\u25CF".repeat(difficulty)}${"\u25CB".repeat(5 - difficulty)}`;
   };
 
+  // src/level-selection.js
+  var chooseRandomUnlockedLevel = (levels, unlockedLevelIds, currentLevelId, random = Math.random) => {
+    var _a, _b, _c, _d;
+    const unlocked = levels.filter(({ id }) => unlockedLevelIds.includes(id));
+    const candidates = unlocked.length > 1 ? unlocked.filter(({ id }) => id !== currentLevelId) : unlocked;
+    if (candidates.length === 0) return (_b = (_a = levels[0]) == null ? void 0 : _a.id) != null ? _b : null;
+    return (_d = (_c = candidates[Math.floor(random() * candidates.length)]) == null ? void 0 : _c.id) != null ? _d : candidates[0].id;
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1392,6 +1401,7 @@
       this.score = documentObject.querySelector(".score");
       this.startButton = documentObject.getElementById("start-btn");
       this.levelSelect = documentObject.getElementById("level-select");
+      this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1463,6 +1473,7 @@
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
+      this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();
@@ -1495,6 +1506,19 @@
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = record ? `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+    }
+    selectRandomLevel() {
+      const progress = this.progressStore.load();
+      this.selectedLevelId = chooseRandomUnlockedLevel(
+        LEVELS,
+        progress.unlockedLevels,
+        this.selectedLevelId
+      );
+      this.progressStore.selectLevel(this.selectedLevelId);
+      this.levelSelect.value = this.selectedLevelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.levelSelect.focus();
     }
     renderMissions() {
       var _a, _b, _c, _d;

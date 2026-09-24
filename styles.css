@@ -97,6 +97,22 @@ body {
   line-height: 1.4;
 }
 
+.random-level-btn {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 7px;
+  background: #3f3f3f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.random-level-btn:hover {
+  background: #606060;
+}
+
 .control-guide {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

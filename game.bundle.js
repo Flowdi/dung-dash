@@ -49,14 +49,21 @@
     pipeBackground: "./assets/themes/pipe-background.png",
     pipeAtlas: "./assets/themes/pipe-atlas.png"
   };
-  var loadSprites = (ImageConstructor = Image) => {
+  var loadSprites = (ImageConstructor = Image, onProgress = () => {
+  }) => {
     const sprites = {};
+    const total = Object.keys(spriteSources).length;
+    let loaded = 0;
     const ready = Promise.all(
       Object.entries(spriteSources).map(
         ([name, source]) => new Promise((resolve, reject) => {
           const image = new ImageConstructor();
           sprites[name] = image;
-          image.addEventListener("load", resolve, { once: true });
+          image.addEventListener("load", () => {
+            loaded += 1;
+            onProgress({ loaded, total, percent: Math.round(loaded / total * 100) });
+            resolve();
+          }, { once: true });
           image.addEventListener(
             "error",
             () => reject(new Error(`Sprite konnte nicht geladen werden: ${source}`)),
@@ -66,7 +73,7 @@
         })
       )
     );
-    return { sprites, ready };
+    return { sprites, ready, total };
   };
 
   // src/input.js
@@ -432,6 +439,9 @@
       if (!(level.width > 0) || !(((_a = level.height) != null ? _a : 800) > 0)) {
         throw new Error(`Ung\xFCltige Levelgr\xF6\xDFe: ${level.id}`);
       }
+      if (!Number.isInteger(level.difficulty) || level.difficulty < 1 || level.difficulty > 5) {
+        throw new Error(`Ung\xFCltiger Schwierigkeitsgrad: ${level.id}`);
+      }
       if (!((_b = level.theme) == null ? void 0 : _b.background) || !((_c = level.theme) == null ? void 0 : _c.atlas)) {
         throw new Error(`Unvollst\xE4ndiges Levelthema: ${level.id}`);
       }
@@ -466,6 +476,7 @@
       id: "bathroom-run",
       name: "Badezimmer-Sprint",
       description: "Der klassische horizontale Lauf zur letzten Toilette.",
+      difficulty: 1,
       missions: [
         { id: "bathroom-collector", label: "Sammle alle 20 Fliegen", type: "flies", target: 20 },
         { id: "bathroom-speed", label: "Schaffe das Level in 100 Sekunden", type: "time", target: 100 },
@@ -524,6 +535,7 @@
       id: "sewer-shortcut",
       name: "Kanal-K\xFCrzel",
       description: "K\xFCrzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+      difficulty: 2,
       missions: [
         { id: "sewer-collector", label: "Sammle alle 10 Fliegen", type: "flies", target: 10 },
         { id: "sewer-speed", label: "Schaffe das Level in 75 Sekunden", type: "time", target: 75 },
@@ -569,6 +581,7 @@
       id: "festival-flush",
       name: "Festival-Flucht",
       description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+      difficulty: 3,
       missions: [
         { id: "festival-collector", label: "Sammle alle 11 Fliegen", type: "flies", target: 11 },
         { id: "festival-combo", label: "Erreiche eine \xD74-Combo", type: "combo", target: 4 },
@@ -616,6 +629,7 @@
       id: "royal-flush",
       name: "Royal Flush",
       description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+      difficulty: 3,
       missions: [
         { id: "royal-climber", label: "Erreiche das Ziel in 150 Sekunden", type: "time", target: 150 },
         { id: "royal-collector", label: "Sammle mindestens 12 Fliegen", type: "flies", target: 12 },
@@ -673,6 +687,7 @@
       id: "porcelain-panic",
       name: "Porzellan-Panik",
       description: "Ein langer Endspurt durch eine vollautomatische Sanit\xE4rfabrik.",
+      difficulty: 4,
       missions: [
         { id: "porcelain-collector", label: "Sammle alle 16 Fliegen", type: "flies", target: 16 },
         { id: "porcelain-speed", label: "Schaffe das Level in 125 Sekunden", type: "time", target: 125 },
@@ -737,6 +752,7 @@
       id: "pipe-dream",
       name: "Rohrbruch-Rausch",
       description: "Der h\xE4rteste Aufstieg: ein instabiler Neon-Rohrschacht ohne Abk\xFCrzung.",
+      difficulty: 5,
       missions: [
         { id: "pipe-collector", label: "Sammle alle 18 Fliegen", type: "flies", target: 18 },
         { id: "pipe-speed", label: "Schaffe das Level in 210 Sekunden", type: "time", target: 210 },
@@ -1244,6 +1260,22 @@
     };
   };
 
+  // src/difficulty.js
+  var LABELS = ["Einfach", "Normal", "Anspruchsvoll", "Schwer", "Extrem"];
+  var formatDifficulty = (difficulty) => {
+    var _a;
+    return `${(_a = LABELS[difficulty - 1]) != null ? _a : LABELS[0]} ${"\u25CF".repeat(difficulty)}${"\u25CB".repeat(5 - difficulty)}`;
+  };
+
+  // src/level-selection.js
+  var chooseRandomUnlockedLevel = (levels, unlockedLevelIds, currentLevelId, random = Math.random) => {
+    var _a, _b, _c, _d;
+    const unlocked = levels.filter(({ id }) => unlockedLevelIds.includes(id));
+    const candidates = unlocked.length > 1 ? unlocked.filter(({ id }) => id !== currentLevelId) : unlocked;
+    if (candidates.length === 0) return (_b = (_a = levels[0]) == null ? void 0 : _a.id) != null ? _b : null;
+    return (_d = (_c = candidates[Math.floor(random() * candidates.length)]) == null ? void 0 : _c.id) != null ? _d : candidates[0].id;
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1376,6 +1408,7 @@
       this.score = documentObject.querySelector(".score");
       this.startButton = documentObject.getElementById("start-btn");
       this.levelSelect = documentObject.getElementById("level-select");
+      this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1400,7 +1433,10 @@
       this.comboElement = documentObject.getElementById("combo");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.input = new InputController();
-      this.assets = loadSprites(windowObject.Image);
+      this.assets = loadSprites(windowObject.Image, ({ loaded, total }) => {
+        this.startButton.textContent = loaded === total ? "Spiel starten" : `Grafiken laden ${loaded}/${total}`;
+      });
+      this.startButton.textContent = `Grafiken laden 0/${this.assets.total}`;
       this.state = GameState.READY;
       this.animationFrameId = null;
       this.messageTimeout = null;
@@ -1447,6 +1483,7 @@
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
+      this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();
@@ -1465,7 +1502,7 @@
         option.value = definition.id;
         option.disabled = !unlocked;
         const stars = (_c = (_b = record == null ? void 0 : record.missions) == null ? void 0 : _b.length) != null ? _c : 0;
-        option.textContent = `${index + 1}. ${definition.name}${record ? ` \xB7 ${record.medal} \xB7 ${formatTime(record.bestTime)}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
+        option.textContent = `${index + 1}. ${definition.name} \xB7 ${formatDifficulty(definition.difficulty)}${record ? ` \xB7 ${record.medal} \xB7 ${formatTime(record.bestTime)}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
         this.levelSelect.append(option);
       });
       if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -1478,7 +1515,20 @@
       var _a, _b;
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
-      this.levelDescription.textContent = record ? `${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : definition.description;
+      this.levelDescription.textContent = record ? `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+    }
+    selectRandomLevel() {
+      const progress = this.progressStore.load();
+      this.selectedLevelId = chooseRandomUnlockedLevel(
+        LEVELS,
+        progress.unlockedLevels,
+        this.selectedLevelId
+      );
+      this.progressStore.selectLevel(this.selectedLevelId);
+      this.levelSelect.value = this.selectedLevelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.levelSelect.focus();
     }
     renderMissions() {
       var _a, _b, _c, _d;

@@ -5,6 +5,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "bathroom-run",
     name: "Badezimmer-Sprint",
     description: "Der klassische horizontale Lauf zur letzten Toilette.",
+    difficulty: 1,
     missions: [
       { id: "bathroom-collector", label: "Sammle alle 20 Fliegen", type: "flies", target: 20 },
       { id: "bathroom-speed", label: "Schaffe das Level in 100 Sekunden", type: "time", target: 100 },
@@ -38,6 +39,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "sewer-shortcut",
     name: "Kanal-Kürzel",
     description: "Kürzer, aber mit Sprungpolstern und zerbrechlichen Steinen.",
+    difficulty: 2,
     missions: [
       { id: "sewer-collector", label: "Sammle alle 10 Fliegen", type: "flies", target: 10 },
       { id: "sewer-speed", label: "Schaffe das Level in 75 Sekunden", type: "time", target: 75 },
@@ -69,6 +71,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "festival-flush",
     name: "Festival-Flucht",
     description: "Ein riskanter Expertenlauf mit wertvollen Fliegen.",
+    difficulty: 3,
     missions: [
       { id: "festival-collector", label: "Sammle alle 11 Fliegen", type: "flies", target: 11 },
       { id: "festival-combo", label: "Erreiche eine ×4-Combo", type: "combo", target: 4 },
@@ -101,6 +104,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "royal-flush",
     name: "Royal Flush",
     description: "Vertikaler Aufstieg mit der direkten Steuerung aus den normalen Levels.",
+    difficulty: 3,
     missions: [
       { id: "royal-climber", label: "Erreiche das Ziel in 150 Sekunden", type: "time", target: 150 },
       { id: "royal-collector", label: "Sammle mindestens 12 Fliegen", type: "flies", target: 12 },
@@ -137,6 +141,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "porcelain-panic",
     name: "Porzellan-Panik",
     description: "Ein langer Endspurt durch eine vollautomatische Sanitärfabrik.",
+    difficulty: 4,
     missions: [
       { id: "porcelain-collector", label: "Sammle alle 16 Fliegen", type: "flies", target: 16 },
       { id: "porcelain-speed", label: "Schaffe das Level in 125 Sekunden", type: "time", target: 125 },
@@ -176,6 +181,7 @@ export const LEVELS = Object.freeze(validateLevelDefinitions([
     id: "pipe-dream",
     name: "Rohrbruch-Rausch",
     description: "Der härteste Aufstieg: ein instabiler Neon-Rohrschacht ohne Abkürzung.",
+    difficulty: 5,
     missions: [
       { id: "pipe-collector", label: "Sammle alle 18 Fliegen", type: "flies", target: 18 },
       { id: "pipe-speed", label: "Schaffe das Level in 210 Sekunden", type: "time", target: 210 },

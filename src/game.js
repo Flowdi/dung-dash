@@ -67,7 +67,12 @@ export class Game {
     this.comboElement = documentObject.getElementById("combo");
     this.currentMissionsElement = documentObject.getElementById("current-missions");
     this.input = new InputController();
-    this.assets = loadSprites(windowObject.Image);
+    this.assets = loadSprites(windowObject.Image, ({ loaded, total }) => {
+      this.startButton.textContent = loaded === total
+        ? "Spiel starten"
+        : `Grafiken laden ${loaded}/${total}`;
+    });
+    this.startButton.textContent = `Grafiken laden 0/${this.assets.total}`;
     this.state = GameState.READY;
     this.animationFrameId = null;
     this.messageTimeout = null;

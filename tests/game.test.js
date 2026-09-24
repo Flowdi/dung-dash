@@ -29,6 +29,7 @@ import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
 import { formatDifficulty } from "../src/difficulty.js";
 import { chooseRandomUnlockedLevel } from "../src/level-selection.js";
+import { loadSprites } from "../src/assets.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
 
 test("a jump starts only while the player is grounded", () => {
@@ -610,6 +611,22 @@ test("random level selection only uses unlocked alternatives", () => {
   const levels = [{ id: "first" }, { id: "second" }, { id: "locked" }];
   assert.equal(chooseRandomUnlockedLevel(levels, ["first", "second"], "first", () => 0), "second");
   assert.equal(chooseRandomUnlockedLevel(levels, ["first"], "first", () => 0.9), "first");
+});
+
+test("sprite loading reports deterministic progress", async () => {
+  class FakeImage {
+    listeners = new Map();
+    addEventListener(type, listener) { this.listeners.set(type, listener); }
+    set src(value) {
+      this.source = value;
+      queueMicrotask(() => this.listeners.get("load")());
+    }
+  }
+  const updates = [];
+  const assets = loadSprites(FakeImage, (progress) => updates.push(progress));
+  await assets.ready;
+  assert.equal(updates.length, assets.total);
+  assert.deepEqual(updates.at(-1), { loaded: assets.total, total: assets.total, percent: 100 });
 });
 
 test("platforms and toilets render from the selected theme atlas", () => {

@@ -49,14 +49,21 @@
     pipeBackground: "./assets/themes/pipe-background.png",
     pipeAtlas: "./assets/themes/pipe-atlas.png"
   };
-  var loadSprites = (ImageConstructor = Image) => {
+  var loadSprites = (ImageConstructor = Image, onProgress = () => {
+  }) => {
     const sprites = {};
+    const total = Object.keys(spriteSources).length;
+    let loaded = 0;
     const ready = Promise.all(
       Object.entries(spriteSources).map(
         ([name, source]) => new Promise((resolve, reject) => {
           const image = new ImageConstructor();
           sprites[name] = image;
-          image.addEventListener("load", resolve, { once: true });
+          image.addEventListener("load", () => {
+            loaded += 1;
+            onProgress({ loaded, total, percent: Math.round(loaded / total * 100) });
+            resolve();
+          }, { once: true });
           image.addEventListener(
             "error",
             () => reject(new Error(`Sprite konnte nicht geladen werden: ${source}`)),
@@ -66,7 +73,7 @@
         })
       )
     );
-    return { sprites, ready };
+    return { sprites, ready, total };
   };
 
   // src/input.js
@@ -1426,7 +1433,10 @@
       this.comboElement = documentObject.getElementById("combo");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.input = new InputController();
-      this.assets = loadSprites(windowObject.Image);
+      this.assets = loadSprites(windowObject.Image, ({ loaded, total }) => {
+        this.startButton.textContent = loaded === total ? "Spiel starten" : `Grafiken laden ${loaded}/${total}`;
+      });
+      this.startButton.textContent = `Grafiken laden 0/${this.assets.total}`;
       this.state = GameState.READY;
       this.animationFrameId = null;
       this.messageTimeout = null;

@@ -20,6 +20,9 @@ export const validateLevelDefinitions = (levels) => {
     if (!(level.width > 0) || !((level.height ?? 800) > 0)) {
       throw new Error(`Ungültige Levelgröße: ${level.id}`);
     }
+    if (!Number.isInteger(level.difficulty) || level.difficulty < 1 || level.difficulty > 5) {
+      throw new Error(`Ungültiger Schwierigkeitsgrad: ${level.id}`);
+    }
     if (!level.theme?.background || !level.theme?.atlas) {
       throw new Error(`Unvollständiges Levelthema: ${level.id}`);
     }

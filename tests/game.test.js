@@ -27,6 +27,7 @@ import {
 import { calculateCoverRect } from "../src/rendering.js";
 import { Hazard, respawnAtCheckpoint } from "../src/hazards.js";
 import { validateLevelDefinitions } from "../src/level-validation.js";
+import { formatDifficulty } from "../src/difficulty.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
 
 test("a jump starts only while the player is grounded", () => {
@@ -568,7 +569,7 @@ test("the campaign ends with two substantial expert levels", () => {
 
 test("invalid level data fails fast with a useful error", () => {
   const invalid = [{
-    id: "broken", width: 800, spawn: { x: 0, y: 0 }, theme: { background: "bg", atlas: "atlas" },
+    id: "broken", width: 800, difficulty: 1, spawn: { x: 0, y: 0 }, theme: { background: "bg", atlas: "atlas" },
     missions: [
       { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
       { id: "c", type: "score", target: 1 },
@@ -580,7 +581,7 @@ test("invalid level data fails fast with a useful error", () => {
 
 test("level validation rejects gameplay objects outside the world", () => {
   const invalid = [{
-    id: "outside", width: 800, height: 800, spawn: { x: 10, y: 700 },
+    id: "outside", width: 800, height: 800, difficulty: 1, spawn: { x: 10, y: 700 },
     theme: { background: "bg", atlas: "atlas" },
     missions: [
       { id: "a", type: "time", target: 1 }, { id: "b", type: "flies", target: 1 },
@@ -596,6 +597,12 @@ test("every level defines three unique missions", () => {
     assert.equal(level.missions.length, 3);
     assert.equal(new Set(level.missions.map(({ id }) => id)).size, 3);
   });
+});
+
+test("every level exposes a valid readable difficulty", () => {
+  assert.equal(LEVELS.every(({ difficulty }) => difficulty >= 1 && difficulty <= 5), true);
+  assert.equal(formatDifficulty(1), "Einfach ●○○○○");
+  assert.equal(formatDifficulty(5), "Extrem ●●●●●");
 });
 
 test("platforms and toilets render from the selected theme atlas", () => {

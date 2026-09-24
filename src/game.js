@@ -19,6 +19,7 @@ import {
 } from "./missions.js";
 import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
+import { formatDifficulty } from "./difficulty.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -130,6 +131,7 @@ export class Game {
       option.disabled = !unlocked;
       const stars = record?.missions?.length ?? 0;
       option.textContent = `${index + 1}. ${definition.name}` +
+        ` · ${formatDifficulty(definition.difficulty)}` +
         `${record ? ` · ${record.medal} · ${formatTime(record.bestTime)}` : ""}` +
         `${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
@@ -145,8 +147,8 @@ export class Game {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = record
-      ? `${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
-      : definition.description;
+      ? `${formatDifficulty(definition.difficulty)} · ${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
+      : `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
   }
 
   renderMissions() {

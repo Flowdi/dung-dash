@@ -31,6 +31,18 @@ import { formatDifficulty } from "../src/difficulty.js";
 import { chooseRandomUnlockedLevel } from "../src/level-selection.js";
 import { loadSprites } from "../src/assets.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
+import { fullscreenButtonLabel, supportsFullscreen } from "../src/fullscreen.js";
+
+test("fullscreen controls expose support and the current action", () => {
+  const supportedDocument = {
+    documentElement: { requestFullscreen() {} },
+    exitFullscreen() {},
+  };
+  assert.equal(supportsFullscreen(supportedDocument), true);
+  assert.equal(supportsFullscreen({ documentElement: {} }), false);
+  assert.equal(fullscreenButtonLabel(false), "Vollbild");
+  assert.equal(fullscreenButtonLabel(true), "Vollbild verlassen");
+});
 
 test("a jump starts only while the player is grounded", () => {
   const player = new Player();

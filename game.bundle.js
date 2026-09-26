@@ -1276,6 +1276,13 @@
     return (_d = (_c = candidates[Math.floor(random() * candidates.length)]) == null ? void 0 : _c.id) != null ? _d : candidates[0].id;
   };
 
+  // src/fullscreen.js
+  var supportsFullscreen = (documentObject) => {
+    var _a;
+    return Boolean(((_a = documentObject == null ? void 0 : documentObject.documentElement) == null ? void 0 : _a.requestFullscreen) && (documentObject == null ? void 0 : documentObject.exitFullscreen));
+  };
+  var fullscreenButtonLabel = (isFullscreen) => isFullscreen ? "Vollbild verlassen" : "Vollbild";
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1425,6 +1432,7 @@
       this.resultMissions = documentObject.getElementById("result-missions");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
+      this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
       this.timerElement = documentObject.getElementById("run-time");
@@ -1457,7 +1465,7 @@
       this.selectedLevelId = LEVELS[0].id;
     }
     initialize() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const savedProgress = this.progressStore.load();
       if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
         this.selectedLevelId = savedProgress.selectedLevelId;
@@ -1479,8 +1487,10 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
+      (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
-      (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
+      (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
       this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
@@ -1630,6 +1640,7 @@
       this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
       this.state = GameState.PLAYING;
+      this.updateFullscreenButton();
       this.animationFrameId = this.window.requestAnimationFrame((time) => this.animate(time));
     }
     resize() {
@@ -1741,10 +1752,28 @@
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.updateFullscreenButton();
       this.restartButton.focus();
       this.renderLevelOptions();
       this.renderProgress();
       this.renderMissions();
+      this.updateFullscreenButton();
+    }
+    async toggleFullscreen() {
+      if (!supportsFullscreen(this.document)) return;
+      try {
+        if (this.document.fullscreenElement) await this.document.exitFullscreen();
+        else await this.document.documentElement.requestFullscreen();
+      } finally {
+        this.updateFullscreenButton();
+      }
+    }
+    updateFullscreenButton() {
+      const supported = supportsFullscreen(this.document);
+      const active = Boolean(this.document.fullscreenElement);
+      this.fullscreenButton.hidden = !supported || this.state === GameState.READY;
+      this.fullscreenButton.textContent = fullscreenButtonLabel(active);
+      this.fullscreenButton.setAttribute("aria-pressed", String(active));
     }
     renderRunResult(result, missionResults, newMissions) {
       const rows = [
@@ -1798,6 +1827,7 @@
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.updateFullscreenButton();
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";

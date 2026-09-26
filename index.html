@@ -27,6 +27,7 @@
       </label>
       <button class="random-level-btn" id="random-level-btn" type="button">Zufälliges freigeschaltetes Level</button>
       <p class="level-description" id="level-description"></p>
+      <section class="level-record-card" id="level-record-card" aria-live="polite"></section>
       <section class="mission-panel" aria-labelledby="mission-title">
         <h2 id="mission-title">Level-Missionen <span id="mission-stars"></span></h2>
         <div class="mission-list" id="mission-list"></div>
@@ -53,6 +54,7 @@
       <p class="current-missions" id="current-missions"></p>
       <button class="hud-button" id="pause-btn" type="button" aria-pressed="false" hidden>Pause</button>
       <button class="hud-button secondary-btn" id="reset-run-btn" type="button" hidden>Level neu starten</button>
+      <button class="hud-button secondary-btn" id="fullscreen-btn" type="button" aria-pressed="false" hidden>Vollbild</button>
     </div>
     <!-- Checkpoint-Bereich -->
     <section class="checkpoint-screen" role="status" aria-live="assertive" aria-atomic="true">
@@ -61,6 +63,7 @@
         <div class="result-breakdown" id="result-breakdown" hidden></div>
         <div class="result-splits" id="result-splits" hidden></div>
         <div class="result-missions" id="result-missions" hidden></div>
+        <button class="btn secondary-btn" id="copy-result-btn" type="button" hidden>Ergebnis kopieren</button>
         <button class="btn" id="next-level-btn" type="button">Nächstes Level</button>
         <button class="btn" id="restart-btn" type="button">Erneut spielen</button>
         <button class="btn secondary-btn" id="level-menu-btn" type="button">Anderes Level wählen</button>

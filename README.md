@@ -8,6 +8,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Fliegen-Score mit zeitlich begrenzter Combo bis ×4
 - Bronze-, Silber- und Goldmedaillen
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
+- kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung
@@ -23,6 +24,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
 - Wasserstrahlen, rotierende Toilettenbürsten und Rücksetzung zum letzten Checkpoint
 - ausführliche Ergebnisübersicht mit Score-Aufschlüsselung, Missionsstatus und direktem nächsten Level
+- kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 
 ## Spielen
 
@@ -32,6 +34,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Leertaste, Pfeiltaste hoch oder W: springen
 - P oder Escape: pausieren/fortsetzen
 - R: aktuelles Level sofort neu starten
+- Vollbild: über den Button im HUD ein- und ausschalten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.
 
 ## Entwicklung

@@ -1276,6 +1276,55 @@
     return (_d = (_c = candidates[Math.floor(random() * candidates.length)]) == null ? void 0 : _c.id) != null ? _d : candidates[0].id;
   };
 
+  // src/fullscreen.js
+  var supportsFullscreen = (documentObject) => {
+    var _a;
+    return Boolean(((_a = documentObject == null ? void 0 : documentObject.documentElement) == null ? void 0 : _a.requestFullscreen) && (documentObject == null ? void 0 : documentObject.exitFullscreen));
+  };
+  var fullscreenButtonLabel = (isFullscreen) => isFullscreen ? "Vollbild verlassen" : "Vollbild";
+
+  // src/run-summary.js
+  var createRunSummary = (levelName, result, missionResults = []) => {
+    const completedMissions = missionResults.filter(({ completed }) => completed).length;
+    return [
+      `Dung Dash \u2013 ${levelName}`,
+      `${result.medal}-Medaille \xB7 ${result.score} Punkte`,
+      `Zeit ${formatTime(result.elapsedSeconds)} \xB7 Fliegen ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer ${result.falls}`,
+      `Missionen ${completedMissions}/${missionResults.length}`
+    ].join("\n");
+  };
+  var copyText = async (text, navigatorObject, documentObject) => {
+    var _a;
+    if ((_a = navigatorObject == null ? void 0 : navigatorObject.clipboard) == null ? void 0 : _a.writeText) {
+      await navigatorObject.clipboard.writeText(text);
+      return true;
+    }
+    if (!(documentObject == null ? void 0 : documentObject.execCommand)) return false;
+    const input = documentObject.createElement("textarea");
+    input.value = text;
+    input.setAttribute("readonly", "");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    documentObject.body.append(input);
+    input.select();
+    const copied = documentObject.execCommand("copy");
+    input.remove();
+    return copied;
+  };
+
+  // src/level-record.js
+  var buildLevelRecordStats = (record, missionTotal) => {
+    var _a, _b, _c;
+    if (!record) return null;
+    const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
+    return [
+      ["Medaille", (_b = record.medal) != null ? _b : "\u2013"],
+      ["Highscore", (_c = record.bestScore) != null ? _c : 0],
+      ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
+      ["Sterne", `${completedMissions}/${missionTotal}`]
+    ];
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1410,6 +1459,7 @@
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
@@ -1423,8 +1473,10 @@
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
+      this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
+      this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
       this.timerElement = documentObject.getElementById("run-time");
@@ -1447,6 +1499,7 @@
       this.stats = new RunStats();
       this.lastSafePosition = { x: 100, y: 400 };
       this.nextLevelId = null;
+      this.lastRunSummary = "";
       let storage = null;
       try {
         storage = windowObject.localStorage;
@@ -1457,7 +1510,7 @@
       this.selectedLevelId = LEVELS[0].id;
     }
     initialize() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const savedProgress = this.progressStore.load();
       if (savedProgress.unlockedLevels.includes(savedProgress.selectedLevelId)) {
         this.selectedLevelId = savedProgress.selectedLevelId;
@@ -1479,8 +1532,11 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.copyResultButton.addEventListener("click", () => this.copyRunResult());
+      this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
+      (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
-      (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "visibilitychange", () => {
+      (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
       this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
@@ -1515,7 +1571,16 @@
       var _a, _b;
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
-      this.levelDescription.textContent = record ? `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      const stats = buildLevelRecordStats(record, definition.missions.length);
+      this.levelRecordCard.classList.toggle("empty", !stats);
+      if (!stats) {
+        this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+        return;
+      }
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
+        ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
+      ).join("")}</div>`;
     }
     selectRandomLevel() {
       const progress = this.progressStore.load();
@@ -1621,6 +1686,9 @@
       this.resultBreakdown.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.copyResultButton.hidden = true;
+      this.copyResultButton.textContent = "Ergebnis kopieren";
+      this.lastRunSummary = "";
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
@@ -1630,6 +1698,7 @@
       this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
       this.state = GameState.PLAYING;
+      this.updateFullscreenButton();
       this.animationFrameId = this.window.requestAnimationFrame((time) => this.animate(time));
     }
     resize() {
@@ -1741,12 +1810,42 @@
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.updateFullscreenButton();
       this.restartButton.focus();
       this.renderLevelOptions();
       this.renderProgress();
       this.renderMissions();
+      this.updateFullscreenButton();
+    }
+    async toggleFullscreen() {
+      if (!supportsFullscreen(this.document)) return;
+      try {
+        if (this.document.fullscreenElement) await this.document.exitFullscreen();
+        else await this.document.documentElement.requestFullscreen();
+      } finally {
+        this.updateFullscreenButton();
+      }
+    }
+    updateFullscreenButton() {
+      const supported = supportsFullscreen(this.document);
+      const active = Boolean(this.document.fullscreenElement);
+      this.fullscreenButton.hidden = !supported || this.state === GameState.READY;
+      this.fullscreenButton.textContent = fullscreenButtonLabel(active);
+      this.fullscreenButton.setAttribute("aria-pressed", String(active));
+    }
+    async copyRunResult() {
+      if (!this.lastRunSummary) return;
+      try {
+        const copied = await copyText(this.lastRunSummary, this.window.navigator, this.document);
+        this.copyResultButton.textContent = copied ? "Kopiert!" : "Kopieren nicht m\xF6glich";
+      } catch (e) {
+        this.copyResultButton.textContent = "Kopieren nicht m\xF6glich";
+      }
     }
     renderRunResult(result, missionResults, newMissions) {
+      this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
+      this.copyResultButton.hidden = false;
+      this.copyResultButton.textContent = "Ergebnis kopieren";
       const rows = [
         ["Fliegen & Combo", result.breakdown.flyScore],
         ["Zeitbonus", result.breakdown.timeBonus],
@@ -1795,9 +1894,12 @@
       this.resultBreakdown.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.copyResultButton.hidden = true;
+      this.lastRunSummary = "";
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.updateFullscreenButton();
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";

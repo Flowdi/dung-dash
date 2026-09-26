@@ -21,6 +21,9 @@ import { calculateCoverRect } from "./rendering.js";
 import { respawnAtCheckpoint } from "./hazards.js";
 import { formatDifficulty } from "./difficulty.js";
 import { chooseRandomUnlockedLevel } from "./level-selection.js";
+import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
+import { copyText, createRunSummary } from "./run-summary.js";
+import { buildLevelRecordStats } from "./level-record.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -44,6 +47,7 @@ export class Game {
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
@@ -57,8 +61,10 @@ export class Game {
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
+    this.copyResultButton = documentObject.getElementById("copy-result-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
+    this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
     this.timerElement = documentObject.getElementById("run-time");
@@ -83,6 +89,7 @@ export class Game {
     this.stats = new RunStats();
     this.lastSafePosition = { x: 100, y: 400 };
     this.nextLevelId = null;
+    this.lastRunSummary = "";
     let storage = null;
     try {
       storage = windowObject.localStorage;
@@ -116,6 +123,9 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.copyResultButton.addEventListener("click", () => this.copyRunResult());
+    this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
+    this.document.addEventListener?.("fullscreenchange", () => this.updateFullscreenButton());
     this.resetProgressButton.addEventListener("click", () => this.resetProgress());
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
@@ -154,9 +164,16 @@ export class Game {
   updateLevelDescription() {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
-    this.levelDescription.textContent = record
-      ? `${formatDifficulty(definition.difficulty)} · ${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
-      : `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    const stats = buildLevelRecordStats(record, definition.missions.length);
+    this.levelRecordCard.classList.toggle("empty", !stats);
+    if (!stats) {
+      this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+      return;
+    }
+    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
+      `<p><span>${label}</span><strong>${value}</strong></p>`
+    ).join("")}</div>`;
   }
 
   selectRandomLevel() {
@@ -266,6 +283,9 @@ export class Game {
     this.resultBreakdown.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.copyResultButton.hidden = true;
+    this.copyResultButton.textContent = "Ergebnis kopieren";
+    this.lastRunSummary = "";
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";
     this.levelMenuButton.style.display = "none";
@@ -275,6 +295,7 @@ export class Game {
     this.pauseButton.setAttribute("aria-pressed", "false");
     this.previousFrameTime = null;
     this.state = GameState.PLAYING;
+    this.updateFullscreenButton();
     this.animationFrameId = this.window.requestAnimationFrame((time) => this.animate(time));
   }
 
@@ -400,13 +421,46 @@ export class Game {
     this.levelMenuButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
     this.resetRunButton.hidden = true;
+    this.updateFullscreenButton();
     this.restartButton.focus();
     this.renderLevelOptions();
     this.renderProgress();
     this.renderMissions();
+    this.updateFullscreenButton();
+  }
+
+  async toggleFullscreen() {
+    if (!supportsFullscreen(this.document)) return;
+    try {
+      if (this.document.fullscreenElement) await this.document.exitFullscreen();
+      else await this.document.documentElement.requestFullscreen();
+    } finally {
+      this.updateFullscreenButton();
+    }
+  }
+
+  updateFullscreenButton() {
+    const supported = supportsFullscreen(this.document);
+    const active = Boolean(this.document.fullscreenElement);
+    this.fullscreenButton.hidden = !supported || this.state === GameState.READY;
+    this.fullscreenButton.textContent = fullscreenButtonLabel(active);
+    this.fullscreenButton.setAttribute("aria-pressed", String(active));
+  }
+
+  async copyRunResult() {
+    if (!this.lastRunSummary) return;
+    try {
+      const copied = await copyText(this.lastRunSummary, this.window.navigator, this.document);
+      this.copyResultButton.textContent = copied ? "Kopiert!" : "Kopieren nicht möglich";
+    } catch {
+      this.copyResultButton.textContent = "Kopieren nicht möglich";
+    }
   }
 
   renderRunResult(result, missionResults, newMissions) {
+    this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
+    this.copyResultButton.hidden = false;
+    this.copyResultButton.textContent = "Ergebnis kopieren";
     const rows = [
       ["Fliegen & Combo", result.breakdown.flyScore],
       ["Zeitbonus", result.breakdown.timeBonus],
@@ -460,9 +514,12 @@ export class Game {
     this.resultBreakdown.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.copyResultButton.hidden = true;
+    this.lastRunSummary = "";
     this.score.style.display = "none";
     this.pauseButton.hidden = true;
     this.resetRunButton.hidden = true;
+    this.updateFullscreenButton();
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";
     this.levelMenuButton.style.display = "none";

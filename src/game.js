@@ -22,6 +22,7 @@ import { respawnAtCheckpoint } from "./hazards.js";
 import { formatDifficulty } from "./difficulty.js";
 import { chooseRandomUnlockedLevel } from "./level-selection.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
+import { copyText, createRunSummary } from "./run-summary.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -58,6 +59,7 @@ export class Game {
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
+    this.copyResultButton = documentObject.getElementById("copy-result-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
     this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
@@ -85,6 +87,7 @@ export class Game {
     this.stats = new RunStats();
     this.lastSafePosition = { x: 100, y: 400 };
     this.nextLevelId = null;
+    this.lastRunSummary = "";
     let storage = null;
     try {
       storage = windowObject.localStorage;
@@ -118,6 +121,7 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.copyResultButton.addEventListener("click", () => this.copyRunResult());
     this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
     this.document.addEventListener?.("fullscreenchange", () => this.updateFullscreenButton());
     this.resetProgressButton.addEventListener("click", () => this.resetProgress());
@@ -270,6 +274,9 @@ export class Game {
     this.resultBreakdown.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.copyResultButton.hidden = true;
+    this.copyResultButton.textContent = "Ergebnis kopieren";
+    this.lastRunSummary = "";
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";
     this.levelMenuButton.style.display = "none";
@@ -431,7 +438,20 @@ export class Game {
     this.fullscreenButton.setAttribute("aria-pressed", String(active));
   }
 
+  async copyRunResult() {
+    if (!this.lastRunSummary) return;
+    try {
+      const copied = await copyText(this.lastRunSummary, this.window.navigator, this.document);
+      this.copyResultButton.textContent = copied ? "Kopiert!" : "Kopieren nicht möglich";
+    } catch {
+      this.copyResultButton.textContent = "Kopieren nicht möglich";
+    }
+  }
+
   renderRunResult(result, missionResults, newMissions) {
+    this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
+    this.copyResultButton.hidden = false;
+    this.copyResultButton.textContent = "Ergebnis kopieren";
     const rows = [
       ["Fliegen & Combo", result.breakdown.flyScore],
       ["Zeitbonus", result.breakdown.timeBonus],
@@ -485,6 +505,8 @@ export class Game {
     this.resultBreakdown.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.copyResultButton.hidden = true;
+    this.lastRunSummary = "";
     this.score.style.display = "none";
     this.pauseButton.hidden = true;
     this.resetRunButton.hidden = true;

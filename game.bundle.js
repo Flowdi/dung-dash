@@ -1283,6 +1283,35 @@
   };
   var fullscreenButtonLabel = (isFullscreen) => isFullscreen ? "Vollbild verlassen" : "Vollbild";
 
+  // src/run-summary.js
+  var createRunSummary = (levelName, result, missionResults = []) => {
+    const completedMissions = missionResults.filter(({ completed }) => completed).length;
+    return [
+      `Dung Dash \u2013 ${levelName}`,
+      `${result.medal}-Medaille \xB7 ${result.score} Punkte`,
+      `Zeit ${formatTime(result.elapsedSeconds)} \xB7 Fliegen ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer ${result.falls}`,
+      `Missionen ${completedMissions}/${missionResults.length}`
+    ].join("\n");
+  };
+  var copyText = async (text, navigatorObject, documentObject) => {
+    var _a;
+    if ((_a = navigatorObject == null ? void 0 : navigatorObject.clipboard) == null ? void 0 : _a.writeText) {
+      await navigatorObject.clipboard.writeText(text);
+      return true;
+    }
+    if (!(documentObject == null ? void 0 : documentObject.execCommand)) return false;
+    const input = documentObject.createElement("textarea");
+    input.value = text;
+    input.setAttribute("readonly", "");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    documentObject.body.append(input);
+    input.select();
+    const copied = documentObject.execCommand("copy");
+    input.remove();
+    return copied;
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1430,6 +1459,7 @@
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
+      this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
       this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
@@ -1455,6 +1485,7 @@
       this.stats = new RunStats();
       this.lastSafePosition = { x: 100, y: 400 };
       this.nextLevelId = null;
+      this.lastRunSummary = "";
       let storage = null;
       try {
         storage = windowObject.localStorage;
@@ -1487,6 +1518,7 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.copyResultButton.addEventListener("click", () => this.copyRunResult());
       this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
@@ -1631,6 +1663,9 @@
       this.resultBreakdown.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.copyResultButton.hidden = true;
+      this.copyResultButton.textContent = "Ergebnis kopieren";
+      this.lastRunSummary = "";
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
       this.levelMenuButton.style.display = "none";
@@ -1775,7 +1810,19 @@
       this.fullscreenButton.textContent = fullscreenButtonLabel(active);
       this.fullscreenButton.setAttribute("aria-pressed", String(active));
     }
+    async copyRunResult() {
+      if (!this.lastRunSummary) return;
+      try {
+        const copied = await copyText(this.lastRunSummary, this.window.navigator, this.document);
+        this.copyResultButton.textContent = copied ? "Kopiert!" : "Kopieren nicht m\xF6glich";
+      } catch (e) {
+        this.copyResultButton.textContent = "Kopieren nicht m\xF6glich";
+      }
+    }
     renderRunResult(result, missionResults, newMissions) {
+      this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
+      this.copyResultButton.hidden = false;
+      this.copyResultButton.textContent = "Ergebnis kopieren";
       const rows = [
         ["Fliegen & Combo", result.breakdown.flyScore],
         ["Zeitbonus", result.breakdown.timeBonus],
@@ -1824,6 +1871,8 @@
       this.resultBreakdown.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.copyResultButton.hidden = true;
+      this.lastRunSummary = "";
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;

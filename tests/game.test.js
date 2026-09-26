@@ -32,6 +32,31 @@ import { chooseRandomUnlockedLevel } from "../src/level-selection.js";
 import { loadSprites } from "../src/assets.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "../src/fullscreen.js";
+import { copyText, createRunSummary } from "../src/run-summary.js";
+
+test("run summaries contain the result details players want to share", () => {
+  const summary = createRunSummary("Royal Flush", {
+    medal: "Gold",
+    score: 12345,
+    elapsedSeconds: 65.4,
+    fliesCollected: 12,
+    totalFlies: 12,
+    falls: 1,
+  }, [{ completed: true }, { completed: false }, { completed: true }]);
+  assert.match(summary, /Dung Dash – Royal Flush/);
+  assert.match(summary, /Gold-Medaille · 12345 Punkte/);
+  assert.match(summary, /Zeit 01:05\.4 · Fliegen 12\/12 · Treffer 1/);
+  assert.match(summary, /Missionen 2\/3/);
+});
+
+test("run summaries use the modern clipboard API when available", async () => {
+  let copiedText = "";
+  const copied = await copyText("Ergebnis", {
+    clipboard: { writeText: async (text) => { copiedText = text; } },
+  });
+  assert.equal(copied, true);
+  assert.equal(copiedText, "Ergebnis");
+});
 
 test("fullscreen controls expose support and the current action", () => {
   const supportedDocument = {

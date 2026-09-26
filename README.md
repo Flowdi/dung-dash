@@ -8,6 +8,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Fliegen-Score mit zeitlich begrenzter Combo bis ×4
 - Bronze-, Silber- und Goldmedaillen
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
+- kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung

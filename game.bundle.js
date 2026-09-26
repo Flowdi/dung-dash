@@ -1312,6 +1312,19 @@
     return copied;
   };
 
+  // src/level-record.js
+  var buildLevelRecordStats = (record, missionTotal) => {
+    var _a, _b, _c;
+    if (!record) return null;
+    const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
+    return [
+      ["Medaille", (_b = record.medal) != null ? _b : "\u2013"],
+      ["Highscore", (_c = record.bestScore) != null ? _c : 0],
+      ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
+      ["Sterne", `${completedMissions}/${missionTotal}`]
+    ];
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1446,6 +1459,7 @@
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
@@ -1557,7 +1571,16 @@
       var _a, _b;
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
-      this.levelDescription.textContent = record ? `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description} Bestwert: ${record.bestScore} Punkte \xB7 ${record.bestTime == null ? "\u2013" : formatTime(record.bestTime)}.` : `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      const stats = buildLevelRecordStats(record, definition.missions.length);
+      this.levelRecordCard.classList.toggle("empty", !stats);
+      if (!stats) {
+        this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+        return;
+      }
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
+        ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
+      ).join("")}</div>`;
     }
     selectRandomLevel() {
       const progress = this.progressStore.load();

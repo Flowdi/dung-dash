@@ -33,6 +33,22 @@ import { loadSprites } from "../src/assets.js";
 import { shouldPauseWhenHidden } from "../src/game.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "../src/fullscreen.js";
 import { copyText, createRunSummary } from "../src/run-summary.js";
+import { buildLevelRecordStats } from "../src/level-record.js";
+
+test("level record cards format completed progress at a glance", () => {
+  assert.equal(buildLevelRecordStats(null, 3), null);
+  assert.deepEqual(buildLevelRecordStats({
+    medal: "Silber",
+    bestScore: 9876,
+    bestTime: 72.3,
+    missions: ["fast", "fast", "flies"],
+  }, 3), [
+    ["Medaille", "Silber"],
+    ["Highscore", 9876],
+    ["Bestzeit", "01:12.3"],
+    ["Sterne", "2/3"],
+  ]);
+});
 
 test("run summaries contain the result details players want to share", () => {
   const summary = createRunSummary("Royal Flush", {

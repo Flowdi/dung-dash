@@ -23,6 +23,7 @@ import { formatDifficulty } from "./difficulty.js";
 import { chooseRandomUnlockedLevel } from "./level-selection.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
 import { copyText, createRunSummary } from "./run-summary.js";
+import { buildLevelRecordStats } from "./level-record.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -46,6 +47,7 @@ export class Game {
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
@@ -162,9 +164,16 @@ export class Game {
   updateLevelDescription() {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
-    this.levelDescription.textContent = record
-      ? `${formatDifficulty(definition.difficulty)} · ${definition.description} Bestwert: ${record.bestScore} Punkte · ${record.bestTime == null ? "–" : formatTime(record.bestTime)}.`
-      : `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    const stats = buildLevelRecordStats(record, definition.missions.length);
+    this.levelRecordCard.classList.toggle("empty", !stats);
+    if (!stats) {
+      this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+      return;
+    }
+    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
+      `<p><span>${label}</span><strong>${value}</strong></p>`
+    ).join("")}</div>`;
   }
 
   selectRandomLevel() {

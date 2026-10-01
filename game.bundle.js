@@ -1089,6 +1089,8 @@
     bestTime: null,
     totalRuns: 0,
     totalFlies: 0,
+    totalPlayTime: 0,
+    totalFalls: 0,
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1134,6 +1136,10 @@
         ];
       }))
     };
+    base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
+    base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
+    base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
+    base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1182,6 +1188,8 @@
         bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
         totalRuns: progress.totalRuns + 1,
         totalFlies: progress.totalFlies + result.fliesCollected,
+        totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
+        totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         medals: {
           ...progress.medals,
           [result.medal]: ((_c = progress.medals[result.medal]) != null ? _c : 0) + 1
@@ -1325,6 +1333,56 @@
     ];
   };
 
+  // src/campaign-progress.js
+  var calculateCampaignProgress = (progress, levels) => {
+    const completedLevels = levels.filter(({ id }) => {
+      var _a;
+      return Boolean((_a = progress.levelRecords) == null ? void 0 : _a[id]);
+    }).length;
+    const totalLevels = levels.length;
+    const percent = totalLevels === 0 ? 0 : Math.round(completedLevels / totalLevels * 100);
+    return { completedLevels, totalLevels, percent };
+  };
+
+  // src/campaign-selection.js
+  var chooseCampaignLevel = (levels, progress) => {
+    var _a, _b, _c, _d, _e;
+    const unlocked = new Set((_a = progress.unlockedLevels) != null ? _a : []);
+    const available = levels.filter(({ id }) => unlocked.has(id));
+    const unfinished = available.find(({ id }) => {
+      var _a2;
+      return !((_a2 = progress.levelRecords) == null ? void 0 : _a2[id]);
+    });
+    if (unfinished) return { levelId: unfinished.id, reason: "unfinished" };
+    const missingStars = available.find(
+      ({ id, missions }) => {
+        var _a2, _b2, _c2;
+        return new Set((_c2 = (_b2 = (_a2 = progress.levelRecords) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.missions) != null ? _c2 : []).size < missions.length;
+      }
+    );
+    if (missingStars) return { levelId: missingStars.id, reason: "missions" };
+    return { levelId: (_e = (_d = (_b = available.at(-1)) == null ? void 0 : _b.id) != null ? _d : (_c = levels[0]) == null ? void 0 : _c.id) != null ? _e : null, reason: "complete" };
+  };
+  var campaignButtonLabel = (reason) => {
+    var _a;
+    return (_a = {
+      unfinished: "Kampagne fortsetzen",
+      missions: "Offene Missionen spielen",
+      complete: "Lieblingslevel wiederholen"
+    }[reason]) != null ? _a : "Kampagne spielen";
+  };
+
+  // src/level-goal.js
+  var describeNextLevelGoal = (level, record) => {
+    var _a;
+    if (!record) return "Erstes Ziel: Level abschlie\xDFen";
+    const completed = new Set((_a = record.missions) != null ? _a : []);
+    const nextMission = level.missions.find(({ id }) => !completed.has(id));
+    if (nextMission) return `N\xE4chstes Ziel: ${nextMission.label}`;
+    if (record.medal !== "Gold") return "N\xE4chstes Ziel: Goldmedaille holen";
+    return "Alle Ziele dieses Levels erreicht";
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1456,6 +1514,7 @@
       this.checkpointMessage = documentObject.getElementById("checkpoint-message");
       this.score = documentObject.querySelector(".score");
       this.startButton = documentObject.getElementById("start-btn");
+      this.continueButton = documentObject.getElementById("continue-btn");
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
@@ -1463,6 +1522,9 @@
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
+      this.campaignProgress = documentObject.getElementById("campaign-progress");
+      this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
+      this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
       this.medalSummary = documentObject.getElementById("medal-summary");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
@@ -1521,6 +1583,7 @@
         { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
       );
       this.startButton.addEventListener("click", () => this.start());
+      this.continueButton.addEventListener("click", () => this.continueCampaign());
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
         this.progressStore.selectLevel(this.selectedLevelId);
@@ -1565,7 +1628,19 @@
         this.selectedLevelId = (_a = progress.unlockedLevels[0]) != null ? _a : LEVELS[0].id;
       }
       this.levelSelect.value = this.selectedLevelId;
+      const campaignChoice = chooseCampaignLevel(LEVELS, progress);
+      this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
       this.updateLevelDescription();
+    }
+    continueCampaign() {
+      const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
+      if (!choice.levelId) return;
+      this.selectedLevelId = choice.levelId;
+      this.progressStore.selectLevel(choice.levelId);
+      this.levelSelect.value = choice.levelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.start();
     }
     updateLevelDescription() {
       var _a, _b;
@@ -1573,14 +1648,15 @@
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
       const stats = buildLevelRecordStats(record, definition.missions.length);
+      const nextGoal = describeNextLevelGoal(definition, record);
       this.levelRecordCard.classList.toggle("empty", !stats);
       if (!stats) {
-        this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+        this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
         return;
       }
       this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
-      ).join("")}</div>`;
+      ).join("")}</div><small>${nextGoal}</small>`;
     }
     selectRandomLevel() {
       const progress = this.progressStore.load();
@@ -1611,9 +1687,15 @@
     renderProgress() {
       var _a;
       const progress = this.progressStore.load();
+      const campaign = calculateCampaignProgress(progress, LEVELS);
+      this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
+      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}%`;
+      this.campaignProgressFill.style.width = `${campaign.percent}%`;
       const stats = [
         ["L\xE4ufe", progress.totalRuns],
         ["Fliegen", progress.totalFlies],
+        ["Spielzeit", formatTime(progress.totalPlayTime)],
+        ["Treffer", progress.totalFalls],
         ["Highscore", progress.bestScore],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
         ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]

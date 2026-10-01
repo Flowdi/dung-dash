@@ -24,6 +24,9 @@ import { chooseRandomUnlockedLevel } from "./level-selection.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
 import { copyText, createRunSummary } from "./run-summary.js";
 import { buildLevelRecordStats } from "./level-record.js";
+import { calculateCampaignProgress } from "./campaign-progress.js";
+import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.js";
+import { describeNextLevelGoal } from "./level-goal.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -44,6 +47,7 @@ export class Game {
     this.checkpointMessage = documentObject.getElementById("checkpoint-message");
     this.score = documentObject.querySelector(".score");
     this.startButton = documentObject.getElementById("start-btn");
+    this.continueButton = documentObject.getElementById("continue-btn");
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
@@ -51,6 +55,9 @@ export class Game {
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
+    this.campaignProgress = documentObject.getElementById("campaign-progress");
+    this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
+    this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
     this.medalSummary = documentObject.getElementById("medal-summary");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
@@ -112,6 +119,7 @@ export class Game {
       { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
     );
     this.startButton.addEventListener("click", () => this.start());
+    this.continueButton.addEventListener("click", () => this.continueCampaign());
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
       this.progressStore.selectLevel(this.selectedLevelId);
@@ -158,7 +166,20 @@ export class Game {
       this.selectedLevelId = progress.unlockedLevels[0] ?? LEVELS[0].id;
     }
     this.levelSelect.value = this.selectedLevelId;
+    const campaignChoice = chooseCampaignLevel(LEVELS, progress);
+    this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
     this.updateLevelDescription();
+  }
+
+  continueCampaign() {
+    const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
+    if (!choice.levelId) return;
+    this.selectedLevelId = choice.levelId;
+    this.progressStore.selectLevel(choice.levelId);
+    this.levelSelect.value = choice.levelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.start();
   }
 
   updateLevelDescription() {
@@ -166,14 +187,15 @@ export class Game {
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
     const stats = buildLevelRecordStats(record, definition.missions.length);
+    const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
     if (!stats) {
-      this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
       return;
     }
     this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value}</strong></p>`
-    ).join("")}</div>`;
+    ).join("")}</div><small>${nextGoal}</small>`;
   }
 
   selectRandomLevel() {
@@ -205,9 +227,15 @@ export class Game {
 
   renderProgress() {
     const progress = this.progressStore.load();
+    const campaign = calculateCampaignProgress(progress, LEVELS);
+    this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
+    this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],
       ["Fliegen", progress.totalFlies],
+      ["Spielzeit", formatTime(progress.totalPlayTime)],
+      ["Treffer", progress.totalFalls],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],

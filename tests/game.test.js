@@ -34,6 +34,14 @@ import { shouldPauseWhenHidden } from "../src/game.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "../src/fullscreen.js";
 import { copyText, createRunSummary } from "../src/run-summary.js";
 import { buildLevelRecordStats } from "../src/level-record.js";
+import { calculateCampaignProgress } from "../src/campaign-progress.js";
+
+test("campaign progress counts uniquely completed levels", () => {
+  const progress = calculateCampaignProgress({
+    levelRecords: { one: {}, three: {} },
+  }, [{ id: "one" }, { id: "two" }, { id: "three" }, { id: "four" }]);
+  assert.deepEqual(progress, { completedLevels: 2, totalLevels: 4, percent: 50 });
+});
 
 test("level record cards format completed progress at a glance", () => {
   assert.equal(buildLevelRecordStats(null, 3), null);

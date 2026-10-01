@@ -254,6 +254,32 @@ body {
   font-size: 1.15rem;
 }
 
+.campaign-progress {
+  position: relative;
+  min-height: 28px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.campaign-progress span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.campaign-progress i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, #9a5b16, #e2a62b);
+  transition: width 300ms ease;
+}
+
 .career-stats {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

@@ -1333,6 +1333,17 @@
     ];
   };
 
+  // src/campaign-progress.js
+  var calculateCampaignProgress = (progress, levels) => {
+    const completedLevels = levels.filter(({ id }) => {
+      var _a;
+      return Boolean((_a = progress.levelRecords) == null ? void 0 : _a[id]);
+    }).length;
+    const totalLevels = levels.length;
+    const percent = totalLevels === 0 ? 0 : Math.round(completedLevels / totalLevels * 100);
+    return { completedLevels, totalLevels, percent };
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1471,6 +1482,9 @@
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
       this.careerStats = documentObject.getElementById("career-stats");
+      this.campaignProgress = documentObject.getElementById("campaign-progress");
+      this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
+      this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
       this.medalSummary = documentObject.getElementById("medal-summary");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
@@ -1619,6 +1633,10 @@
     renderProgress() {
       var _a;
       const progress = this.progressStore.load();
+      const campaign = calculateCampaignProgress(progress, LEVELS);
+      this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
+      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}%`;
+      this.campaignProgressFill.style.width = `${campaign.percent}%`;
       const stats = [
         ["L\xE4ufe", progress.totalRuns],
         ["Fliegen", progress.totalFlies],

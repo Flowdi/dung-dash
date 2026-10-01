@@ -24,6 +24,7 @@ import { chooseRandomUnlockedLevel } from "./level-selection.js";
 import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
 import { copyText, createRunSummary } from "./run-summary.js";
 import { buildLevelRecordStats } from "./level-record.js";
+import { calculateCampaignProgress } from "./campaign-progress.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -51,6 +52,9 @@ export class Game {
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
     this.careerStats = documentObject.getElementById("career-stats");
+    this.campaignProgress = documentObject.getElementById("campaign-progress");
+    this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
+    this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
     this.medalSummary = documentObject.getElementById("medal-summary");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
@@ -205,6 +209,10 @@ export class Game {
 
   renderProgress() {
     const progress = this.progressStore.load();
+    const campaign = calculateCampaignProgress(progress, LEVELS);
+    this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
+    this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],
       ["Fliegen", progress.totalFlies],

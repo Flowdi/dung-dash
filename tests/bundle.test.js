@@ -71,6 +71,7 @@ test("system accessibility preferences disable incidental motion", async () => {
 test("start screen exposes career stats and achievements", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="career-stats"/);
+  assert.match(html, /id="campaign-progress"/);
   assert.match(html, /id="medal-summary"/);
   assert.match(html, /id="achievement-list"/);
   assert.match(html, /id="reset-progress-btn"/);

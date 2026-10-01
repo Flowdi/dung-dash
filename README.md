@@ -10,6 +10,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
+- visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung

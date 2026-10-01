@@ -12,6 +12,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
+- kontextbezogene Empfehlung für das nächste sinnvolle Ziel jedes Levels
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung

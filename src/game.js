@@ -26,6 +26,7 @@ import { copyText, createRunSummary } from "./run-summary.js";
 import { buildLevelRecordStats } from "./level-record.js";
 import { calculateCampaignProgress } from "./campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.js";
+import { describeNextLevelGoal } from "./level-goal.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -186,14 +187,15 @@ export class Game {
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
     const stats = buildLevelRecordStats(record, definition.missions.length);
+    const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
     if (!stats) {
-      this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
       return;
     }
     this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value}</strong></p>`
-    ).join("")}</div>`;
+    ).join("")}</div><small>${nextGoal}</small>`;
   }
 
   selectRandomLevel() {

@@ -133,8 +133,13 @@ body {
   font-size: 0.86rem;
 }
 
+.level-record-card > small {
+  color: #f4d77b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .level-record-card.empty {
-  grid-template-columns: auto 1fr;
   color: #bdbdbd;
   font-size: 0.76rem;
 }

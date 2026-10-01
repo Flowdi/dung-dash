@@ -1372,6 +1372,17 @@
     }[reason]) != null ? _a : "Kampagne spielen";
   };
 
+  // src/level-goal.js
+  var describeNextLevelGoal = (level, record) => {
+    var _a;
+    if (!record) return "Erstes Ziel: Level abschlie\xDFen";
+    const completed = new Set((_a = record.missions) != null ? _a : []);
+    const nextMission = level.missions.find(({ id }) => !completed.has(id));
+    if (nextMission) return `N\xE4chstes Ziel: ${nextMission.label}`;
+    if (record.medal !== "Gold") return "N\xE4chstes Ziel: Goldmedaille holen";
+    return "Alle Ziele dieses Levels erreicht";
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1637,14 +1648,15 @@
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
       const stats = buildLevelRecordStats(record, definition.missions.length);
+      const nextGoal = describeNextLevelGoal(definition, record);
       this.levelRecordCard.classList.toggle("empty", !stats);
       if (!stats) {
-        this.levelRecordCard.innerHTML = "<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span>";
+        this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
         return;
       }
       this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
-      ).join("")}</div>`;
+      ).join("")}</div><small>${nextGoal}</small>`;
     }
     selectRandomLevel() {
       const progress = this.progressStore.load();

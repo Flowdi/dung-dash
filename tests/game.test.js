@@ -36,6 +36,21 @@ import { copyText, createRunSummary } from "../src/run-summary.js";
 import { buildLevelRecordStats } from "../src/level-record.js";
 import { calculateCampaignProgress } from "../src/campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-selection.js";
+import { describeNextLevelGoal } from "../src/level-goal.js";
+
+test("level goals guide players from first finish to missions and gold", () => {
+  const level = { missions: [
+    { id: "flies", label: "Sammle alle Fliegen" },
+    { id: "speed", label: "Schaffe das Zeitlimit" },
+  ] };
+  assert.equal(describeNextLevelGoal(level, null), "Erstes Ziel: Level abschließen");
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies"], medal: "Gold" }),
+    "Nächstes Ziel: Schaffe das Zeitlimit");
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber" }),
+    "Nächstes Ziel: Goldmedaille holen");
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Gold" }),
+    "Alle Ziele dieses Levels erreicht");
+});
 
 test("campaign continuation prioritizes unfinished levels and then open missions", () => {
   const levels = [

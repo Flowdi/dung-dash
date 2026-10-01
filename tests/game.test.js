@@ -35,6 +35,23 @@ import { fullscreenButtonLabel, supportsFullscreen } from "../src/fullscreen.js"
 import { copyText, createRunSummary } from "../src/run-summary.js";
 import { buildLevelRecordStats } from "../src/level-record.js";
 import { calculateCampaignProgress } from "../src/campaign-progress.js";
+import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-selection.js";
+
+test("campaign continuation prioritizes unfinished levels and then open missions", () => {
+  const levels = [
+    { id: "one", missions: [{ id: "a" }] },
+    { id: "two", missions: [{ id: "b" }] },
+  ];
+  assert.deepEqual(chooseCampaignLevel(levels, {
+    unlockedLevels: ["one", "two"],
+    levelRecords: { one: { missions: ["a"] } },
+  }), { levelId: "two", reason: "unfinished" });
+  assert.deepEqual(chooseCampaignLevel(levels, {
+    unlockedLevels: ["one", "two"],
+    levelRecords: { one: { missions: [] }, two: { missions: ["b"] } },
+  }), { levelId: "one", reason: "missions" });
+  assert.equal(campaignButtonLabel("missions"), "Offene Missionen spielen");
+});
 
 test("campaign progress counts uniquely completed levels", () => {
   const progress = calculateCampaignProgress({

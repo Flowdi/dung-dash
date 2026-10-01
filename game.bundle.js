@@ -1344,6 +1344,34 @@
     return { completedLevels, totalLevels, percent };
   };
 
+  // src/campaign-selection.js
+  var chooseCampaignLevel = (levels, progress) => {
+    var _a, _b, _c, _d, _e;
+    const unlocked = new Set((_a = progress.unlockedLevels) != null ? _a : []);
+    const available = levels.filter(({ id }) => unlocked.has(id));
+    const unfinished = available.find(({ id }) => {
+      var _a2;
+      return !((_a2 = progress.levelRecords) == null ? void 0 : _a2[id]);
+    });
+    if (unfinished) return { levelId: unfinished.id, reason: "unfinished" };
+    const missingStars = available.find(
+      ({ id, missions }) => {
+        var _a2, _b2, _c2;
+        return new Set((_c2 = (_b2 = (_a2 = progress.levelRecords) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.missions) != null ? _c2 : []).size < missions.length;
+      }
+    );
+    if (missingStars) return { levelId: missingStars.id, reason: "missions" };
+    return { levelId: (_e = (_d = (_b = available.at(-1)) == null ? void 0 : _b.id) != null ? _d : (_c = levels[0]) == null ? void 0 : _c.id) != null ? _e : null, reason: "complete" };
+  };
+  var campaignButtonLabel = (reason) => {
+    var _a;
+    return (_a = {
+      unfinished: "Kampagne fortsetzen",
+      missions: "Offene Missionen spielen",
+      complete: "Lieblingslevel wiederholen"
+    }[reason]) != null ? _a : "Kampagne spielen";
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1475,6 +1503,7 @@
       this.checkpointMessage = documentObject.getElementById("checkpoint-message");
       this.score = documentObject.querySelector(".score");
       this.startButton = documentObject.getElementById("start-btn");
+      this.continueButton = documentObject.getElementById("continue-btn");
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
@@ -1543,6 +1572,7 @@
         { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
       );
       this.startButton.addEventListener("click", () => this.start());
+      this.continueButton.addEventListener("click", () => this.continueCampaign());
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
         this.progressStore.selectLevel(this.selectedLevelId);
@@ -1587,7 +1617,19 @@
         this.selectedLevelId = (_a = progress.unlockedLevels[0]) != null ? _a : LEVELS[0].id;
       }
       this.levelSelect.value = this.selectedLevelId;
+      const campaignChoice = chooseCampaignLevel(LEVELS, progress);
+      this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
       this.updateLevelDescription();
+    }
+    continueCampaign() {
+      const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
+      if (!choice.levelId) return;
+      this.selectedLevelId = choice.levelId;
+      this.progressStore.selectLevel(choice.levelId);
+      this.levelSelect.value = choice.levelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.start();
     }
     updateLevelDescription() {
       var _a, _b;

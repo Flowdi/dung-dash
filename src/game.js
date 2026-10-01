@@ -25,6 +25,7 @@ import { fullscreenButtonLabel, supportsFullscreen } from "./fullscreen.js";
 import { copyText, createRunSummary } from "./run-summary.js";
 import { buildLevelRecordStats } from "./level-record.js";
 import { calculateCampaignProgress } from "./campaign-progress.js";
+import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -45,6 +46,7 @@ export class Game {
     this.checkpointMessage = documentObject.getElementById("checkpoint-message");
     this.score = documentObject.querySelector(".score");
     this.startButton = documentObject.getElementById("start-btn");
+    this.continueButton = documentObject.getElementById("continue-btn");
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
@@ -116,6 +118,7 @@ export class Game {
       { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
     );
     this.startButton.addEventListener("click", () => this.start());
+    this.continueButton.addEventListener("click", () => this.continueCampaign());
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
       this.progressStore.selectLevel(this.selectedLevelId);
@@ -162,7 +165,20 @@ export class Game {
       this.selectedLevelId = progress.unlockedLevels[0] ?? LEVELS[0].id;
     }
     this.levelSelect.value = this.selectedLevelId;
+    const campaignChoice = chooseCampaignLevel(LEVELS, progress);
+    this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
     this.updateLevelDescription();
+  }
+
+  continueCampaign() {
+    const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
+    if (!choice.levelId) return;
+    this.selectedLevelId = choice.levelId;
+    this.progressStore.selectLevel(choice.levelId);
+    this.levelSelect.value = choice.levelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.start();
   }
 
   updateLevelDescription() {

@@ -8,6 +8,8 @@ const emptyProgress = () => ({
   bestTime: null,
   totalRuns: 0,
   totalFlies: 0,
+  totalPlayTime: 0,
+  totalFalls: 0,
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
@@ -47,6 +49,10 @@ export const normalizeProgress = (saved) => {
       Math.max(0, Number(source.medals?.[medal]) || 0),
     ])),
   };
+  base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
+  base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
+  base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
+  base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
   base.unlockedLevels = migrateUnlockedLevels(base);
   base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
     ? source.selectedLevelId
@@ -100,6 +106,8 @@ export class ProgressStore {
       bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
       totalRuns: progress.totalRuns + 1,
       totalFlies: progress.totalFlies + result.fliesCollected,
+      totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
+      totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
       medals: {
         ...progress.medals,
         [result.medal]: (progress.medals[result.medal] ?? 0) + 1,

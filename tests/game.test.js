@@ -299,12 +299,14 @@ test("progress store keeps personal records", () => {
     setItem: (key, value) => values.set(key, value),
   };
   const store = new ProgressStore(storage);
-  store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, medal: "Bronze" });
-  const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, medal: "Gold" });
+  store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, medal: "Bronze" });
+  const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, medal: "Gold" });
   assert.equal(progress.bestScore, 1500);
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
+  assert.equal(progress.totalPlayTime, 170);
+  assert.equal(progress.totalFalls, 3);
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
 

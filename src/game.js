@@ -208,6 +208,8 @@ export class Game {
     const stats = [
       ["Läufe", progress.totalRuns],
       ["Fliegen", progress.totalFlies],
+      ["Spielzeit", formatTime(progress.totalPlayTime)],
+      ["Treffer", progress.totalFalls],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],

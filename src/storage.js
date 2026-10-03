@@ -10,6 +10,7 @@ const emptyProgress = () => ({
   totalFlies: 0,
   totalPlayTime: 0,
   totalFalls: 0,
+  bestCombo: 0,
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
@@ -53,6 +54,7 @@ export const normalizeProgress = (saved) => {
   base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
   base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
   base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
+  base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
   base.unlockedLevels = migrateUnlockedLevels(base);
   base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
     ? source.selectedLevelId
@@ -108,6 +110,7 @@ export class ProgressStore {
       totalFlies: progress.totalFlies + result.fliesCollected,
       totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
       totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
+      bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
       medals: {
         ...progress.medals,
         [result.medal]: (progress.medals[result.medal] ?? 0) + 1,
@@ -127,6 +130,7 @@ export class ProgressStore {
             ? (result.checkpointSplits ?? []).map((split) => ({ ...split }))
             : (previousLevelRecord.bestSplits ?? []),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
+          bestCombo: Math.max(previousLevelRecord?.bestCombo ?? 0, Number(result.bestCombo) || 0),
           missions: [...new Set([
             ...(progress.levelRecords?.[levelId]?.missions ?? []),
             ...completedMissions,

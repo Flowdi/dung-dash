@@ -236,6 +236,7 @@ export class Game {
       ["Fliegen", progress.totalFlies],
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Treffer", progress.totalFalls],
+      ["Beste Combo", `×${progress.bestCombo}`],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],

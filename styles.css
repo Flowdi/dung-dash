@@ -475,9 +475,38 @@ button:focus-visible {
 }
 
 .result-breakdown[hidden],
+.result-comparison[hidden],
 .result-splits[hidden],
 .result-missions[hidden] {
   display: none;
+}
+
+.result-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 12px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.result-comparison > strong {
+  grid-column: 1 / -1;
+}
+
+.result-comparison p {
+  margin: 0;
+}
+
+.result-comparison .improved {
+  color: #8ff0a4;
+}
+
+.result-comparison .behind {
+  color: #ffb0a8;
 }
 
 .result-breakdown p {

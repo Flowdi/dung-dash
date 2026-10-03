@@ -37,6 +37,23 @@ import { buildLevelRecordStats } from "../src/level-record.js";
 import { calculateCampaignProgress } from "../src/campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-selection.js";
 import { describeNextLevelGoal } from "../src/level-goal.js";
+import { compareRunWithRecord } from "../src/result-comparison.js";
+
+test("run comparisons explain gains and losses against personal records", () => {
+  assert.equal(compareRunWithRecord({ score: 100, elapsedSeconds: 10 }, null), null);
+  const improved = compareRunWithRecord({ score: 12000, elapsedSeconds: 58 }, {
+    bestScore: 10500,
+    bestTime: 61.5,
+  });
+  assert.deepEqual(improved.score, { improved: true, text: "+1500 Punkte" });
+  assert.deepEqual(improved.time, { improved: true, text: "00:03.5 schneller" });
+  const behind = compareRunWithRecord({ score: 9000, elapsedSeconds: 65 }, {
+    bestScore: 10500,
+    bestTime: 61.5,
+  });
+  assert.deepEqual(behind.score, { improved: false, text: "−1500 Punkte" });
+  assert.deepEqual(behind.time, { improved: false, text: "00:03.5 langsamer" });
+});
 
 test("level goals guide players from first finish to missions and gold", () => {
   const level = { missions: [

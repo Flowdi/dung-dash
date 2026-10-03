@@ -37,6 +37,41 @@ import { buildLevelRecordStats } from "../src/level-record.js";
 import { calculateCampaignProgress } from "../src/campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-selection.js";
 import { describeNextLevelGoal } from "../src/level-goal.js";
+import { compareRunWithRecord } from "../src/result-comparison.js";
+import { buildLevelPreview } from "../src/level-preview.js";
+
+test("level previews summarize route and gameplay scope", () => {
+  assert.deepEqual(buildLevelPreview({
+    mode: "vertical",
+    width: 1200,
+    height: 4200,
+    flies: [1, 2, 3],
+    checkpoints: [1, 2],
+    hazards: [1],
+  }), [
+    ["Route", "Vertikal"],
+    ["Größe", "1.200 × 4.200"],
+    ["Fliegen", 3],
+    ["Checkpoints", 2],
+    ["Gefahren", 1],
+  ]);
+});
+
+test("run comparisons explain gains and losses against personal records", () => {
+  assert.equal(compareRunWithRecord({ score: 100, elapsedSeconds: 10 }, null), null);
+  const improved = compareRunWithRecord({ score: 12000, elapsedSeconds: 58 }, {
+    bestScore: 10500,
+    bestTime: 61.5,
+  });
+  assert.deepEqual(improved.score, { improved: true, text: "+1500 Punkte" });
+  assert.deepEqual(improved.time, { improved: true, text: "00:03.5 schneller" });
+  const behind = compareRunWithRecord({ score: 9000, elapsedSeconds: 65 }, {
+    bestScore: 10500,
+    bestTime: 61.5,
+  });
+  assert.deepEqual(behind.score, { improved: false, text: "−1500 Punkte" });
+  assert.deepEqual(behind.time, { improved: false, text: "00:03.5 langsamer" });
+});
 
 test("level goals guide players from first finish to missions and gold", () => {
   const level = { missions: [
@@ -81,11 +116,13 @@ test("level record cards format completed progress at a glance", () => {
     medal: "Silber",
     bestScore: 9876,
     bestTime: 72.3,
+    bestCombo: 4,
     missions: ["fast", "fast", "flies"],
   }, 3), [
     ["Medaille", "Silber"],
     ["Highscore", 9876],
     ["Bestzeit", "01:12.3"],
+    ["Beste Combo", "×4"],
     ["Sterne", "2/3"],
   ]);
 });
@@ -339,14 +376,16 @@ test("progress store keeps personal records", () => {
     setItem: (key, value) => values.set(key, value),
   };
   const store = new ProgressStore(storage);
-  store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, medal: "Bronze" });
-  const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, medal: "Gold" });
+  store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, bestCombo: 2, medal: "Bronze" });
+  const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, bestCombo: 4, medal: "Gold" });
   assert.equal(progress.bestScore, 1500);
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
   assert.equal(progress.totalPlayTime, 170);
   assert.equal(progress.totalFalls, 3);
+  assert.equal(progress.bestCombo, 4);
+  assert.equal(progress.levelRecords["bathroom-run"].bestCombo, 4);
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
 

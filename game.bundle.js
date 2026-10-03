@@ -1091,6 +1091,7 @@
     totalFlies: 0,
     totalPlayTime: 0,
     totalFalls: 0,
+    bestCombo: 0,
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1140,6 +1141,7 @@
     base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
     base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
+    base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1177,7 +1179,7 @@
       return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1190,6 +1192,7 @@
         totalFlies: progress.totalFlies + result.fliesCollected,
         totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
+        bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
         medals: {
           ...progress.medals,
           [result.medal]: ((_c = progress.medals[result.medal]) != null ? _c : 0) + 1
@@ -1205,17 +1208,18 @@
             bestTime: ((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
             bestSplits: isNewBestTime ? ((_k = result.checkpointSplits) != null ? _k : []).map((split) => ({ ...split })) : (_l = previousLevelRecord.bestSplits) != null ? _l : [],
             medal: this.bestMedal((_n = (_m = progress.levelRecords) == null ? void 0 : _m[levelId]) == null ? void 0 : _n.medal, result.medal),
+            bestCombo: Math.max((_o = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _o : 0, Number(result.bestCombo) || 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_q = (_p = (_o = progress.levelRecords) == null ? void 0 : _o[levelId]) == null ? void 0 : _p.missions) != null ? _q : [],
+              ...(_r = (_q = (_p = progress.levelRecords) == null ? void 0 : _p[levelId]) == null ? void 0 : _q.missions) != null ? _r : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_r = progress.achievements) != null ? _r : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_s = progress.achievements) != null ? _s : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_s = this.storage) == null ? void 0 : _s.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_t = this.storage) == null ? void 0 : _t.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1322,13 +1326,14 @@
 
   // src/level-record.js
   var buildLevelRecordStats = (record, missionTotal) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (!record) return null;
     const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
     return [
       ["Medaille", (_b = record.medal) != null ? _b : "\u2013"],
       ["Highscore", (_c = record.bestScore) != null ? _c : 0],
       ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
+      ["Beste Combo", `\xD7${(_d = record.bestCombo) != null ? _d : 0}`],
       ["Sterne", `${completedMissions}/${missionTotal}`]
     ];
   };
@@ -1381,6 +1386,36 @@
     if (nextMission) return `N\xE4chstes Ziel: ${nextMission.label}`;
     if (record.medal !== "Gold") return "N\xE4chstes Ziel: Goldmedaille holen";
     return "Alle Ziele dieses Levels erreicht";
+  };
+
+  // src/result-comparison.js
+  var compareRunWithRecord = (result, previousRecord) => {
+    var _a;
+    if (!previousRecord) return null;
+    const scoreDelta = result.score - ((_a = previousRecord.bestScore) != null ? _a : 0);
+    const timeDelta = previousRecord.bestTime == null ? null : previousRecord.bestTime - result.elapsedSeconds;
+    return {
+      score: {
+        improved: scoreDelta > 0,
+        text: scoreDelta === 0 ? "Highscore eingestellt" : `${scoreDelta > 0 ? "+" : "\u2212"}${Math.abs(scoreDelta)} Punkte`
+      },
+      time: timeDelta === null ? null : {
+        improved: timeDelta > 0,
+        text: timeDelta === 0 ? "Bestzeit eingestellt" : `${formatTime(Math.abs(timeDelta))} ${timeDelta > 0 ? "schneller" : "langsamer"}`
+      }
+    };
+  };
+
+  // src/level-preview.js
+  var buildLevelPreview = (level) => {
+    var _a, _b, _c;
+    return [
+      ["Route", level.mode === "vertical" ? "Vertikal" : "Horizontal"],
+      ["Gr\xF6\xDFe", `${level.width.toLocaleString("de-DE")} \xD7 ${((_a = level.height) != null ? _a : 800).toLocaleString("de-DE")}`],
+      ["Fliegen", level.flies.length],
+      ["Checkpoints", level.checkpoints.length],
+      ["Gefahren", (_c = (_b = level.hazards) == null ? void 0 : _b.length) != null ? _c : 0]
+    ];
   };
 
   // src/physics.js
@@ -1518,6 +1553,7 @@
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.levelPreview = documentObject.getElementById("level-preview");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1533,6 +1569,7 @@
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
+      this.resultComparison = documentObject.getElementById("result-comparison");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
@@ -1647,6 +1684,11 @@
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
+        const item = this.document.createElement("p");
+        item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
       const stats = buildLevelRecordStats(record, definition.missions.length);
       const nextGoal = describeNextLevelGoal(definition, record);
       this.levelRecordCard.classList.toggle("empty", !stats);
@@ -1696,6 +1738,7 @@
         ["Fliegen", progress.totalFlies],
         ["Spielzeit", formatTime(progress.totalPlayTime)],
         ["Treffer", progress.totalFalls],
+        ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Highscore", progress.bestScore],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
         ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
@@ -1766,6 +1809,7 @@
       this.checkpointScreen.classList.remove("toast");
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultComparison.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;
@@ -1866,7 +1910,7 @@
       }
     }
     finish() {
-      var _a, _b, _c, _d, _e;
+      var _a, _b, _c, _d;
       this.state = GameState.FINISHED;
       this.input.reset();
       const result = this.stats.finish(this.level.flies.length);
@@ -1874,9 +1918,8 @@
       const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
       const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
       const nextLevelId = (_b = (_a = LEVELS[levelIndex + 1]) == null ? void 0 : _a.id) != null ? _b : null;
-      const completedBefore = new Set(
-        (_e = (_d = (_c = this.progressStore.load().levelRecords) == null ? void 0 : _c[this.level.id]) == null ? void 0 : _d.missions) != null ? _e : []
-      );
+      const previousRecord = (_c = this.progressStore.load().levelRecords) == null ? void 0 : _c[this.level.id];
+      const completedBefore = new Set((_d = previousRecord == null ? void 0 : previousRecord.missions) != null ? _d : []);
       const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
       const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
       this.runScoreElement.textContent = String(result.score);
@@ -1885,7 +1928,7 @@
         `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.recordFlags.levelScore ? " \xB7 Neuer Level-Highscore!" : "") + (progress.recordFlags.levelTime ? " \xB7 Neue Level-Bestzeit!" : "") + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
         false
       );
-      this.renderRunResult(result, missionResults, newMissions);
+      this.renderRunResult(result, missionResults, newMissions, previousRecord);
       this.nextLevelId = nextLevelId;
       this.restartButton.style.display = "inline-block";
       this.nextLevelButton.style.display = nextLevelId ? "inline-block" : "none";
@@ -1924,7 +1967,7 @@
         this.copyResultButton.textContent = "Kopieren nicht m\xF6glich";
       }
     }
-    renderRunResult(result, missionResults, newMissions) {
+    renderRunResult(result, missionResults, newMissions, previousRecord) {
       this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
       this.copyResultButton.hidden = false;
       this.copyResultButton.textContent = "Ergebnis kopieren";
@@ -1940,6 +1983,9 @@
       this.resultBreakdown.innerHTML = rows.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
       ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+      const comparison = compareRunWithRecord(result, previousRecord);
+      this.resultComparison.hidden = !comparison;
+      this.resultComparison.innerHTML = comparison ? `<strong>Vergleich zum bisherigen Rekord</strong><p class="${comparison.score.improved ? "improved" : "behind"}">Score: ${comparison.score.text}</p>` + (comparison.time ? `<p class="${comparison.time.improved ? "improved" : "behind"}">Zeit: ${comparison.time.text}</p>` : "") : "";
       this.resultSplits.hidden = result.checkpointSplits.length === 0;
       this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
         (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
@@ -1974,6 +2020,7 @@
       this.checkpointScreen.style.display = "none";
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
+      this.resultComparison.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;

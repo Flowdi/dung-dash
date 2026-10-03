@@ -18,6 +18,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="fullscreen-btn"/);
   assert.match(html, /id="level-select"/);
   assert.match(html, /id="level-record-card"/);
+  assert.match(html, /id="level-preview"/);
   assert.match(html, /id="random-level-btn"/);
   assert.match(html, /id="continue-btn"/);
   assert.match(html, /class="control-guide"/);
@@ -26,6 +27,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="level-menu-btn"/);
   assert.match(html, /id="next-level-btn"/);
   assert.match(html, /id="result-breakdown"/);
+  assert.match(html, /id="result-comparison"/);
   assert.match(html, /id="result-splits"/);
   assert.match(html, /id="copy-result-btn"/);
   assert.doesNotMatch(html, /fonts\.googleapis\.com/);

@@ -27,6 +27,8 @@ import { buildLevelRecordStats } from "./level-record.js";
 import { calculateCampaignProgress } from "./campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.js";
 import { describeNextLevelGoal } from "./level-goal.js";
+import { compareRunWithRecord } from "./result-comparison.js";
+import { buildLevelPreview } from "./level-preview.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -51,6 +53,7 @@ export class Game {
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.levelPreview = documentObject.getElementById("level-preview");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -66,6 +69,7 @@ export class Game {
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
+    this.resultComparison = documentObject.getElementById("result-comparison");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
     this.copyResultButton = documentObject.getElementById("copy-result-btn");
@@ -186,6 +190,11 @@ export class Game {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
+      const item = this.document.createElement("p");
+      item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      return item;
+    }));
     const stats = buildLevelRecordStats(record, definition.missions.length);
     const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
@@ -236,6 +245,7 @@ export class Game {
       ["Fliegen", progress.totalFlies],
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Treffer", progress.totalFalls],
+      ["Beste Combo", `×${progress.bestCombo}`],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
@@ -309,6 +319,7 @@ export class Game {
     this.checkpointScreen.classList.remove("toast");
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
+    this.resultComparison.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.copyResultButton.hidden = true;
@@ -425,9 +436,8 @@ export class Game {
     const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
     const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
     const nextLevelId = LEVELS[levelIndex + 1]?.id ?? null;
-    const completedBefore = new Set(
-      this.progressStore.load().levelRecords?.[this.level.id]?.missions ?? []
-    );
+    const previousRecord = this.progressStore.load().levelRecords?.[this.level.id];
+    const completedBefore = new Set(previousRecord?.missions ?? []);
     const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
     const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
     this.runScoreElement.textContent = String(result.score);
@@ -442,7 +452,7 @@ export class Game {
           : ""),
       false
     );
-    this.renderRunResult(result, missionResults, newMissions);
+    this.renderRunResult(result, missionResults, newMissions, previousRecord);
     this.nextLevelId = nextLevelId;
     this.restartButton.style.display = "inline-block";
     this.nextLevelButton.style.display = nextLevelId ? "inline-block" : "none";
@@ -485,7 +495,7 @@ export class Game {
     }
   }
 
-  renderRunResult(result, missionResults, newMissions) {
+  renderRunResult(result, missionResults, newMissions, previousRecord) {
     this.lastRunSummary = createRunSummary(this.level.name, result, missionResults);
     this.copyResultButton.hidden = false;
     this.copyResultButton.textContent = "Ergebnis kopieren";
@@ -501,6 +511,12 @@ export class Game {
     this.resultBreakdown.innerHTML = rows.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value > 0 ? "+" : ""}${value}</strong></p>`
     ).join("") + `<p class="result-total"><span>Gesamt</span><strong>${result.score}</strong></p>`;
+    const comparison = compareRunWithRecord(result, previousRecord);
+    this.resultComparison.hidden = !comparison;
+    this.resultComparison.innerHTML = comparison
+      ? `<strong>Vergleich zum bisherigen Rekord</strong><p class="${comparison.score.improved ? "improved" : "behind"}">Score: ${comparison.score.text}</p>` +
+        (comparison.time ? `<p class="${comparison.time.improved ? "improved" : "behind"}">Zeit: ${comparison.time.text}</p>` : "")
+      : "";
     this.resultSplits.hidden = result.checkpointSplits.length === 0;
     this.resultSplits.innerHTML = result.checkpointSplits.length
       ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map((split) =>
@@ -540,6 +556,7 @@ export class Game {
     this.checkpointScreen.style.display = "none";
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
+    this.resultComparison.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.copyResultButton.hidden = true;

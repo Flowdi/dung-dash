@@ -1406,6 +1406,18 @@
     };
   };
 
+  // src/level-preview.js
+  var buildLevelPreview = (level) => {
+    var _a, _b, _c;
+    return [
+      ["Route", level.mode === "vertical" ? "Vertikal" : "Horizontal"],
+      ["Gr\xF6\xDFe", `${level.width.toLocaleString("de-DE")} \xD7 ${((_a = level.height) != null ? _a : 800).toLocaleString("de-DE")}`],
+      ["Fliegen", level.flies.length],
+      ["Checkpoints", level.checkpoints.length],
+      ["Gefahren", (_c = (_b = level.hazards) == null ? void 0 : _b.length) != null ? _c : 0]
+    ];
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1541,6 +1553,7 @@
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
+      this.levelPreview = documentObject.getElementById("level-preview");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1671,6 +1684,11 @@
       const definition = (_a = LEVELS.find((level) => level.id === this.selectedLevelId)) != null ? _a : LEVELS[0];
       const record = (_b = this.progressStore.load().levelRecords) == null ? void 0 : _b[definition.id];
       this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} \xB7 ${definition.description}`;
+      this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
+        const item = this.document.createElement("p");
+        item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
       const stats = buildLevelRecordStats(record, definition.missions.length);
       const nextGoal = describeNextLevelGoal(definition, record);
       this.levelRecordCard.classList.toggle("empty", !stats);

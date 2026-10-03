@@ -14,6 +14,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
 - kontextbezogene Empfehlung für das nächste sinnvolle Ziel jedes Levels
+- Levelvorschau mit Routentyp, Größe, Fliegen, Checkpoints und Gefahren
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung

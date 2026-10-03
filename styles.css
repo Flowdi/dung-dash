@@ -97,6 +97,29 @@ body {
   line-height: 1.4;
 }
 
+.level-preview {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  width: min(100%, 620px);
+  margin: 8px auto;
+}
+
+.level-preview p {
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #cfcfcf;
+  font-size: 0.68rem;
+}
+
+.level-preview strong {
+  color: #fff;
+  font-size: 0.78rem;
+}
+
 .level-record-card {
   display: grid;
   gap: 7px;
@@ -702,6 +725,10 @@ button:focus-visible {
 }
 
 @media (max-width: 540px) {
+  .level-preview {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .level-record-card > div {
     grid-template-columns: repeat(2, 1fr);
   }

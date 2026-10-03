@@ -28,6 +28,7 @@ import { calculateCampaignProgress } from "./campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.js";
 import { describeNextLevelGoal } from "./level-goal.js";
 import { compareRunWithRecord } from "./result-comparison.js";
+import { buildLevelPreview } from "./level-preview.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -52,6 +53,7 @@ export class Game {
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
+    this.levelPreview = documentObject.getElementById("level-preview");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -188,6 +190,11 @@ export class Game {
     const definition = LEVELS.find((level) => level.id === this.selectedLevelId) ?? LEVELS[0];
     const record = this.progressStore.load().levelRecords?.[definition.id];
     this.levelDescription.textContent = `${formatDifficulty(definition.difficulty)} · ${definition.description}`;
+    this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
+      const item = this.document.createElement("p");
+      item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      return item;
+    }));
     const stats = buildLevelRecordStats(record, definition.missions.length);
     const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);

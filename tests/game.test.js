@@ -38,6 +38,24 @@ import { calculateCampaignProgress } from "../src/campaign-progress.js";
 import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-selection.js";
 import { describeNextLevelGoal } from "../src/level-goal.js";
 import { compareRunWithRecord } from "../src/result-comparison.js";
+import { buildLevelPreview } from "../src/level-preview.js";
+
+test("level previews summarize route and gameplay scope", () => {
+  assert.deepEqual(buildLevelPreview({
+    mode: "vertical",
+    width: 1200,
+    height: 4200,
+    flies: [1, 2, 3],
+    checkpoints: [1, 2],
+    hazards: [1],
+  }), [
+    ["Route", "Vertikal"],
+    ["Größe", "1.200 × 4.200"],
+    ["Fliegen", 3],
+    ["Checkpoints", 2],
+    ["Gefahren", 1],
+  ]);
+});
 
 test("run comparisons explain gains and losses against personal records", () => {
   assert.equal(compareRunWithRecord({ score: 100, elapsedSeconds: 10 }, null), null);

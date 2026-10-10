@@ -250,6 +250,7 @@ export class Game {
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
+      ["Fehlerfrei", progress.flawlessRuns],
       ["Highscore", progress.bestScore],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],

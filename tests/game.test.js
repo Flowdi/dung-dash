@@ -128,12 +128,14 @@ test("level record cards format completed progress at a glance", () => {
     bestScore: 9876,
     bestTime: 72.3,
     bestCombo: 4,
+    flawlessRuns: 2,
     missions: ["fast", "fast", "flies"],
   }, 3), [
     ["Medaille", "Silber"],
     ["Highscore", 9876],
     ["Bestzeit", "01:12.3"],
     ["Beste Combo", "×4"],
+    ["Fehlerfrei", 2],
     ["Sterne", "2/3"],
   ]);
 });
@@ -397,6 +399,12 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFalls, 3);
   assert.equal(progress.bestCombo, 4);
   assert.equal(progress.levelRecords["bathroom-run"].bestCombo, 4);
+  assert.equal(progress.flawlessRuns, 0);
+  const flawless = store.record({
+    score: 900, elapsedSeconds: 70, fliesCollected: 5, falls: 0, bestCombo: 2, medal: "Silber",
+  });
+  assert.equal(flawless.flawlessRuns, 1);
+  assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
 

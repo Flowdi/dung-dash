@@ -1093,6 +1093,7 @@
     totalPlayTime: 0,
     totalFalls: 0,
     bestCombo: 0,
+    flawlessRuns: 0,
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1143,6 +1144,7 @@
     base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
+    base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1180,7 +1182,7 @@
       return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1194,6 +1196,7 @@
         totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
+        flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
         medals: {
           ...progress.medals,
           [result.medal]: ((_c = progress.medals[result.medal]) != null ? _c : 0) + 1
@@ -1210,17 +1213,18 @@
             bestSplits: isNewBestTime ? ((_k = result.checkpointSplits) != null ? _k : []).map((split) => ({ ...split })) : (_l = previousLevelRecord.bestSplits) != null ? _l : [],
             medal: this.bestMedal((_n = (_m = progress.levelRecords) == null ? void 0 : _m[levelId]) == null ? void 0 : _n.medal, result.medal),
             bestCombo: Math.max((_o = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _o : 0, Number(result.bestCombo) || 0),
+            flawlessRuns: ((_p = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _p : 0) + (result.falls === 0 ? 1 : 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_r = (_q = (_p = progress.levelRecords) == null ? void 0 : _p[levelId]) == null ? void 0 : _q.missions) != null ? _r : [],
+              ...(_s = (_r = (_q = progress.levelRecords) == null ? void 0 : _q[levelId]) == null ? void 0 : _r.missions) != null ? _s : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_s = progress.achievements) != null ? _s : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_t = progress.achievements) != null ? _t : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_t = this.storage) == null ? void 0 : _t.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_u = this.storage) == null ? void 0 : _u.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1327,7 +1331,7 @@
 
   // src/level-record.js
   var buildLevelRecordStats = (record, missionTotal) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     if (!record) return null;
     const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
     return [
@@ -1335,6 +1339,7 @@
       ["Highscore", (_c = record.bestScore) != null ? _c : 0],
       ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
       ["Beste Combo", `\xD7${(_d = record.bestCombo) != null ? _d : 0}`],
+      ["Fehlerfrei", (_e = record.flawlessRuns) != null ? _e : 0],
       ["Sterne", `${completedMissions}/${missionTotal}`]
     ];
   };
@@ -1757,6 +1762,7 @@
         ["Spielzeit", formatTime(progress.totalPlayTime)],
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
+        ["Fehlerfrei", progress.flawlessRuns],
         ["Highscore", progress.bestScore],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
         ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]

@@ -10,6 +10,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
 - globale und levelbezogene persönliche Combo-Rekorde
+- Zähler für fehlerfreie Läufe in Karriere und Levelrekorden
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen

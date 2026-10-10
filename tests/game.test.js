@@ -39,6 +39,17 @@ import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-select
 import { describeNextLevelGoal } from "../src/level-goal.js";
 import { compareRunWithRecord } from "../src/result-comparison.js";
 import { buildLevelPreview } from "../src/level-preview.js";
+import { calculateRouteProgress } from "../src/route-progress.js";
+
+test("route progress follows horizontal and vertical level direction", () => {
+  const checkpoint = { order: 1, position: { x: 900, y: 100 } };
+  assert.equal(calculateRouteProgress({
+    mode: "horizontal", spawn: { x: 100, y: 500 }, player: { position: { x: 500, y: 500 } }, checkpoints: [checkpoint],
+  }), 50);
+  assert.equal(calculateRouteProgress({
+    mode: "vertical", spawn: { x: 100, y: 900 }, player: { position: { x: 100, y: 500 } }, checkpoints: [checkpoint],
+  }), 50);
+});
 
 test("level previews summarize route and gameplay scope", () => {
   assert.deepEqual(buildLevelPreview({

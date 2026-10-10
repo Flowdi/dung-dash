@@ -29,6 +29,7 @@ import { campaignButtonLabel, chooseCampaignLevel } from "./campaign-selection.j
 import { describeNextLevelGoal } from "./level-goal.js";
 import { compareRunWithRecord } from "./result-comparison.js";
 import { buildLevelPreview } from "./level-preview.js";
+import { calculateRouteProgress } from "./route-progress.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -83,6 +84,9 @@ export class Game {
     this.runFallsElement = documentObject.getElementById("run-falls");
     this.comboElement = documentObject.getElementById("combo");
     this.currentMissionsElement = documentObject.getElementById("current-missions");
+    this.routeProgress = documentObject.getElementById("route-progress");
+    this.routeProgressLabel = documentObject.getElementById("route-progress-label");
+    this.routeProgressFill = documentObject.getElementById("route-progress-fill");
     this.input = new InputController();
     this.assets = loadSprites(windowObject.Image, ({ loaded, total }) => {
       this.startButton.textContent = loaded === total
@@ -418,6 +422,10 @@ export class Game {
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
     if (this.level) {
+      const routePercent = calculateRouteProgress(this.level);
+      this.routeProgress.setAttribute("aria-valuenow", String(routePercent));
+      this.routeProgressLabel.textContent = `Strecke: ${routePercent}%`;
+      this.routeProgressFill.style.width = `${routePercent}%`;
       const missionMarkup = this.level.missions.map((mission) => {
         const state = getMissionProgressState(mission, this.stats);
         return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;

@@ -916,6 +916,7 @@
       width: definition.width,
       height: (_a = definition.height) != null ? _a : 800,
       mode: (_b = definition.mode) != null ? _b : "horizontal",
+      spawn: { ...definition.spawn },
       theme: definition.theme,
       missions: definition.missions,
       player: new Player(definition.spawn, {
@@ -1418,6 +1419,20 @@
     ];
   };
 
+  // src/route-progress.js
+  var clamp = (value) => Math.max(0, Math.min(1, value));
+  var calculateRouteProgress = (level) => {
+    var _a;
+    const goal = (_a = [...level.checkpoints].sort((a, b) => b.order - a.order)[0]) == null ? void 0 : _a.position;
+    if (!goal) return 0;
+    const start = level.spawn;
+    const current = level.player.position;
+    const vertical = level.mode === "vertical";
+    const distance = vertical ? start.y - goal.y : goal.x - start.x;
+    const travelled = vertical ? start.y - current.y : current.x - start.x;
+    return distance === 0 ? 0 : Math.round(clamp(travelled / distance) * 100);
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1583,6 +1598,9 @@
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
+      this.routeProgress = documentObject.getElementById("route-progress");
+      this.routeProgressLabel = documentObject.getElementById("route-progress-label");
+      this.routeProgressFill = documentObject.getElementById("route-progress-fill");
       this.input = new InputController();
       this.assets = loadSprites(windowObject.Image, ({ loaded, total }) => {
         this.startButton.textContent = loaded === total ? "Spiel starten" : `Grafiken laden ${loaded}/${total}`;
@@ -1900,6 +1918,10 @@
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       if (this.level) {
+        const routePercent = calculateRouteProgress(this.level);
+        this.routeProgress.setAttribute("aria-valuenow", String(routePercent));
+        this.routeProgressLabel.textContent = `Strecke: ${routePercent}%`;
+        this.routeProgressFill.style.width = `${routePercent}%`;
         const missionMarkup = this.level.missions.map((mission) => {
           const state = getMissionProgressState(mission, this.stats);
           return `<span class="${state}">${formatMissionProgress(mission, this.stats)}</span>`;

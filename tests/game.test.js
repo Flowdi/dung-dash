@@ -405,6 +405,15 @@ test("progress store keeps personal records", () => {
   });
   assert.equal(flawless.flawlessRuns, 1);
   assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
+  assert.equal(flawless.recentRuns.length, 3);
+  assert.deepEqual(flawless.recentRuns[0], {
+    levelId: "bathroom-run",
+    score: 900,
+    elapsedSeconds: 70,
+    medal: "Silber",
+    fliesCollected: 5,
+    falls: 0,
+  });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
 

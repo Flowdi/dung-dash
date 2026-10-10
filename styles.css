@@ -346,6 +346,41 @@ body {
   color: var(--focus);
 }
 
+.recent-runs {
+  margin-top: 10px;
+  text-align: left;
+}
+
+.recent-runs h3 {
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+}
+
+#recent-runs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+}
+
+#recent-runs-list p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 7px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.67rem;
+}
+
+#recent-runs-list p strong {
+  color: var(--focus);
+  font-size: 0.72rem;
+}
+
+#recent-runs-list.empty {
+  color: #aaa;
+}
+
 .achievement-list {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

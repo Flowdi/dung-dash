@@ -1094,6 +1094,7 @@
     totalFalls: 0,
     bestCombo: 0,
     flawlessRuns: 0,
+    recentRuns: [],
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1145,6 +1146,7 @@
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
+    base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1182,7 +1184,7 @@
       return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1197,34 +1199,42 @@
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
         flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
+        recentRuns: [{
+          levelId,
+          score: Math.max(0, Number(result.score) || 0),
+          elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),
+          medal: result.medal,
+          fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
+          falls: Math.max(0, Number(result.falls) || 0)
+        }, ...(_c = progress.recentRuns) != null ? _c : []].slice(0, 5),
         medals: {
           ...progress.medals,
-          [result.medal]: ((_c = progress.medals[result.medal]) != null ? _c : 0) + 1
+          [result.medal]: ((_d = progress.medals[result.medal]) != null ? _d : 0) + 1
         },
         unlockedLevels: [.../* @__PURE__ */ new Set([
-          ...(_d = progress.unlockedLevels) != null ? _d : ["bathroom-run"],
+          ...(_e = progress.unlockedLevels) != null ? _e : ["bathroom-run"],
           ...nextLevelId ? [nextLevelId] : []
         ])],
         levelRecords: {
-          ...(_e = progress.levelRecords) != null ? _e : {},
+          ...(_f = progress.levelRecords) != null ? _f : {},
           [levelId]: {
-            bestScore: Math.max((_h = (_g = (_f = progress.levelRecords) == null ? void 0 : _f[levelId]) == null ? void 0 : _g.bestScore) != null ? _h : 0, result.score),
-            bestTime: ((_j = (_i = progress.levelRecords) == null ? void 0 : _i[levelId]) == null ? void 0 : _j.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            bestSplits: isNewBestTime ? ((_k = result.checkpointSplits) != null ? _k : []).map((split) => ({ ...split })) : (_l = previousLevelRecord.bestSplits) != null ? _l : [],
-            medal: this.bestMedal((_n = (_m = progress.levelRecords) == null ? void 0 : _m[levelId]) == null ? void 0 : _n.medal, result.medal),
-            bestCombo: Math.max((_o = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _o : 0, Number(result.bestCombo) || 0),
-            flawlessRuns: ((_p = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _p : 0) + (result.falls === 0 ? 1 : 0),
+            bestScore: Math.max((_i = (_h = (_g = progress.levelRecords) == null ? void 0 : _g[levelId]) == null ? void 0 : _h.bestScore) != null ? _i : 0, result.score),
+            bestTime: ((_k = (_j = progress.levelRecords) == null ? void 0 : _j[levelId]) == null ? void 0 : _k.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_l = result.checkpointSplits) != null ? _l : []).map((split) => ({ ...split })) : (_m = previousLevelRecord.bestSplits) != null ? _m : [],
+            medal: this.bestMedal((_o = (_n = progress.levelRecords) == null ? void 0 : _n[levelId]) == null ? void 0 : _o.medal, result.medal),
+            bestCombo: Math.max((_p = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _p : 0, Number(result.bestCombo) || 0),
+            flawlessRuns: ((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _q : 0) + (result.falls === 0 ? 1 : 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_s = (_r = (_q = progress.levelRecords) == null ? void 0 : _q[levelId]) == null ? void 0 : _r.missions) != null ? _s : [],
+              ...(_t = (_s = (_r = progress.levelRecords) == null ? void 0 : _r[levelId]) == null ? void 0 : _s.missions) != null ? _t : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_t = progress.achievements) != null ? _t : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_u = progress.achievements) != null ? _u : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_u = this.storage) == null ? void 0 : _u.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_v = this.storage) == null ? void 0 : _v.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1582,6 +1592,7 @@
       this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
       this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
       this.medalSummary = documentObject.getElementById("medal-summary");
+      this.recentRunsList = documentObject.getElementById("recent-runs-list");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -1750,7 +1761,7 @@
       }));
     }
     renderProgress() {
-      var _a;
+      var _a, _b;
       const progress = this.progressStore.load();
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -1774,13 +1785,26 @@
       }));
       const medalIcons = { Bronze: "\u{1F949}", Silber: "\u{1F948}", Gold: "\u{1F947}" };
       this.medalSummary.replaceChildren(...Object.entries(medalIcons).map(([medal, icon]) => {
-        var _a2, _b;
+        var _a2, _b2;
         const item = this.document.createElement("p");
         item.setAttribute("aria-label", `${medal}: ${(_a2 = progress.medals[medal]) != null ? _a2 : 0}`);
-        item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b = progress.medals[medal]) != null ? _b : 0}</strong>`;
+        item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b2 = progress.medals[medal]) != null ? _b2 : 0}</strong>`;
         return item;
       }));
-      const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
+      const recentRuns = (_a = progress.recentRuns) != null ? _a : [];
+      this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
+      this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
+        var _a2, _b2, _c;
+        const item = this.document.createElement("p");
+        const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
+        item.innerHTML = `<strong>${levelName}</strong><span>${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer</span>`;
+        return item;
+      }) : [(() => {
+        const item = this.document.createElement("p");
+        item.textContent = "Noch keine L\xE4ufe gespeichert.";
+        return item;
+      })()]);
+      const unlocked = new Set((_b = progress.achievements) != null ? _b : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);

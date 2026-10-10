@@ -63,6 +63,7 @@ export class Game {
     this.campaignProgressLabel = documentObject.getElementById("campaign-progress-label");
     this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
     this.medalSummary = documentObject.getElementById("medal-summary");
+    this.recentRunsList = documentObject.getElementById("recent-runs-list");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
@@ -267,6 +268,18 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${progress.medals[medal] ?? 0}</strong>`;
       return item;
     }));
+    const recentRuns = progress.recentRuns ?? [];
+    this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
+    this.recentRunsList.replaceChildren(...(recentRuns.length ? recentRuns.map((run) => {
+      const item = this.document.createElement("p");
+      const levelName = LEVELS.find(({ id }) => id === run.levelId)?.name ?? run.levelId;
+      item.innerHTML = `<strong>${levelName}</strong><span>${run.medal ?? "–"} · ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer</span>`;
+      return item;
+    }) : [(() => {
+      const item = this.document.createElement("p");
+      item.textContent = "Noch keine Läufe gespeichert.";
+      return item;
+    })()]));
 
     const unlocked = new Set(progress.achievements ?? []);
     this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {

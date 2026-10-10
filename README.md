@@ -10,6 +10,8 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
 - globale und levelbezogene persönliche Combo-Rekorde
+- Zähler für fehlerfreie Läufe in Karriere und Levelrekorden
+- lokale Historie der fünf letzten Läufe mit Score, Zeit und Trefferzahl
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
@@ -32,6 +34,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - ausführliche Ergebnisübersicht mit Score-Aufschlüsselung, Missionsstatus und direktem nächsten Level
 - kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 - direkter Ergebnisvergleich mit bisherigem Level-Highscore und Bestzeit
+- laufende Streckenanzeige für horizontale und vertikale Level
 
 ## Spielen
 
@@ -42,6 +45,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - P oder Escape: pausieren/fortsetzen
 - R: aktuelles Level sofort neu starten
 - Vollbild: über den Button im HUD ein- und ausschalten
+- F: Vollbildmodus direkt per Tastatur umschalten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.
 
 ## Entwicklung

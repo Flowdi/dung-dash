@@ -11,6 +11,8 @@ const emptyProgress = () => ({
   totalPlayTime: 0,
   totalFalls: 0,
   bestCombo: 0,
+  flawlessRuns: 0,
+  recentRuns: [],
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
@@ -55,6 +57,10 @@ export const normalizeProgress = (saved) => {
   base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
   base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
   base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
+  base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
+  base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
+    .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
+    .slice(0, 5);
   base.unlockedLevels = migrateUnlockedLevels(base);
   base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
     ? source.selectedLevelId
@@ -111,6 +117,15 @@ export class ProgressStore {
       totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
       totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
       bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
+      flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
+      recentRuns: [{
+        levelId,
+        score: Math.max(0, Number(result.score) || 0),
+        elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),
+        medal: result.medal,
+        fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
+        falls: Math.max(0, Number(result.falls) || 0),
+      }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,
         [result.medal]: (progress.medals[result.medal] ?? 0) + 1,
@@ -131,6 +146,7 @@ export class ProgressStore {
             : (previousLevelRecord.bestSplits ?? []),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
           bestCombo: Math.max(previousLevelRecord?.bestCombo ?? 0, Number(result.bestCombo) || 0),
+          flawlessRuns: (previousLevelRecord?.flawlessRuns ?? 0) + (result.falls === 0 ? 1 : 0),
           missions: [...new Set([
             ...(progress.levelRecords?.[levelId]?.missions ?? []),
             ...completedMissions,

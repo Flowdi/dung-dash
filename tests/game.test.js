@@ -323,7 +323,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P, Escape and R expose pause and restart controls without repeating", () => {
+test("P, Escape, R and F expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -333,9 +333,11 @@ test("P, Escape and R expose pause and restart controls without repeating", () =
   const input = new InputController();
   let pauseCalls = 0;
   let restartCalls = 0;
+  let fullscreenCalls = 0;
   input.bind(windowObject, [], {
     onPause: () => pauseCalls += 1,
     onRestart: () => restartCalls += 1,
+    onFullscreen: () => fullscreenCalls += 1,
   });
 
   const event = (key, repeat = false) => ({
@@ -349,8 +351,11 @@ test("P, Escape and R expose pause and restart controls without repeating", () =
   listeners.get("keydown")(event("p", true));
   listeners.get("keydown")(event("r"));
   listeners.get("keydown")(event("r", true));
+  listeners.get("keydown")(event("f"));
+  listeners.get("keydown")(event("f", true));
   assert.equal(pauseCalls, 2);
   assert.equal(restartCalls, 1);
+  assert.equal(fullscreenCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {

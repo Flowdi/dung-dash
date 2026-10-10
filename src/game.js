@@ -125,7 +125,11 @@ export class Game {
     this.input.bind(
       this.window,
       [...this.document.querySelectorAll("[data-control]")],
-      { onPause: () => this.togglePause(), onRestart: () => this.restartCurrentLevel() }
+      {
+        onPause: () => this.togglePause(),
+        onRestart: () => this.restartCurrentLevel(),
+        onFullscreen: () => this.toggleFullscreen(),
+      }
     );
     this.startButton.addEventListener("click", () => this.start());
     this.continueButton.addEventListener("click", () => this.continueCampaign());

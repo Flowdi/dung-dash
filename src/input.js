@@ -29,7 +29,9 @@ export class InputController {
     this.jumpBufferRemaining = 0;
   }
 
-  bind(windowObject, touchControls = [], { onPause = () => {}, onRestart = () => {} } = {}) {
+  bind(windowObject, touchControls = [], {
+    onPause = () => {}, onRestart = () => {}, onFullscreen = () => {},
+  } = {}) {
     windowObject.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
       if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key) || ["a", "d", "w"].includes(key)) {
@@ -41,6 +43,7 @@ export class InputController {
         onPause();
       }
       if (!event.repeat && key === "r") onRestart();
+      if (!event.repeat && key === "f") onFullscreen();
       if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
         this.queueJump();
       }

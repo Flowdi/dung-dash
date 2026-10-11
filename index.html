@@ -17,7 +17,7 @@
       <section class="control-guide" aria-label="Steuerung">
         <p><strong>Bewegen</strong><span><kbd>←</kbd><kbd>→</kbd> oder <kbd>A</kbd><kbd>D</kbd></span></p>
         <p><strong>Springen</strong><span><kbd>Leertaste</kbd>, <kbd>↑</kbd> oder <kbd>W</kbd></span></p>
-        <p><strong>Spiel</strong><span><kbd>P</kbd>/<kbd>Esc</kbd> Pause · <kbd>R</kbd> Neustart</span></p>
+        <p><strong>Spiel</strong><span><kbd>P</kbd>/<kbd>Esc</kbd> Pause · <kbd>R</kbd> Neustart · <kbd>F</kbd> Vollbild</span></p>
         <p class="touch-hint"><strong>Smartphone</strong><span>Bildschirmtasten erscheinen automatisch</span></p>
       </section>
 
@@ -42,6 +42,10 @@
         </div>
         <div class="career-stats" id="career-stats"></div>
         <div class="medal-summary" id="medal-summary" aria-label="Gesammelte Medaillen"></div>
+        <section class="recent-runs" aria-labelledby="recent-runs-title">
+          <h3 id="recent-runs-title">Letzte Läufe</h3>
+          <div id="recent-runs-list"></div>
+        </section>
         <div class="achievement-list" id="achievement-list"></div>
         <button class="btn secondary-btn reset-progress-btn" id="reset-progress-btn" type="button">Fortschritt zurücksetzen</button>
         <p class="progress-reset-status" id="progress-reset-status" aria-live="polite"></p>
@@ -58,6 +62,9 @@
       <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
       <p class="combo" id="combo" aria-live="polite"></p>
       <p class="current-missions" id="current-missions"></p>
+      <div class="route-progress" id="route-progress" role="progressbar" aria-label="Levelstrecke" aria-valuemin="0" aria-valuemax="100">
+        <span id="route-progress-label">Strecke: 0%</span><i id="route-progress-fill"></i>
+      </div>
       <button class="hud-button" id="pause-btn" type="button" aria-pressed="false" hidden>Pause</button>
       <button class="hud-button secondary-btn" id="reset-run-btn" type="button" hidden>Level neu starten</button>
       <button class="hud-button secondary-btn" id="fullscreen-btn" type="button" aria-pressed="false" hidden>Vollbild</button>

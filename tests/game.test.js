@@ -39,6 +39,17 @@ import { campaignButtonLabel, chooseCampaignLevel } from "../src/campaign-select
 import { describeNextLevelGoal } from "../src/level-goal.js";
 import { compareRunWithRecord } from "../src/result-comparison.js";
 import { buildLevelPreview } from "../src/level-preview.js";
+import { calculateRouteProgress } from "../src/route-progress.js";
+
+test("route progress follows horizontal and vertical level direction", () => {
+  const checkpoint = { order: 1, position: { x: 900, y: 100 } };
+  assert.equal(calculateRouteProgress({
+    mode: "horizontal", spawn: { x: 100, y: 500 }, player: { position: { x: 500, y: 500 } }, checkpoints: [checkpoint],
+  }), 50);
+  assert.equal(calculateRouteProgress({
+    mode: "vertical", spawn: { x: 100, y: 900 }, player: { position: { x: 100, y: 500 } }, checkpoints: [checkpoint],
+  }), 50);
+});
 
 test("level previews summarize route and gameplay scope", () => {
   assert.deepEqual(buildLevelPreview({
@@ -117,12 +128,14 @@ test("level record cards format completed progress at a glance", () => {
     bestScore: 9876,
     bestTime: 72.3,
     bestCombo: 4,
+    flawlessRuns: 2,
     missions: ["fast", "fast", "flies"],
   }, 3), [
     ["Medaille", "Silber"],
     ["Highscore", 9876],
     ["Bestzeit", "01:12.3"],
     ["Beste Combo", "×4"],
+    ["Fehlerfrei", 2],
     ["Sterne", "2/3"],
   ]);
 });
@@ -310,7 +323,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P, Escape and R expose pause and restart controls without repeating", () => {
+test("P, Escape, R and F expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -320,9 +333,11 @@ test("P, Escape and R expose pause and restart controls without repeating", () =
   const input = new InputController();
   let pauseCalls = 0;
   let restartCalls = 0;
+  let fullscreenCalls = 0;
   input.bind(windowObject, [], {
     onPause: () => pauseCalls += 1,
     onRestart: () => restartCalls += 1,
+    onFullscreen: () => fullscreenCalls += 1,
   });
 
   const event = (key, repeat = false) => ({
@@ -336,8 +351,11 @@ test("P, Escape and R expose pause and restart controls without repeating", () =
   listeners.get("keydown")(event("p", true));
   listeners.get("keydown")(event("r"));
   listeners.get("keydown")(event("r", true));
+  listeners.get("keydown")(event("f"));
+  listeners.get("keydown")(event("f", true));
   assert.equal(pauseCalls, 2);
   assert.equal(restartCalls, 1);
+  assert.equal(fullscreenCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {
@@ -386,6 +404,21 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFalls, 3);
   assert.equal(progress.bestCombo, 4);
   assert.equal(progress.levelRecords["bathroom-run"].bestCombo, 4);
+  assert.equal(progress.flawlessRuns, 0);
+  const flawless = store.record({
+    score: 900, elapsedSeconds: 70, fliesCollected: 5, falls: 0, bestCombo: 2, medal: "Silber",
+  });
+  assert.equal(flawless.flawlessRuns, 1);
+  assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
+  assert.equal(flawless.recentRuns.length, 3);
+  assert.deepEqual(flawless.recentRuns[0], {
+    levelId: "bathroom-run",
+    score: 900,
+    elapsedSeconds: 70,
+    medal: "Silber",
+    fliesCollected: 5,
+    falls: 0,
+  });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
 

@@ -1051,11 +1051,18 @@
     { id: "golden-pile", name: "Goldst\xFCck", description: "Verdiene eine Goldmedaille." },
     { id: "speed-runner", name: "Ab durch die Sch\xFCssel", description: "Beende ein Level in h\xF6chstens 60 Sekunden." },
     { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." },
-    { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." }
+    { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." },
+    { id: "long-haul", name: "Dauersp\xFClung", description: "Spiele insgesamt 30 Minuten." },
+    { id: "spotless-five", name: "Saubere Serie", description: "Schlie\xDFe f\xFCnf L\xE4ufe fehlerfrei ab." },
+    { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." }
   ]);
   var findNewAchievements = (progress, result) => {
-    var _a;
+    var _a, _b;
     const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
+    const completedMissions = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
     const qualifies = {
       "first-flush": progress.totalRuns >= 1,
       "fly-hunter": progress.totalFlies >= 50,
@@ -1066,27 +1073,38 @@
       "campaign-complete": LEVELS.every(({ id }) => {
         var _a2;
         return (_a2 = progress.levelRecords) == null ? void 0 : _a2[id];
-      })
+      }),
+      "long-haul": progress.totalPlayTime >= 30 * 60,
+      "spotless-five": progress.flawlessRuns >= 5,
+      "all-stars": completedMissions >= LEVELS.reduce((total, level) => total + level.missions.length, 0)
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
       return Math.min(fastest, (_a2 = record.bestTime) != null ? _a2 : Infinity);
     }, Infinity);
+    const completedMissions = Object.values((_c = progress.levelRecords) != null ? _c : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
+    const missionTotal = LEVELS.reduce((total, level) => total + level.missions.length, 0);
     const values = {
-      "first-flush": `${Math.min((_c = progress.totalRuns) != null ? _c : 0, 1)}/1 Level`,
-      "fly-hunter": `${Math.min((_d = progress.totalFlies) != null ? _d : 0, 50)}/50 Fliegen`,
+      "first-flush": `${Math.min((_d = progress.totalRuns) != null ? _d : 0, 1)}/1 Level`,
+      "fly-hunter": `${Math.min((_e = progress.totalFlies) != null ? _e : 0, 50)}/50 Fliegen`,
       "combo-master": "In einem Lauf \xD74 erreichen",
-      "golden-pile": `${Math.min((_f = (_e = progress.medals) == null ? void 0 : _e.Gold) != null ? _f : 0, 1)}/1 Goldmedaille`,
+      "golden-pile": `${Math.min((_g = (_f = progress.medals) == null ? void 0 : _f.Gold) != null ? _g : 0, 1)}/1 Goldmedaille`,
       "speed-runner": fastestTime <= 60 ? "1/1 Speedrun" : "0/1 unter 60 Sekunden",
       "sure-footed": "Ein Level ohne Treffer",
-      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`
+      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`,
+      "long-haul": `${Math.min(Math.floor(((_h = progress.totalPlayTime) != null ? _h : 0) / 60), 30)}/30 Minuten`,
+      "spotless-five": `${Math.min((_i = progress.flawlessRuns) != null ? _i : 0, 5)}/5 fehlerfreie L\xE4ufe`,
+      "all-stars": `${Math.min(completedMissions, missionTotal)}/${missionTotal} Sterne`
     };
-    return (_g = values[achievementId]) != null ? _g : "";
+    return (_j = values[achievementId]) != null ? _j : "";
   };
 
   // src/storage.js

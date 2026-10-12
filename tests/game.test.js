@@ -633,6 +633,26 @@ test("finishing every level unlocks the campaign achievement", () => {
   assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
 });
 
+test("career milestones unlock long-term achievements", () => {
+  const levelRecords = Object.fromEntries(LEVELS.map((level) => [
+    level.id,
+    { missions: level.missions.map(({ id }) => id) },
+  ]));
+  const achievements = findNewAchievements({
+    totalRuns: 10,
+    totalFlies: 0,
+    totalPlayTime: 1800,
+    flawlessRuns: 5,
+    achievements: [],
+    levelRecords,
+  }, { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 });
+  const ids = achievements.map(({ id }) => id);
+  assert.ok(ids.includes("long-haul"));
+  assert.ok(ids.includes("spotless-five"));
+  assert.ok(ids.includes("all-stars"));
+  assert.equal(achievementProgressText("long-haul", { totalPlayTime: 900 }), "15/30 Minuten");
+});
+
 test("locked achievements expose useful progress text", () => {
   const progress = {
     totalRuns: 0,

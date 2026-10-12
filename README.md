@@ -13,6 +13,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Zähler für fehlerfreie Läufe in Karriere und Levelrekorden
 - lokale Historie der fünf letzten Läufe mit Score, Zeit und Trefferzahl
 - direkter Level-Neustart aus jedem Eintrag der Laufhistorie
+- validierter Export und Import des lokalen Spielstands über die Zwischenablage
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen

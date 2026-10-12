@@ -1207,6 +1207,15 @@
       }
       return next;
     }
+    replace(progress) {
+      var _a;
+      const next = normalizeProgress(progress);
+      try {
+        (_a = this.storage) == null ? void 0 : _a.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+      }
+      return next;
+    }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
       const progress = this.load();
@@ -1475,6 +1484,27 @@
   // src/run-history.js
   var resolveReplayLevel = (levels, progress, levelId) => levels.some(({ id }) => id === levelId) && progress.unlockedLevels.includes(levelId) ? levelId : null;
 
+  // src/progress-backup.js
+  var BACKUP_FORMAT = "dung-dash-progress";
+  var BACKUP_VERSION = 1;
+  var serializeProgressBackup = (progress) => JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    progress
+  }, null, 2);
+  var parseProgressBackup = (text) => {
+    let backup;
+    try {
+      backup = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Die Sicherung enth\xE4lt kein g\xFCltiges JSON.");
+    }
+    if ((backup == null ? void 0 : backup.format) !== BACKUP_FORMAT || (backup == null ? void 0 : backup.version) !== BACKUP_VERSION || !backup.progress || typeof backup.progress !== "object" || Array.isArray(backup.progress)) {
+      throw new Error("Die Sicherung geh\xF6rt nicht zu dieser Dung-Dash-Version.");
+    }
+    return backup.progress;
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1622,6 +1652,8 @@
       this.recentRunsList = documentObject.getElementById("recent-runs-list");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+      this.exportProgressButton = documentObject.getElementById("export-progress-btn");
+      this.importProgressButton = documentObject.getElementById("import-progress-btn");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1701,6 +1733,8 @@
       this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
+      this.exportProgressButton.addEventListener("click", () => this.exportProgress());
+      this.importProgressButton.addEventListener("click", () => this.importProgress());
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1875,6 +1909,31 @@
       this.renderMissions();
       this.progressResetStatus.textContent = "Fortschritt wurde zur\xFCckgesetzt.";
       this.levelSelect.focus();
+    }
+    async exportProgress() {
+      try {
+        const backup = serializeProgressBackup(this.progressStore.load());
+        const copied = await copyText(backup, this.window.navigator, this.document);
+        this.progressResetStatus.textContent = copied ? "Spielstand wurde in die Zwischenablage kopiert." : "Spielstand konnte nicht kopiert werden.";
+      } catch (e) {
+        this.progressResetStatus.textContent = "Spielstand konnte nicht kopiert werden.";
+      }
+    }
+    importProgress() {
+      const text = this.window.prompt("F\xFCge hier deine Dung-Dash-Spielstandsicherung ein:");
+      if (text === null) return;
+      try {
+        const imported = parseProgressBackup(text);
+        if (!this.window.confirm("Aktuellen Spielstand durch diese Sicherung ersetzen?")) return;
+        const progress = this.progressStore.replace(imported);
+        this.selectedLevelId = progress.selectedLevelId;
+        this.renderLevelOptions();
+        this.renderProgress();
+        this.renderMissions();
+        this.progressResetStatus.textContent = "Spielstand wurde erfolgreich wiederhergestellt.";
+      } catch (error) {
+        this.progressResetStatus.textContent = error.message;
+      }
     }
     async start() {
       if (this.state !== GameState.READY && this.state !== GameState.ERROR) return;

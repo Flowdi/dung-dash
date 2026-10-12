@@ -41,6 +41,15 @@ import { compareRunWithRecord } from "../src/result-comparison.js";
 import { buildLevelPreview } from "../src/level-preview.js";
 import { calculateRouteProgress } from "../src/route-progress.js";
 import { resolveReplayLevel } from "../src/run-history.js";
+import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
+
+test("progress backups round-trip and reject unrelated JSON", () => {
+  const progress = { totalRuns: 7, unlockedLevels: ["bathroom-run"] };
+  assert.deepEqual(parseProgressBackup(serializeProgressBackup(progress)), progress);
+  assert.throws(() => parseProgressBackup("not json"), /gültiges JSON/);
+  assert.throws(() => parseProgressBackup('{"format":"other","version":1,"progress":{}}'),
+    /Dung-Dash-Version/);
+});
 
 test("run history only replays known unlocked levels", () => {
   const levels = [{ id: "one" }, { id: "two" }];

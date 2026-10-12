@@ -439,6 +439,20 @@ body {
   font-size: 0.78rem;
 }
 
+.progress-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.progress-backup-actions .btn {
+  min-height: 36px;
+  margin: 0;
+  font-size: 0.75rem;
+}
+
 .progress-reset-status {
   min-height: 1.2em;
   margin-top: 5px;

@@ -40,6 +40,24 @@ import { describeNextLevelGoal } from "../src/level-goal.js";
 import { compareRunWithRecord } from "../src/result-comparison.js";
 import { buildLevelPreview } from "../src/level-preview.js";
 import { calculateRouteProgress } from "../src/route-progress.js";
+import { resolveReplayLevel } from "../src/run-history.js";
+import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
+
+test("progress backups round-trip and reject unrelated JSON", () => {
+  const progress = { totalRuns: 7, unlockedLevels: ["bathroom-run"] };
+  assert.deepEqual(parseProgressBackup(serializeProgressBackup(progress)), progress);
+  assert.throws(() => parseProgressBackup("not json"), /gültiges JSON/);
+  assert.throws(() => parseProgressBackup('{"format":"other","version":1,"progress":{}}'),
+    /Dung-Dash-Version/);
+});
+
+test("run history only replays known unlocked levels", () => {
+  const levels = [{ id: "one" }, { id: "two" }];
+  const progress = { unlockedLevels: ["one"] };
+  assert.equal(resolveReplayLevel(levels, progress, "one"), "one");
+  assert.equal(resolveReplayLevel(levels, progress, "two"), null);
+  assert.equal(resolveReplayLevel(levels, progress, "unknown"), null);
+});
 
 test("route progress follows horizontal and vertical level direction", () => {
   const checkpoint = { order: 1, position: { x: 900, y: 100 } };
@@ -631,6 +649,26 @@ test("finishing every level unlocks the campaign achievement", () => {
     { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 }
   );
   assert.ok(achievements.some(({ id }) => id === "campaign-complete"));
+});
+
+test("career milestones unlock long-term achievements", () => {
+  const levelRecords = Object.fromEntries(LEVELS.map((level) => [
+    level.id,
+    { missions: level.missions.map(({ id }) => id) },
+  ]));
+  const achievements = findNewAchievements({
+    totalRuns: 10,
+    totalFlies: 0,
+    totalPlayTime: 1800,
+    flawlessRuns: 5,
+    achievements: [],
+    levelRecords,
+  }, { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 });
+  const ids = achievements.map(({ id }) => id);
+  assert.ok(ids.includes("long-haul"));
+  assert.ok(ids.includes("spotless-five"));
+  assert.ok(ids.includes("all-stars"));
+  assert.equal(achievementProgressText("long-haul", { totalPlayTime: 900 }), "15/30 Minuten");
 });
 
 test("locked achievements expose useful progress text", () => {

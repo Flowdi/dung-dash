@@ -103,6 +103,16 @@ export class ProgressStore {
     return next;
   }
 
+  replace(progress) {
+    const next = normalizeProgress(progress);
+    try {
+      this.storage?.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Der validierte Stand kann in eingeschränkten Browsern nur für diese Sitzung genutzt werden.
+    }
+    return next;
+  }
+
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
     const previousLevelRecord = progress.levelRecords?.[levelId];

@@ -30,6 +30,8 @@ import { describeNextLevelGoal } from "./level-goal.js";
 import { compareRunWithRecord } from "./result-comparison.js";
 import { buildLevelPreview } from "./level-preview.js";
 import { calculateRouteProgress } from "./route-progress.js";
+import { resolveReplayLevel } from "./run-history.js";
+import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -66,6 +68,8 @@ export class Game {
     this.recentRunsList = documentObject.getElementById("recent-runs-list");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+    this.exportProgressButton = documentObject.getElementById("export-progress-btn");
+    this.importProgressButton = documentObject.getElementById("import-progress-btn");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -148,6 +152,8 @@ export class Game {
     this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
     this.document.addEventListener?.("fullscreenchange", () => this.updateFullscreenButton());
     this.resetProgressButton.addEventListener("click", () => this.resetProgress());
+    this.exportProgressButton.addEventListener("click", () => this.exportProgress());
+    this.importProgressButton.addEventListener("click", () => this.importProgress());
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -277,7 +283,17 @@ export class Game {
     this.recentRunsList.replaceChildren(...(recentRuns.length ? recentRuns.map((run) => {
       const item = this.document.createElement("p");
       const levelName = LEVELS.find(({ id }) => id === run.levelId)?.name ?? run.levelId;
-      item.innerHTML = `<strong>${levelName}</strong><span>${run.medal ?? "–"} · ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer</span>`;
+      const title = this.document.createElement("strong");
+      title.textContent = levelName;
+      const score = this.document.createElement("span");
+      score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
+      const details = this.document.createElement("span");
+      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer`;
+      const replay = this.document.createElement("button");
+      replay.type = "button";
+      replay.textContent = "Level wiederholen";
+      replay.addEventListener("click", () => this.replayHistoryLevel(run.levelId));
+      item.append(title, score, details, replay);
       return item;
     }) : [(() => {
       const item = this.document.createElement("p");
@@ -297,6 +313,17 @@ export class Game {
     }));
   }
 
+  replayHistoryLevel(levelId) {
+    const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
+    if (!replayLevelId) return;
+    this.selectedLevelId = replayLevelId;
+    this.progressStore.selectLevel(replayLevelId);
+    this.levelSelect.value = replayLevelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.start();
+  }
+
   resetProgress() {
     if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen löschen?")) return;
     this.progressStore.clear();
@@ -306,6 +333,35 @@ export class Game {
     this.renderMissions();
     this.progressResetStatus.textContent = "Fortschritt wurde zurückgesetzt.";
     this.levelSelect.focus();
+  }
+
+  async exportProgress() {
+    try {
+      const backup = serializeProgressBackup(this.progressStore.load());
+      const copied = await copyText(backup, this.window.navigator, this.document);
+      this.progressResetStatus.textContent = copied
+        ? "Spielstand wurde in die Zwischenablage kopiert."
+        : "Spielstand konnte nicht kopiert werden.";
+    } catch {
+      this.progressResetStatus.textContent = "Spielstand konnte nicht kopiert werden.";
+    }
+  }
+
+  importProgress() {
+    const text = this.window.prompt("Füge hier deine Dung-Dash-Spielstandsicherung ein:");
+    if (text === null) return;
+    try {
+      const imported = parseProgressBackup(text);
+      if (!this.window.confirm("Aktuellen Spielstand durch diese Sicherung ersetzen?")) return;
+      const progress = this.progressStore.replace(imported);
+      this.selectedLevelId = progress.selectedLevelId;
+      this.renderLevelOptions();
+      this.renderProgress();
+      this.renderMissions();
+      this.progressResetStatus.textContent = "Spielstand wurde erfolgreich wiederhergestellt.";
+    } catch (error) {
+      this.progressResetStatus.textContent = error.message;
+    }
   }
 
   async start() {

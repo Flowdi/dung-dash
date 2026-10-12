@@ -1051,11 +1051,18 @@
     { id: "golden-pile", name: "Goldst\xFCck", description: "Verdiene eine Goldmedaille." },
     { id: "speed-runner", name: "Ab durch die Sch\xFCssel", description: "Beende ein Level in h\xF6chstens 60 Sekunden." },
     { id: "sure-footed", name: "Trittsicher", description: "Beende ein Level ohne einen Sturz." },
-    { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." }
+    { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." },
+    { id: "long-haul", name: "Dauersp\xFClung", description: "Spiele insgesamt 30 Minuten." },
+    { id: "spotless-five", name: "Saubere Serie", description: "Schlie\xDFe f\xFCnf L\xE4ufe fehlerfrei ab." },
+    { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." }
   ]);
   var findNewAchievements = (progress, result) => {
-    var _a;
+    var _a, _b;
     const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
+    const completedMissions = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
     const qualifies = {
       "first-flush": progress.totalRuns >= 1,
       "fly-hunter": progress.totalFlies >= 50,
@@ -1066,27 +1073,38 @@
       "campaign-complete": LEVELS.every(({ id }) => {
         var _a2;
         return (_a2 = progress.levelRecords) == null ? void 0 : _a2[id];
-      })
+      }),
+      "long-haul": progress.totalPlayTime >= 30 * 60,
+      "spotless-five": progress.flawlessRuns >= 5,
+      "all-stars": completedMissions >= LEVELS.reduce((total, level) => total + level.missions.length, 0)
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
       return Math.min(fastest, (_a2 = record.bestTime) != null ? _a2 : Infinity);
     }, Infinity);
+    const completedMissions = Object.values((_c = progress.levelRecords) != null ? _c : {}).reduce((total, record) => {
+      var _a2;
+      return total + new Set((_a2 = record.missions) != null ? _a2 : []).size;
+    }, 0);
+    const missionTotal = LEVELS.reduce((total, level) => total + level.missions.length, 0);
     const values = {
-      "first-flush": `${Math.min((_c = progress.totalRuns) != null ? _c : 0, 1)}/1 Level`,
-      "fly-hunter": `${Math.min((_d = progress.totalFlies) != null ? _d : 0, 50)}/50 Fliegen`,
+      "first-flush": `${Math.min((_d = progress.totalRuns) != null ? _d : 0, 1)}/1 Level`,
+      "fly-hunter": `${Math.min((_e = progress.totalFlies) != null ? _e : 0, 50)}/50 Fliegen`,
       "combo-master": "In einem Lauf \xD74 erreichen",
-      "golden-pile": `${Math.min((_f = (_e = progress.medals) == null ? void 0 : _e.Gold) != null ? _f : 0, 1)}/1 Goldmedaille`,
+      "golden-pile": `${Math.min((_g = (_f = progress.medals) == null ? void 0 : _f.Gold) != null ? _g : 0, 1)}/1 Goldmedaille`,
       "speed-runner": fastestTime <= 60 ? "1/1 Speedrun" : "0/1 unter 60 Sekunden",
       "sure-footed": "Ein Level ohne Treffer",
-      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`
+      "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`,
+      "long-haul": `${Math.min(Math.floor(((_h = progress.totalPlayTime) != null ? _h : 0) / 60), 30)}/30 Minuten`,
+      "spotless-five": `${Math.min((_i = progress.flawlessRuns) != null ? _i : 0, 5)}/5 fehlerfreie L\xE4ufe`,
+      "all-stars": `${Math.min(completedMissions, missionTotal)}/${missionTotal} Sterne`
     };
-    return (_g = values[achievementId]) != null ? _g : "";
+    return (_j = values[achievementId]) != null ? _j : "";
   };
 
   // src/storage.js
@@ -1183,6 +1201,15 @@
       const progress = this.load();
       if (!LEVEL_ORDER.includes(levelId) || !progress.unlockedLevels.includes(levelId)) return progress;
       const next = { ...progress, selectedLevelId: levelId };
+      try {
+        (_a = this.storage) == null ? void 0 : _a.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (e) {
+      }
+      return next;
+    }
+    replace(progress) {
+      var _a;
+      const next = normalizeProgress(progress);
       try {
         (_a = this.storage) == null ? void 0 : _a.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
@@ -1454,6 +1481,30 @@
     return distance === 0 ? 0 : Math.round(clamp(travelled / distance) * 100);
   };
 
+  // src/run-history.js
+  var resolveReplayLevel = (levels, progress, levelId) => levels.some(({ id }) => id === levelId) && progress.unlockedLevels.includes(levelId) ? levelId : null;
+
+  // src/progress-backup.js
+  var BACKUP_FORMAT = "dung-dash-progress";
+  var BACKUP_VERSION = 1;
+  var serializeProgressBackup = (progress) => JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    progress
+  }, null, 2);
+  var parseProgressBackup = (text) => {
+    let backup;
+    try {
+      backup = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Die Sicherung enth\xE4lt kein g\xFCltiges JSON.");
+    }
+    if ((backup == null ? void 0 : backup.format) !== BACKUP_FORMAT || (backup == null ? void 0 : backup.version) !== BACKUP_VERSION || !backup.progress || typeof backup.progress !== "object" || Array.isArray(backup.progress)) {
+      throw new Error("Die Sicherung geh\xF6rt nicht zu dieser Dung-Dash-Version.");
+    }
+    return backup.progress;
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1601,6 +1652,8 @@
       this.recentRunsList = documentObject.getElementById("recent-runs-list");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
+      this.exportProgressButton = documentObject.getElementById("export-progress-btn");
+      this.importProgressButton = documentObject.getElementById("import-progress-btn");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1680,6 +1733,8 @@
       this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
+      this.exportProgressButton.addEventListener("click", () => this.exportProgress());
+      this.importProgressButton.addEventListener("click", () => this.importProgress());
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1807,7 +1862,17 @@
         var _a2, _b2, _c;
         const item = this.document.createElement("p");
         const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
-        item.innerHTML = `<strong>${levelName}</strong><span>${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer</span>`;
+        const title = this.document.createElement("strong");
+        title.textContent = levelName;
+        const score = this.document.createElement("span");
+        score.textContent = `${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte`;
+        const details = this.document.createElement("span");
+        details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer`;
+        const replay = this.document.createElement("button");
+        replay.type = "button";
+        replay.textContent = "Level wiederholen";
+        replay.addEventListener("click", () => this.replayHistoryLevel(run.levelId));
+        item.append(title, score, details, replay);
         return item;
       }) : [(() => {
         const item = this.document.createElement("p");
@@ -1825,6 +1890,16 @@
         return item;
       }));
     }
+    replayHistoryLevel(levelId) {
+      const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
+      if (!replayLevelId) return;
+      this.selectedLevelId = replayLevelId;
+      this.progressStore.selectLevel(replayLevelId);
+      this.levelSelect.value = replayLevelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.start();
+    }
     resetProgress() {
       if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;
       this.progressStore.clear();
@@ -1834,6 +1909,31 @@
       this.renderMissions();
       this.progressResetStatus.textContent = "Fortschritt wurde zur\xFCckgesetzt.";
       this.levelSelect.focus();
+    }
+    async exportProgress() {
+      try {
+        const backup = serializeProgressBackup(this.progressStore.load());
+        const copied = await copyText(backup, this.window.navigator, this.document);
+        this.progressResetStatus.textContent = copied ? "Spielstand wurde in die Zwischenablage kopiert." : "Spielstand konnte nicht kopiert werden.";
+      } catch (e) {
+        this.progressResetStatus.textContent = "Spielstand konnte nicht kopiert werden.";
+      }
+    }
+    importProgress() {
+      const text = this.window.prompt("F\xFCge hier deine Dung-Dash-Spielstandsicherung ein:");
+      if (text === null) return;
+      try {
+        const imported = parseProgressBackup(text);
+        if (!this.window.confirm("Aktuellen Spielstand durch diese Sicherung ersetzen?")) return;
+        const progress = this.progressStore.replace(imported);
+        this.selectedLevelId = progress.selectedLevelId;
+        this.renderLevelOptions();
+        this.renderProgress();
+        this.renderMissions();
+        this.progressResetStatus.textContent = "Spielstand wurde erfolgreich wiederhergestellt.";
+      } catch (error) {
+        this.progressResetStatus.textContent = error.message;
+      }
     }
     async start() {
       if (this.state !== GameState.READY && this.state !== GameState.ERROR) return;

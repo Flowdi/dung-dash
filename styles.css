@@ -377,6 +377,22 @@ body {
   font-size: 0.72rem;
 }
 
+#recent-runs-list button {
+  min-height: 30px;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: #3f3f3f;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#recent-runs-list button:hover {
+  background: #606060;
+}
+
 #recent-runs-list.empty {
   color: #aaa;
 }
@@ -421,6 +437,20 @@ body {
   min-height: 36px;
   margin: 12px 0 0;
   font-size: 0.78rem;
+}
+
+.progress-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.progress-backup-actions .btn {
+  min-height: 36px;
+  margin: 0;
+  font-size: 0.75rem;
 }
 
 .progress-reset-status {

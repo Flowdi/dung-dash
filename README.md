@@ -12,6 +12,8 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - globale und levelbezogene persönliche Combo-Rekorde
 - Zähler für fehlerfreie Läufe in Karriere und Levelrekorden
 - lokale Historie der fünf letzten Läufe mit Score, Zeit und Trefferzahl
+- direkter Level-Neustart aus jedem Eintrag der Laufhistorie
+- validierter Export und Import des lokalen Spielstands über die Zwischenablage
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
@@ -26,7 +28,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - vollständig feste Plattformen mit Kollisionen an Ober-, Unter- und beiden Seiten
 - eigene generierte Hintergründe, Plattformen und Toiletten für jedes Levelthema
 - nahtlose, proportional skalierte Levelhintergründe mit kamerageführtem Bildausschnitt
-- Karriereübersicht mit Gesamtstatistik und sieben dauerhaft gespeicherten Achievements
+- Karriereübersicht mit Gesamtstatistik und zehn dauerhaft gespeicherten Achievements
 - drei individuelle, dauerhaft gespeicherte Sterne-Missionen pro Level
 - zügig horizontal und vertikal fahrende Plattformen, die den Spieler mitnehmen und seitlich schieben
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen

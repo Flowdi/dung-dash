@@ -1472,6 +1472,9 @@
     return distance === 0 ? 0 : Math.round(clamp(travelled / distance) * 100);
   };
 
+  // src/run-history.js
+  var resolveReplayLevel = (levels, progress, levelId) => levels.some(({ id }) => id === levelId) && progress.unlockedLevels.includes(levelId) ? levelId : null;
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1825,7 +1828,17 @@
         var _a2, _b2, _c;
         const item = this.document.createElement("p");
         const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
-        item.innerHTML = `<strong>${levelName}</strong><span>${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer</span>`;
+        const title = this.document.createElement("strong");
+        title.textContent = levelName;
+        const score = this.document.createElement("span");
+        score.textContent = `${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte`;
+        const details = this.document.createElement("span");
+        details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer`;
+        const replay = this.document.createElement("button");
+        replay.type = "button";
+        replay.textContent = "Level wiederholen";
+        replay.addEventListener("click", () => this.replayHistoryLevel(run.levelId));
+        item.append(title, score, details, replay);
         return item;
       }) : [(() => {
         const item = this.document.createElement("p");
@@ -1842,6 +1855,16 @@
         item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
         return item;
       }));
+    }
+    replayHistoryLevel(levelId) {
+      const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
+      if (!replayLevelId) return;
+      this.selectedLevelId = replayLevelId;
+      this.progressStore.selectLevel(replayLevelId);
+      this.levelSelect.value = replayLevelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.start();
     }
     resetProgress() {
       if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;

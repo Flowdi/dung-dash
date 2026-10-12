@@ -30,6 +30,7 @@ import { describeNextLevelGoal } from "./level-goal.js";
 import { compareRunWithRecord } from "./result-comparison.js";
 import { buildLevelPreview } from "./level-preview.js";
 import { calculateRouteProgress } from "./route-progress.js";
+import { resolveReplayLevel } from "./run-history.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -277,7 +278,17 @@ export class Game {
     this.recentRunsList.replaceChildren(...(recentRuns.length ? recentRuns.map((run) => {
       const item = this.document.createElement("p");
       const levelName = LEVELS.find(({ id }) => id === run.levelId)?.name ?? run.levelId;
-      item.innerHTML = `<strong>${levelName}</strong><span>${run.medal ?? "–"} · ${run.score} Punkte</span><span>${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer</span>`;
+      const title = this.document.createElement("strong");
+      title.textContent = levelName;
+      const score = this.document.createElement("span");
+      score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
+      const details = this.document.createElement("span");
+      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer`;
+      const replay = this.document.createElement("button");
+      replay.type = "button";
+      replay.textContent = "Level wiederholen";
+      replay.addEventListener("click", () => this.replayHistoryLevel(run.levelId));
+      item.append(title, score, details, replay);
       return item;
     }) : [(() => {
       const item = this.document.createElement("p");
@@ -295,6 +306,17 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
       return item;
     }));
+  }
+
+  replayHistoryLevel(levelId) {
+    const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
+    if (!replayLevelId) return;
+    this.selectedLevelId = replayLevelId;
+    this.progressStore.selectLevel(replayLevelId);
+    this.levelSelect.value = replayLevelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.start();
   }
 
   resetProgress() {

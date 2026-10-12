@@ -377,6 +377,22 @@ body {
   font-size: 0.72rem;
 }
 
+#recent-runs-list button {
+  min-height: 30px;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: #3f3f3f;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#recent-runs-list button:hover {
+  background: #606060;
+}
+
 #recent-runs-list.empty {
   color: #aaa;
 }

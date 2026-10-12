@@ -40,6 +40,15 @@ import { describeNextLevelGoal } from "../src/level-goal.js";
 import { compareRunWithRecord } from "../src/result-comparison.js";
 import { buildLevelPreview } from "../src/level-preview.js";
 import { calculateRouteProgress } from "../src/route-progress.js";
+import { resolveReplayLevel } from "../src/run-history.js";
+
+test("run history only replays known unlocked levels", () => {
+  const levels = [{ id: "one" }, { id: "two" }];
+  const progress = { unlockedLevels: ["one"] };
+  assert.equal(resolveReplayLevel(levels, progress, "one"), "one");
+  assert.equal(resolveReplayLevel(levels, progress, "two"), null);
+  assert.equal(resolveReplayLevel(levels, progress, "unknown"), null);
+});
 
 test("route progress follows horizontal and vertical level direction", () => {
   const checkpoint = { order: 1, position: { x: 900, y: 100 } };

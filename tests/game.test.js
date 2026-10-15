@@ -711,6 +711,22 @@ test("progress store persists achievements only once", () => {
   assert.deepEqual(second.achievements, first.achievements);
 });
 
+test("run history can be cleared without deleting career progress", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.replace({ totalRuns: 4, bestScore: 12000, recentRuns: [{
+    levelId: "bathroom-run", score: 12000, elapsedSeconds: 60, fliesCollected: 20, falls: 0,
+  }] });
+  const cleared = store.clearRecentRuns();
+  assert.deepEqual(cleared.recentRuns, []);
+  assert.equal(cleared.totalRuns, 4);
+  assert.equal(cleared.bestScore, 12000);
+});
+
 test("level missions evaluate time, collection, combo and score goals", () => {
   const missions = [
     { id: "fast", type: "time", target: 60 },

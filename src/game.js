@@ -67,6 +67,7 @@ export class Game {
     this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
     this.medalSummary = documentObject.getElementById("medal-summary");
     this.recentRunsList = documentObject.getElementById("recent-runs-list");
+    this.clearRecentRunsButton = documentObject.getElementById("clear-recent-runs-btn");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.exportProgressButton = documentObject.getElementById("export-progress-btn");
@@ -155,6 +156,7 @@ export class Game {
     this.resetProgressButton.addEventListener("click", () => this.resetProgress());
     this.exportProgressButton.addEventListener("click", () => this.exportProgress());
     this.importProgressButton.addEventListener("click", () => this.importProgress());
+    this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -283,6 +285,7 @@ export class Game {
       return item;
     }));
     const recentRuns = progress.recentRuns ?? [];
+    this.clearRecentRunsButton.hidden = recentRuns.length === 0;
     this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
     this.recentRunsList.replaceChildren(...(recentRuns.length ? recentRuns.map((run) => {
       const item = this.document.createElement("p");
@@ -326,6 +329,13 @@ export class Game {
     this.updateLevelDescription();
     this.renderMissions();
     this.start();
+  }
+
+  clearRecentRuns() {
+    if (!this.window.confirm("Nur die Liste der letzten Läufe leeren? Deine Rekorde bleiben erhalten.")) return;
+    this.progressStore.clearRecentRuns();
+    this.renderProgress();
+    this.progressResetStatus.textContent = "Laufhistorie wurde geleert; Rekorde und Fortschritt bleiben erhalten.";
   }
 
   resetProgress() {

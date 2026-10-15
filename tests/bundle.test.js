@@ -78,6 +78,7 @@ test("start screen exposes career stats and achievements", async () => {
   assert.match(html, /id="campaign-progress"/);
   assert.match(html, /id="medal-summary"/);
   assert.match(html, /id="recent-runs-list"/);
+  assert.match(html, /id="clear-recent-runs-btn"/);
   assert.match(html, /id="achievement-list"/);
   assert.match(html, /id="reset-progress-btn"/);
   assert.match(html, /id="progress-reset-status"/);

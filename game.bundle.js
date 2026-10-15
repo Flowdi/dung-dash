@@ -1218,6 +1218,10 @@
       }
       return next;
     }
+    clearRecentRuns() {
+      const progress = this.load();
+      return this.replace({ ...progress, recentRuns: [] });
+    }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
       const progress = this.load();
@@ -1665,6 +1669,7 @@
       this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
       this.medalSummary = documentObject.getElementById("medal-summary");
       this.recentRunsList = documentObject.getElementById("recent-runs-list");
+      this.clearRecentRunsButton = documentObject.getElementById("clear-recent-runs-btn");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.exportProgressButton = documentObject.getElementById("export-progress-btn");
@@ -1750,6 +1755,7 @@
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
       this.exportProgressButton.addEventListener("click", () => this.exportProgress());
       this.importProgressButton.addEventListener("click", () => this.importProgress());
+      this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1875,6 +1881,7 @@
         return item;
       }));
       const recentRuns = (_a = progress.recentRuns) != null ? _a : [];
+      this.clearRecentRunsButton.hidden = recentRuns.length === 0;
       this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
       this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
         var _a2, _b2, _c;
@@ -1917,6 +1924,12 @@
       this.updateLevelDescription();
       this.renderMissions();
       this.start();
+    }
+    clearRecentRuns() {
+      if (!this.window.confirm("Nur die Liste der letzten L\xE4ufe leeren? Deine Rekorde bleiben erhalten.")) return;
+      this.progressStore.clearRecentRuns();
+      this.renderProgress();
+      this.progressResetStatus.textContent = "Laufhistorie wurde geleert; Rekorde und Fortschritt bleiben erhalten.";
     }
     resetProgress() {
       if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;

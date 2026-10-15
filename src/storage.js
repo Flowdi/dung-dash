@@ -115,6 +115,11 @@ export class ProgressStore {
     return next;
   }
 
+  clearRecentRuns() {
+    const progress = this.load();
+    return this.replace({ ...progress, recentRuns: [] });
+  }
+
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
     const previousLevelRecord = progress.levelRecords?.[levelId];

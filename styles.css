@@ -352,8 +352,25 @@ body {
 }
 
 .recent-runs h3 {
-  margin-bottom: 6px;
   font-size: 0.82rem;
+}
+
+.recent-runs-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.recent-runs-heading button {
+  border: 0;
+  background: transparent;
+  color: #bbb;
+  font: inherit;
+  font-size: 0.68rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 #recent-runs-list {

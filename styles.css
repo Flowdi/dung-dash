@@ -464,6 +464,45 @@ body {
   margin-top: 12px;
 }
 
+.motion-preference {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: fit-content;
+  margin: 12px auto 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  text-align: left;
+  cursor: pointer;
+}
+
+.motion-preference input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.motion-preference strong,
+.motion-preference small {
+  display: block;
+}
+
+.motion-preference small {
+  margin-top: 2px;
+  color: #bbb;
+  font-size: 0.68rem;
+}
+
+body.reduce-motion .checkpoint-screen.toast {
+  animation: none;
+}
+
+body.reduce-motion .campaign-progress i,
+body.reduce-motion .route-progress i {
+  transition: none;
+}
+
 .progress-backup-actions .btn {
   min-height: 36px;
   margin: 0;
@@ -818,6 +857,11 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .checkpoint-screen.toast {
     animation: none;
+  }
+
+  .campaign-progress i,
+  .route-progress i {
+    transition: none;
   }
 }
 

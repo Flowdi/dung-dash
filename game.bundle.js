@@ -1120,6 +1120,7 @@
     bestCombo: 0,
     flawlessRuns: 0,
     recentRuns: [],
+    preferences: { reducedMotion: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1145,7 +1146,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1173,6 +1174,7 @@
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
+    base.preferences = { reducedMotion: ((_d = source.preferences) == null ? void 0 : _d.reducedMotion) === true };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1221,6 +1223,13 @@
     clearRecentRuns() {
       const progress = this.load();
       return this.replace({ ...progress, recentRuns: [] });
+    }
+    setReducedMotion(enabled) {
+      const progress = this.load();
+      return this.replace({
+        ...progress,
+        preferences: { ...progress.preferences, reducedMotion: Boolean(enabled) }
+      });
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
@@ -1674,6 +1683,7 @@
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.exportProgressButton = documentObject.getElementById("export-progress-btn");
       this.importProgressButton = documentObject.getElementById("import-progress-btn");
+      this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1756,6 +1766,10 @@
       this.exportProgressButton.addEventListener("click", () => this.exportProgress());
       this.importProgressButton.addEventListener("click", () => this.importProgress());
       this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
+      this.reducedMotionToggle.addEventListener("change", () => {
+        this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
+        this.applyMotionPreference(this.reducedMotionToggle.checked);
+      });
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1847,8 +1861,10 @@
       }));
     }
     renderProgress() {
-      var _a, _b;
+      var _a, _b, _c;
       const progress = this.progressStore.load();
+      this.reducedMotionToggle.checked = ((_a = progress.preferences) == null ? void 0 : _a.reducedMotion) === true;
+      this.applyMotionPreference(this.reducedMotionToggle.checked);
       const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -1880,17 +1896,17 @@
         item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b2 = progress.medals[medal]) != null ? _b2 : 0}</strong>`;
         return item;
       }));
-      const recentRuns = (_a = progress.recentRuns) != null ? _a : [];
+      const recentRuns = (_b = progress.recentRuns) != null ? _b : [];
       this.clearRecentRunsButton.hidden = recentRuns.length === 0;
       this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
       this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
-        var _a2, _b2, _c;
+        var _a2, _b2, _c2;
         const item = this.document.createElement("p");
         const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
         const title = this.document.createElement("strong");
         title.textContent = levelName;
         const score = this.document.createElement("span");
-        score.textContent = `${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte`;
+        score.textContent = `${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer`;
         const replay = this.document.createElement("button");
@@ -1904,7 +1920,7 @@
         item.textContent = "Noch keine L\xE4ufe gespeichert.";
         return item;
       })()]);
-      const unlocked = new Set((_b = progress.achievements) != null ? _b : []);
+      const unlocked = new Set((_c = progress.achievements) != null ? _c : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);
@@ -1914,6 +1930,9 @@
         item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "\u{1F3C6}" : "\u{1F512}"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
         return item;
       }));
+    }
+    applyMotionPreference(reduced) {
+      this.document.body.classList.toggle("reduce-motion", reduced);
     }
     replayHistoryLevel(levelId) {
       const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);

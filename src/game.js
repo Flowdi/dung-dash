@@ -72,6 +72,7 @@ export class Game {
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.exportProgressButton = documentObject.getElementById("export-progress-btn");
     this.importProgressButton = documentObject.getElementById("import-progress-btn");
+    this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -157,6 +158,10 @@ export class Game {
     this.exportProgressButton.addEventListener("click", () => this.exportProgress());
     this.importProgressButton.addEventListener("click", () => this.importProgress());
     this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
+    this.reducedMotionToggle.addEventListener("change", () => {
+      this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
+      this.applyMotionPreference(this.reducedMotionToggle.checked);
+    });
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -254,6 +259,8 @@ export class Game {
 
   renderProgress() {
     const progress = this.progressStore.load();
+    this.reducedMotionToggle.checked = progress.preferences?.reducedMotion === true;
+    this.applyMotionPreference(this.reducedMotionToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -318,6 +325,10 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${isUnlocked ? "🏆" : "🔒"}</span><div><strong>${achievement.name}</strong><small>${achievement.description}</small><small class="achievement-progress">${progressText}</small></div>`;
       return item;
     }));
+  }
+
+  applyMotionPreference(reduced) {
+    this.document.body.classList.toggle("reduce-motion", reduced);
   }
 
   replayHistoryLevel(levelId) {

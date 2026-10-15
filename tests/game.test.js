@@ -727,6 +727,20 @@ test("run history can be cleared without deleting career progress", () => {
   assert.equal(cleared.bestScore, 12000);
 });
 
+test("reduced motion preference persists without changing career data", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.replace({ totalRuns: 3 });
+  const updated = store.setReducedMotion(true);
+  assert.equal(updated.preferences.reducedMotion, true);
+  assert.equal(updated.totalRuns, 3);
+  assert.equal(store.load().preferences.reducedMotion, true);
+});
+
 test("level missions evaluate time, collection, combo and score goals", () => {
   const missions = [
     { id: "fast", type: "time", target: 60 },

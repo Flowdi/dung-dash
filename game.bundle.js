@@ -1111,6 +1111,7 @@
   var STORAGE_KEY = "dung-dash-progress-v1";
   var emptyProgress = () => ({
     bestScore: 0,
+    totalScore: 0,
     bestTime: null,
     totalRuns: 0,
     totalFlies: 0,
@@ -1119,6 +1120,7 @@
     bestCombo: 0,
     flawlessRuns: 0,
     recentRuns: [],
+    preferences: { reducedMotion: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1144,7 +1146,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1165,12 +1167,14 @@
       }))
     };
     base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
+    base.totalScore = Math.max(0, Number(base.totalScore) || 0);
     base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
     base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
+    base.preferences = { reducedMotion: ((_d = source.preferences) == null ? void 0 : _d.reducedMotion) === true };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1216,8 +1220,19 @@
       }
       return next;
     }
+    clearRecentRuns() {
+      const progress = this.load();
+      return this.replace({ ...progress, recentRuns: [] });
+    }
+    setReducedMotion(enabled) {
+      const progress = this.load();
+      return this.replace({
+        ...progress,
+        preferences: { ...progress.preferences, reducedMotion: Boolean(enabled) }
+      });
+    }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1225,6 +1240,7 @@
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
+        totalScore: progress.totalScore + Math.max(0, Number(result.score) || 0),
         bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
         totalRuns: progress.totalRuns + 1,
         totalFlies: progress.totalFlies + result.fliesCollected,
@@ -1251,23 +1267,24 @@
         levelRecords: {
           ...(_f = progress.levelRecords) != null ? _f : {},
           [levelId]: {
-            bestScore: Math.max((_i = (_h = (_g = progress.levelRecords) == null ? void 0 : _g[levelId]) == null ? void 0 : _h.bestScore) != null ? _i : 0, result.score),
-            bestTime: ((_k = (_j = progress.levelRecords) == null ? void 0 : _j[levelId]) == null ? void 0 : _k.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            bestSplits: isNewBestTime ? ((_l = result.checkpointSplits) != null ? _l : []).map((split) => ({ ...split })) : (_m = previousLevelRecord.bestSplits) != null ? _m : [],
-            medal: this.bestMedal((_o = (_n = progress.levelRecords) == null ? void 0 : _n[levelId]) == null ? void 0 : _o.medal, result.medal),
-            bestCombo: Math.max((_p = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _p : 0, Number(result.bestCombo) || 0),
-            flawlessRuns: ((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _q : 0) + (result.falls === 0 ? 1 : 0),
+            attempts: ((_g = previousLevelRecord == null ? void 0 : previousLevelRecord.attempts) != null ? _g : 0) + 1,
+            bestScore: Math.max((_j = (_i = (_h = progress.levelRecords) == null ? void 0 : _h[levelId]) == null ? void 0 : _i.bestScore) != null ? _j : 0, result.score),
+            bestTime: ((_l = (_k = progress.levelRecords) == null ? void 0 : _k[levelId]) == null ? void 0 : _l.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_m = result.checkpointSplits) != null ? _m : []).map((split) => ({ ...split })) : (_n = previousLevelRecord.bestSplits) != null ? _n : [],
+            medal: this.bestMedal((_p = (_o = progress.levelRecords) == null ? void 0 : _o[levelId]) == null ? void 0 : _p.medal, result.medal),
+            bestCombo: Math.max((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _q : 0, Number(result.bestCombo) || 0),
+            flawlessRuns: ((_r = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _r : 0) + (result.falls === 0 ? 1 : 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_t = (_s = (_r = progress.levelRecords) == null ? void 0 : _r[levelId]) == null ? void 0 : _s.missions) != null ? _t : [],
+              ...(_u = (_t = (_s = progress.levelRecords) == null ? void 0 : _s[levelId]) == null ? void 0 : _t.missions) != null ? _u : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_u = progress.achievements) != null ? _u : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_v = progress.achievements) != null ? _v : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_v = this.storage) == null ? void 0 : _v.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_w = this.storage) == null ? void 0 : _w.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1374,7 +1391,7 @@
 
   // src/level-record.js
   var buildLevelRecordStats = (record, missionTotal) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     if (!record) return null;
     const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
     return [
@@ -1383,6 +1400,7 @@
       ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
       ["Beste Combo", `\xD7${(_d = record.bestCombo) != null ? _d : 0}`],
       ["Fehlerfrei", (_e = record.flawlessRuns) != null ? _e : 0],
+      ["Versuche", (_f = record.attempts) != null ? _f : 1],
       ["Sterne", `${completedMissions}/${missionTotal}`]
     ];
   };
@@ -1503,6 +1521,16 @@
       throw new Error("Die Sicherung geh\xF6rt nicht zu dieser Dung-Dash-Version.");
     }
     return backup.progress;
+  };
+
+  // src/career-stats.js
+  var calculateCareerAverages = (progress) => {
+    const runs = Math.max(0, Number(progress.totalRuns) || 0);
+    if (runs === 0) return { score: 0, falls: 0 };
+    return {
+      score: Math.round((Number(progress.totalScore) || 0) / runs),
+      falls: Math.round((Number(progress.totalFalls) || 0) / runs * 10) / 10
+    };
   };
 
   // src/physics.js
@@ -1650,10 +1678,12 @@
       this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
       this.medalSummary = documentObject.getElementById("medal-summary");
       this.recentRunsList = documentObject.getElementById("recent-runs-list");
+      this.clearRecentRunsButton = documentObject.getElementById("clear-recent-runs-btn");
       this.achievementList = documentObject.getElementById("achievement-list");
       this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
       this.exportProgressButton = documentObject.getElementById("export-progress-btn");
       this.importProgressButton = documentObject.getElementById("import-progress-btn");
+      this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1735,6 +1765,11 @@
       this.resetProgressButton.addEventListener("click", () => this.resetProgress());
       this.exportProgressButton.addEventListener("click", () => this.exportProgress());
       this.importProgressButton.addEventListener("click", () => this.importProgress());
+      this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
+      this.reducedMotionToggle.addEventListener("change", () => {
+        this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
+        this.applyMotionPreference(this.reducedMotionToggle.checked);
+      });
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -1826,8 +1861,11 @@
       }));
     }
     renderProgress() {
-      var _a, _b;
+      var _a, _b, _c;
       const progress = this.progressStore.load();
+      this.reducedMotionToggle.checked = ((_a = progress.preferences) == null ? void 0 : _a.reducedMotion) === true;
+      this.applyMotionPreference(this.reducedMotionToggle.checked);
+      const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
       this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}%`;
@@ -1840,6 +1878,8 @@
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
         ["Highscore", progress.bestScore],
+        ["\xD8 Score", averages.score],
+        ["\xD8 Treffer", averages.falls],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
         ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
       ];
@@ -1856,16 +1896,17 @@
         item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b2 = progress.medals[medal]) != null ? _b2 : 0}</strong>`;
         return item;
       }));
-      const recentRuns = (_a = progress.recentRuns) != null ? _a : [];
+      const recentRuns = (_b = progress.recentRuns) != null ? _b : [];
+      this.clearRecentRunsButton.hidden = recentRuns.length === 0;
       this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
       this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
-        var _a2, _b2, _c;
+        var _a2, _b2, _c2;
         const item = this.document.createElement("p");
         const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
         const title = this.document.createElement("strong");
         title.textContent = levelName;
         const score = this.document.createElement("span");
-        score.textContent = `${(_c = run.medal) != null ? _c : "\u2013"} \xB7 ${run.score} Punkte`;
+        score.textContent = `${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer`;
         const replay = this.document.createElement("button");
@@ -1879,7 +1920,7 @@
         item.textContent = "Noch keine L\xE4ufe gespeichert.";
         return item;
       })()]);
-      const unlocked = new Set((_b = progress.achievements) != null ? _b : []);
+      const unlocked = new Set((_c = progress.achievements) != null ? _c : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);
@@ -1890,6 +1931,9 @@
         return item;
       }));
     }
+    applyMotionPreference(reduced) {
+      this.document.body.classList.toggle("reduce-motion", reduced);
+    }
     replayHistoryLevel(levelId) {
       const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
       if (!replayLevelId) return;
@@ -1899,6 +1943,12 @@
       this.updateLevelDescription();
       this.renderMissions();
       this.start();
+    }
+    clearRecentRuns() {
+      if (!this.window.confirm("Nur die Liste der letzten L\xE4ufe leeren? Deine Rekorde bleiben erhalten.")) return;
+      this.progressStore.clearRecentRuns();
+      this.renderProgress();
+      this.progressResetStatus.textContent = "Laufhistorie wurde geleert; Rekorde und Fortschritt bleiben erhalten.";
     }
     resetProgress() {
       if (!this.window.confirm("Wirklich alle Rekorde, Sterne und Freischaltungen l\xF6schen?")) return;

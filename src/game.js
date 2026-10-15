@@ -32,6 +32,7 @@ import { buildLevelPreview } from "./level-preview.js";
 import { calculateRouteProgress } from "./route-progress.js";
 import { resolveReplayLevel } from "./run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.js";
+import { calculateCareerAverages } from "./career-stats.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -66,10 +67,12 @@ export class Game {
     this.campaignProgressFill = documentObject.getElementById("campaign-progress-fill");
     this.medalSummary = documentObject.getElementById("medal-summary");
     this.recentRunsList = documentObject.getElementById("recent-runs-list");
+    this.clearRecentRunsButton = documentObject.getElementById("clear-recent-runs-btn");
     this.achievementList = documentObject.getElementById("achievement-list");
     this.resetProgressButton = documentObject.getElementById("reset-progress-btn");
     this.exportProgressButton = documentObject.getElementById("export-progress-btn");
     this.importProgressButton = documentObject.getElementById("import-progress-btn");
+    this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -154,6 +157,11 @@ export class Game {
     this.resetProgressButton.addEventListener("click", () => this.resetProgress());
     this.exportProgressButton.addEventListener("click", () => this.exportProgress());
     this.importProgressButton.addEventListener("click", () => this.importProgress());
+    this.clearRecentRunsButton.addEventListener("click", () => this.clearRecentRuns());
+    this.reducedMotionToggle.addEventListener("change", () => {
+      this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
+      this.applyMotionPreference(this.reducedMotionToggle.checked);
+    });
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -251,6 +259,9 @@ export class Game {
 
   renderProgress() {
     const progress = this.progressStore.load();
+    this.reducedMotionToggle.checked = progress.preferences?.reducedMotion === true;
+    this.applyMotionPreference(this.reducedMotionToggle.checked);
+    const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
     this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
@@ -263,6 +274,8 @@ export class Game {
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
       ["Highscore", progress.bestScore],
+      ["Ø Score", averages.score],
+      ["Ø Treffer", averages.falls],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
     ];
@@ -279,6 +292,7 @@ export class Game {
       return item;
     }));
     const recentRuns = progress.recentRuns ?? [];
+    this.clearRecentRunsButton.hidden = recentRuns.length === 0;
     this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
     this.recentRunsList.replaceChildren(...(recentRuns.length ? recentRuns.map((run) => {
       const item = this.document.createElement("p");
@@ -313,6 +327,10 @@ export class Game {
     }));
   }
 
+  applyMotionPreference(reduced) {
+    this.document.body.classList.toggle("reduce-motion", reduced);
+  }
+
   replayHistoryLevel(levelId) {
     const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
     if (!replayLevelId) return;
@@ -322,6 +340,13 @@ export class Game {
     this.updateLevelDescription();
     this.renderMissions();
     this.start();
+  }
+
+  clearRecentRuns() {
+    if (!this.window.confirm("Nur die Liste der letzten Läufe leeren? Deine Rekorde bleiben erhalten.")) return;
+    this.progressStore.clearRecentRuns();
+    this.renderProgress();
+    this.progressResetStatus.textContent = "Laufhistorie wurde geleert; Rekorde und Fortschritt bleiben erhalten.";
   }
 
   resetProgress() {

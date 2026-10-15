@@ -352,8 +352,25 @@ body {
 }
 
 .recent-runs h3 {
-  margin-bottom: 6px;
   font-size: 0.82rem;
+}
+
+.recent-runs-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.recent-runs-heading button {
+  border: 0;
+  background: transparent;
+  color: #bbb;
+  font: inherit;
+  font-size: 0.68rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 #recent-runs-list {
@@ -445,6 +462,45 @@ body {
   justify-content: center;
   gap: 7px;
   margin-top: 12px;
+}
+
+.motion-preference {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: fit-content;
+  margin: 12px auto 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  text-align: left;
+  cursor: pointer;
+}
+
+.motion-preference input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.motion-preference strong,
+.motion-preference small {
+  display: block;
+}
+
+.motion-preference small {
+  margin-top: 2px;
+  color: #bbb;
+  font-size: 0.68rem;
+}
+
+body.reduce-motion .checkpoint-screen.toast {
+  animation: none;
+}
+
+body.reduce-motion .campaign-progress i,
+body.reduce-motion .route-progress i {
+  transition: none;
 }
 
 .progress-backup-actions .btn {
@@ -801,6 +857,11 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .checkpoint-screen.toast {
     animation: none;
+  }
+
+  .campaign-progress i,
+  .route-progress i {
+    transition: none;
   }
 }
 

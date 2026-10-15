@@ -43,10 +43,17 @@
         <div class="career-stats" id="career-stats"></div>
         <div class="medal-summary" id="medal-summary" aria-label="Gesammelte Medaillen"></div>
         <section class="recent-runs" aria-labelledby="recent-runs-title">
-          <h3 id="recent-runs-title">Letzte Läufe</h3>
+          <div class="recent-runs-heading">
+            <h3 id="recent-runs-title">Letzte Läufe</h3>
+            <button id="clear-recent-runs-btn" type="button">Historie leeren</button>
+          </div>
           <div id="recent-runs-list"></div>
         </section>
         <div class="achievement-list" id="achievement-list"></div>
+        <label class="motion-preference" for="reduced-motion-toggle">
+          <input id="reduced-motion-toggle" type="checkbox" />
+          <span><strong>Animationen reduzieren</strong><small>Deaktiviert Einblend- und Fortschrittsanimationen.</small></span>
+        </label>
         <div class="progress-backup-actions">
           <button class="btn secondary-btn" id="export-progress-btn" type="button">Spielstand kopieren</button>
           <button class="btn secondary-btn" id="import-progress-btn" type="button">Spielstand einfügen</button>

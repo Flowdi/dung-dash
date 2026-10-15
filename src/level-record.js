@@ -9,6 +9,7 @@ export const buildLevelRecordStats = (record, missionTotal) => {
     ["Bestzeit", record.bestTime == null ? "–" : formatTime(record.bestTime)],
     ["Beste Combo", `×${record.bestCombo ?? 0}`],
     ["Fehlerfrei", record.flawlessRuns ?? 0],
+    ["Versuche", record.attempts ?? 1],
     ["Sterne", `${completedMissions}/${missionTotal}`],
   ];
 };

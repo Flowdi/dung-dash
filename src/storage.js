@@ -5,6 +5,7 @@ const STORAGE_KEY = "dung-dash-progress-v1";
 
 const emptyProgress = () => ({
   bestScore: 0,
+  totalScore: 0,
   bestTime: null,
   totalRuns: 0,
   totalFlies: 0,
@@ -53,6 +54,7 @@ export const normalizeProgress = (saved) => {
     ])),
   };
   base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
+  base.totalScore = Math.max(0, Number(base.totalScore) || 0);
   base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
   base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
   base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
@@ -121,6 +123,7 @@ export class ProgressStore {
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
+      totalScore: progress.totalScore + Math.max(0, Number(result.score) || 0),
       bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
       totalRuns: progress.totalRuns + 1,
       totalFlies: progress.totalFlies + result.fliesCollected,
@@ -147,6 +150,7 @@ export class ProgressStore {
       levelRecords: {
         ...(progress.levelRecords ?? {}),
         [levelId]: {
+          attempts: (previousLevelRecord?.attempts ?? 0) + 1,
           bestScore: Math.max(progress.levelRecords?.[levelId]?.bestScore ?? 0, result.score),
           bestTime: progress.levelRecords?.[levelId]?.bestTime == null
             ? result.elapsedSeconds

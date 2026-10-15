@@ -42,6 +42,15 @@ import { buildLevelPreview } from "../src/level-preview.js";
 import { calculateRouteProgress } from "../src/route-progress.js";
 import { resolveReplayLevel } from "../src/run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
+import { calculateCareerAverages } from "../src/career-stats.js";
+
+test("career averages remain useful before and after completed runs", () => {
+  assert.deepEqual(calculateCareerAverages({ totalRuns: 0 }), { score: 0, falls: 0 });
+  assert.deepEqual(calculateCareerAverages({ totalRuns: 4, totalScore: 42000, totalFalls: 5 }), {
+    score: 10500,
+    falls: 1.3,
+  });
+});
 
 test("progress backups round-trip and reject unrelated JSON", () => {
   const progress = { totalRuns: 7, unlockedLevels: ["bathroom-run"] };
@@ -147,6 +156,7 @@ test("level record cards format completed progress at a glance", () => {
     bestTime: 72.3,
     bestCombo: 4,
     flawlessRuns: 2,
+    attempts: 7,
     missions: ["fast", "fast", "flies"],
   }, 3), [
     ["Medaille", "Silber"],
@@ -154,6 +164,7 @@ test("level record cards format completed progress at a glance", () => {
     ["Bestzeit", "01:12.3"],
     ["Beste Combo", "×4"],
     ["Fehlerfrei", 2],
+    ["Versuche", 7],
     ["Sterne", "2/3"],
   ]);
 });
@@ -415,6 +426,7 @@ test("progress store keeps personal records", () => {
   store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, bestCombo: 2, medal: "Bronze" });
   const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, bestCombo: 4, medal: "Gold" });
   assert.equal(progress.bestScore, 1500);
+  assert.equal(progress.totalScore, 2500);
   assert.equal(progress.bestTime, 80);
   assert.equal(progress.totalRuns, 2);
   assert.equal(progress.totalFlies, 30);
@@ -422,6 +434,7 @@ test("progress store keeps personal records", () => {
   assert.equal(progress.totalFalls, 3);
   assert.equal(progress.bestCombo, 4);
   assert.equal(progress.levelRecords["bathroom-run"].bestCombo, 4);
+  assert.equal(progress.levelRecords["bathroom-run"].attempts, 2);
   assert.equal(progress.flawlessRuns, 0);
   const flawless = store.record({
     score: 900, elapsedSeconds: 70, fliesCollected: 5, falls: 0, bestCombo: 2, medal: "Silber",

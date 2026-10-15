@@ -1111,6 +1111,7 @@
   var STORAGE_KEY = "dung-dash-progress-v1";
   var emptyProgress = () => ({
     bestScore: 0,
+    totalScore: 0,
     bestTime: null,
     totalRuns: 0,
     totalFlies: 0,
@@ -1165,6 +1166,7 @@
       }))
     };
     base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
+    base.totalScore = Math.max(0, Number(base.totalScore) || 0);
     base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
     base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
@@ -1217,7 +1219,7 @@
       return next;
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1225,6 +1227,7 @@
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
+        totalScore: progress.totalScore + Math.max(0, Number(result.score) || 0),
         bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
         totalRuns: progress.totalRuns + 1,
         totalFlies: progress.totalFlies + result.fliesCollected,
@@ -1251,23 +1254,24 @@
         levelRecords: {
           ...(_f = progress.levelRecords) != null ? _f : {},
           [levelId]: {
-            bestScore: Math.max((_i = (_h = (_g = progress.levelRecords) == null ? void 0 : _g[levelId]) == null ? void 0 : _h.bestScore) != null ? _i : 0, result.score),
-            bestTime: ((_k = (_j = progress.levelRecords) == null ? void 0 : _j[levelId]) == null ? void 0 : _k.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            bestSplits: isNewBestTime ? ((_l = result.checkpointSplits) != null ? _l : []).map((split) => ({ ...split })) : (_m = previousLevelRecord.bestSplits) != null ? _m : [],
-            medal: this.bestMedal((_o = (_n = progress.levelRecords) == null ? void 0 : _n[levelId]) == null ? void 0 : _o.medal, result.medal),
-            bestCombo: Math.max((_p = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _p : 0, Number(result.bestCombo) || 0),
-            flawlessRuns: ((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _q : 0) + (result.falls === 0 ? 1 : 0),
+            attempts: ((_g = previousLevelRecord == null ? void 0 : previousLevelRecord.attempts) != null ? _g : 0) + 1,
+            bestScore: Math.max((_j = (_i = (_h = progress.levelRecords) == null ? void 0 : _h[levelId]) == null ? void 0 : _i.bestScore) != null ? _j : 0, result.score),
+            bestTime: ((_l = (_k = progress.levelRecords) == null ? void 0 : _k[levelId]) == null ? void 0 : _l.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_m = result.checkpointSplits) != null ? _m : []).map((split) => ({ ...split })) : (_n = previousLevelRecord.bestSplits) != null ? _n : [],
+            medal: this.bestMedal((_p = (_o = progress.levelRecords) == null ? void 0 : _o[levelId]) == null ? void 0 : _p.medal, result.medal),
+            bestCombo: Math.max((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _q : 0, Number(result.bestCombo) || 0),
+            flawlessRuns: ((_r = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _r : 0) + (result.falls === 0 ? 1 : 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_t = (_s = (_r = progress.levelRecords) == null ? void 0 : _r[levelId]) == null ? void 0 : _s.missions) != null ? _t : [],
+              ...(_u = (_t = (_s = progress.levelRecords) == null ? void 0 : _s[levelId]) == null ? void 0 : _t.missions) != null ? _u : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_u = progress.achievements) != null ? _u : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_v = progress.achievements) != null ? _v : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_v = this.storage) == null ? void 0 : _v.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_w = this.storage) == null ? void 0 : _w.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1374,7 +1378,7 @@
 
   // src/level-record.js
   var buildLevelRecordStats = (record, missionTotal) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     if (!record) return null;
     const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
     return [
@@ -1383,6 +1387,7 @@
       ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
       ["Beste Combo", `\xD7${(_d = record.bestCombo) != null ? _d : 0}`],
       ["Fehlerfrei", (_e = record.flawlessRuns) != null ? _e : 0],
+      ["Versuche", (_f = record.attempts) != null ? _f : 1],
       ["Sterne", `${completedMissions}/${missionTotal}`]
     ];
   };
@@ -1503,6 +1508,16 @@
       throw new Error("Die Sicherung geh\xF6rt nicht zu dieser Dung-Dash-Version.");
     }
     return backup.progress;
+  };
+
+  // src/career-stats.js
+  var calculateCareerAverages = (progress) => {
+    const runs = Math.max(0, Number(progress.totalRuns) || 0);
+    if (runs === 0) return { score: 0, falls: 0 };
+    return {
+      score: Math.round((Number(progress.totalScore) || 0) / runs),
+      falls: Math.round((Number(progress.totalFalls) || 0) / runs * 10) / 10
+    };
   };
 
   // src/physics.js
@@ -1828,6 +1843,7 @@
     renderProgress() {
       var _a, _b;
       const progress = this.progressStore.load();
+      const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
       this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}%`;
@@ -1840,6 +1856,8 @@
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
         ["Highscore", progress.bestScore],
+        ["\xD8 Score", averages.score],
+        ["\xD8 Treffer", averages.falls],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
         ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
       ];

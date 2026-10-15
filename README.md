@@ -9,6 +9,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Bronze-, Silber- und Goldmedaillen
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
+- Levelversuche sowie durchschnittlicher Score und durchschnittliche Treffer pro Lauf
 - globale und levelbezogene persönliche Combo-Rekorde
 - Zähler für fehlerfreie Läufe in Karriere und Levelrekorden
 - lokale Historie der fünf letzten Läufe mit Score, Zeit und Trefferzahl

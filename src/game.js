@@ -32,6 +32,7 @@ import { buildLevelPreview } from "./level-preview.js";
 import { calculateRouteProgress } from "./route-progress.js";
 import { resolveReplayLevel } from "./run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.js";
+import { calculateCareerAverages } from "./career-stats.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -251,6 +252,7 @@ export class Game {
 
   renderProgress() {
     const progress = this.progressStore.load();
+    const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
     this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
@@ -263,6 +265,8 @@ export class Game {
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
       ["Highscore", progress.bestScore],
+      ["Ø Score", averages.score],
+      ["Ø Treffer", averages.falls],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
     ];

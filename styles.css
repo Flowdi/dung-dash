@@ -680,9 +680,32 @@ button:focus-visible {
 
 .result-breakdown[hidden],
 .result-comparison[hidden],
+.result-performance[hidden],
 .result-splits[hidden],
 .result-missions[hidden] {
   display: none;
+}
+
+.result-performance {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.result-performance p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+}
+
+.result-performance .flawless {
+  color: #8ff0a4;
+  background: rgba(80, 200, 110, 0.12);
 }
 
 .result-comparison {

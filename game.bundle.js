@@ -1362,12 +1362,13 @@
 
   // src/run-summary.js
   var createRunSummary = (levelName, result, missionResults = []) => {
+    var _a;
     const completedMissions = missionResults.filter(({ completed }) => completed).length;
     return [
       `Dung Dash \u2013 ${levelName}`,
       `${result.medal}-Medaille \xB7 ${result.score} Punkte`,
       `Zeit ${formatTime(result.elapsedSeconds)} \xB7 Fliegen ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer ${result.falls}`,
-      `Missionen ${completedMissions}/${missionResults.length}`
+      `Beste Combo \xD7${(_a = result.bestCombo) != null ? _a : 0} \xB7 Missionen ${completedMissions}/${missionResults.length}`
     ].join("\n");
   };
   var copyText = async (text, navigatorObject, documentObject) => {
@@ -1554,6 +1555,13 @@
     ];
   };
 
+  // src/run-analysis.js
+  var analyzeRun = (result) => ({
+    collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
+    bestCombo: Math.max(0, Number(result.bestCombo) || 0),
+    flawless: result.falls === 0
+  });
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1712,6 +1720,7 @@
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
       this.resultComparison = documentObject.getElementById("result-comparison");
+      this.resultPerformance = documentObject.getElementById("result-performance");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
@@ -2047,6 +2056,7 @@
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
       this.resultComparison.hidden = true;
+      this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;
@@ -2229,6 +2239,13 @@
       const comparison = compareRunWithRecord(result, previousRecord);
       this.resultComparison.hidden = !comparison;
       this.resultComparison.innerHTML = comparison ? `<strong>Vergleich zum bisherigen Rekord</strong><p class="${comparison.score.improved ? "improved" : "behind"}">Score: ${comparison.score.text}</p>` + (comparison.time ? `<p class="${comparison.time.improved ? "improved" : "behind"}">Zeit: ${comparison.time.text}</p>` : "") : "";
+      const analysis = analyzeRun(result);
+      this.resultPerformance.hidden = false;
+      this.resultPerformance.innerHTML = [
+        ["Sammelquote", `${analysis.collectionPercent}%`],
+        ["Beste Combo", `\xD7${analysis.bestCombo}`],
+        ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
+      ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
       this.resultSplits.hidden = result.checkpointSplits.length === 0;
       this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
         (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
@@ -2264,6 +2281,7 @@
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
       this.resultComparison.hidden = true;
+      this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;

@@ -38,6 +38,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
 - Wasserstrahlen, rotierende Toilettenbürsten und Rücksetzung zum letzten Checkpoint
 - ausführliche Ergebnisübersicht mit Score-Aufschlüsselung, Missionsstatus und direktem nächsten Level
+- Ergebnisanalyse mit Sammelquote, bester Combo und Kennzeichnung fehlerfreier Läufe
 - kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 - direkter Ergebnisvergleich mit bisherigem Level-Highscore und Bestzeit
 - laufende Streckenanzeige für horizontale und vertikale Level

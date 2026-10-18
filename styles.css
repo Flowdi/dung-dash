@@ -120,6 +120,33 @@ body {
   font-size: 0.78rem;
 }
 
+.fly-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: min(100%, 620px);
+  margin: 6px auto 8px;
+}
+
+.fly-preview p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.67rem;
+}
+
+.fly-preview small {
+  color: #bbb;
+}
+
+.fly-preview .normal > span { color: #d8d8d8; }
+.fly-preview .gold > span { color: #ffd700; }
+.fly-preview .time > span { color: #6ee7ff; }
+
 .level-record-card {
   display: grid;
   gap: 7px;
@@ -575,6 +602,13 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.checkpoint-progress {
+  margin-top: 5px;
+  color: #d8d8d8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .route-progress {
   position: relative;
   min-height: 20px;
@@ -646,9 +680,32 @@ button:focus-visible {
 
 .result-breakdown[hidden],
 .result-comparison[hidden],
+.result-performance[hidden],
 .result-splits[hidden],
 .result-missions[hidden] {
   display: none;
+}
+
+.result-performance {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.result-performance p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+}
+
+.result-performance .flawless {
+  color: #8ff0a4;
+  background: rgba(80, 200, 110, 0.12);
 }
 
 .result-comparison {

@@ -22,6 +22,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
 - kontextbezogene Empfehlung für das nächste sinnvolle Ziel jedes Levels
 - Levelvorschau mit Routentyp, Größe, Fliegen, Checkpoints und Gefahren
+- Aufschlüsselung und Erklärung normaler, goldener und zeitgebender Fliegen
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung
@@ -37,9 +38,11 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - taktische Zeitplattformen mit Warnphase sowie Förderbänder in beide Richtungen
 - Wasserstrahlen, rotierende Toilettenbürsten und Rücksetzung zum letzten Checkpoint
 - ausführliche Ergebnisübersicht mit Score-Aufschlüsselung, Missionsstatus und direktem nächsten Level
+- Ergebnisanalyse mit Sammelquote, bester Combo und Kennzeichnung fehlerfreier Läufe
 - kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 - direkter Ergebnisvergleich mit bisherigem Level-Highscore und Bestzeit
 - laufende Streckenanzeige für horizontale und vertikale Level
+- sichtbarer Toiletten- und Checkpoint-Fortschritt während des Laufs
 
 ## Spielen
 

@@ -1362,12 +1362,13 @@
 
   // src/run-summary.js
   var createRunSummary = (levelName, result, missionResults = []) => {
+    var _a;
     const completedMissions = missionResults.filter(({ completed }) => completed).length;
     return [
       `Dung Dash \u2013 ${levelName}`,
       `${result.medal}-Medaille \xB7 ${result.score} Punkte`,
       `Zeit ${formatTime(result.elapsedSeconds)} \xB7 Fliegen ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer ${result.falls}`,
-      `Missionen ${completedMissions}/${missionResults.length}`
+      `Beste Combo \xD7${(_a = result.bestCombo) != null ? _a : 0} \xB7 Missionen ${completedMissions}/${missionResults.length}`
     ].join("\n");
   };
   var copyText = async (text, navigatorObject, documentObject) => {
@@ -1533,6 +1534,34 @@
     };
   };
 
+  // src/checkpoint-progress.js
+  var calculateCheckpointProgress = (checkpoints = []) => ({
+    reached: checkpoints.filter(({ claimed }) => claimed).length,
+    total: checkpoints.length
+  });
+
+  // src/fly-preview.js
+  var buildFlyBreakdown = (flies = []) => {
+    const counts = { normal: 0, gold: 0, time: 0 };
+    flies.forEach((fly) => {
+      var _a;
+      const type = (_a = fly[2]) != null ? _a : "normal";
+      if (type in counts) counts[type] += 1;
+    });
+    return [
+      { type: "normal", label: "Normal", effect: "500 Punkte", count: counts.normal },
+      { type: "gold", label: "Gold", effect: "dreifacher Wert", count: counts.gold },
+      { type: "time", label: "Zeit", effect: "\u22125 Sekunden", count: counts.time }
+    ];
+  };
+
+  // src/run-analysis.js
+  var analyzeRun = (result) => ({
+    collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
+    bestCombo: Math.max(0, Number(result.bestCombo) || 0),
+    flawless: result.falls === 0
+  });
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1669,6 +1698,7 @@
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
       this.levelPreview = documentObject.getElementById("level-preview");
+      this.flyPreview = documentObject.getElementById("fly-preview");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1690,6 +1720,7 @@
       this.levelMenuButton = documentObject.getElementById("level-menu-btn");
       this.resultBreakdown = documentObject.getElementById("result-breakdown");
       this.resultComparison = documentObject.getElementById("result-comparison");
+      this.resultPerformance = documentObject.getElementById("result-performance");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
@@ -1703,6 +1734,7 @@
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
+      this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
       this.routeProgress = documentObject.getElementById("route-progress");
       this.routeProgressLabel = documentObject.getElementById("route-progress-label");
       this.routeProgressFill = documentObject.getElementById("route-progress-fill");
@@ -1821,6 +1853,12 @@
       this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
         const item = this.document.createElement("p");
         item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
+      this.flyPreview.replaceChildren(...buildFlyBreakdown(definition.flies).map(({ type, label, effect, count }) => {
+        const item = this.document.createElement("p");
+        item.className = type;
+        item.innerHTML = `<span aria-hidden="true">\u25CF</span><strong>${count}\xD7 ${label}</strong><small>${effect}</small>`;
         return item;
       }));
       const stats = buildLevelRecordStats(record, definition.missions.length);
@@ -2018,6 +2056,7 @@
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
       this.resultComparison.hidden = true;
+      this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;
@@ -2108,6 +2147,8 @@
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       if (this.level) {
+        const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
+        this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;
         const routePercent = calculateRouteProgress(this.level);
         this.routeProgress.setAttribute("aria-valuenow", String(routePercent));
         this.routeProgressLabel.textContent = `Strecke: ${routePercent}%`;
@@ -2198,6 +2239,13 @@
       const comparison = compareRunWithRecord(result, previousRecord);
       this.resultComparison.hidden = !comparison;
       this.resultComparison.innerHTML = comparison ? `<strong>Vergleich zum bisherigen Rekord</strong><p class="${comparison.score.improved ? "improved" : "behind"}">Score: ${comparison.score.text}</p>` + (comparison.time ? `<p class="${comparison.time.improved ? "improved" : "behind"}">Zeit: ${comparison.time.text}</p>` : "") : "";
+      const analysis = analyzeRun(result);
+      this.resultPerformance.hidden = false;
+      this.resultPerformance.innerHTML = [
+        ["Sammelquote", `${analysis.collectionPercent}%`],
+        ["Beste Combo", `\xD7${analysis.bestCombo}`],
+        ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
+      ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
       this.resultSplits.hidden = result.checkpointSplits.length === 0;
       this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
         (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
@@ -2233,6 +2281,7 @@
       this.checkpointScreen.classList.remove("results");
       this.resultBreakdown.hidden = true;
       this.resultComparison.hidden = true;
+      this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
       this.copyResultButton.hidden = true;

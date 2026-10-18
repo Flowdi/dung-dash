@@ -43,6 +43,35 @@ import { calculateRouteProgress } from "../src/route-progress.js";
 import { resolveReplayLevel } from "../src/run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
 import { calculateCareerAverages } from "../src/career-stats.js";
+import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
+import { buildFlyBreakdown } from "../src/fly-preview.js";
+import { analyzeRun } from "../src/run-analysis.js";
+
+test("run analysis summarizes collection, combo and clean play", () => {
+  assert.deepEqual(analyzeRun({
+    fliesCollected: 9, totalFlies: 12, bestCombo: 4, falls: 0,
+  }), { collectionPercent: 75, bestCombo: 4, flawless: true });
+  assert.deepEqual(analyzeRun({
+    fliesCollected: 0, totalFlies: 0, bestCombo: 0, falls: 2,
+  }), { collectionPercent: 100, bestCombo: 0, flawless: false });
+});
+
+test("fly previews count every collectible type and explain its effect", () => {
+  assert.deepEqual(buildFlyBreakdown([
+    [0, 0], [1, 0, "normal"], [2, 0, "gold"], [3, 0, "time"], [4, 0, "gold"],
+  ]), [
+    { type: "normal", label: "Normal", effect: "500 Punkte", count: 2 },
+    { type: "gold", label: "Gold", effect: "dreifacher Wert", count: 2 },
+    { type: "time", label: "Zeit", effect: "−5 Sekunden", count: 1 },
+  ]);
+});
+
+test("checkpoint progress counts reached toilets", () => {
+  assert.deepEqual(calculateCheckpointProgress([
+    { claimed: true }, { claimed: false }, { claimed: true },
+  ]), { reached: 2, total: 3 });
+  assert.deepEqual(calculateCheckpointProgress(), { reached: 0, total: 0 });
+});
 
 test("career averages remain useful before and after completed runs", () => {
   assert.deepEqual(calculateCareerAverages({ totalRuns: 0 }), { score: 0, falls: 0 });
@@ -177,11 +206,12 @@ test("run summaries contain the result details players want to share", () => {
     fliesCollected: 12,
     totalFlies: 12,
     falls: 1,
+    bestCombo: 4,
   }, [{ completed: true }, { completed: false }, { completed: true }]);
   assert.match(summary, /Dung Dash – Royal Flush/);
   assert.match(summary, /Gold-Medaille · 12345 Punkte/);
   assert.match(summary, /Zeit 01:05\.4 · Fliegen 12\/12 · Treffer 1/);
-  assert.match(summary, /Missionen 2\/3/);
+  assert.match(summary, /Beste Combo ×4 · Missionen 2\/3/);
 });
 
 test("run summaries use the modern clipboard API when available", async () => {

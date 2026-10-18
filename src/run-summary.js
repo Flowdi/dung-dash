@@ -6,7 +6,7 @@ export const createRunSummary = (levelName, result, missionResults = []) => {
     `Dung Dash – ${levelName}`,
     `${result.medal}-Medaille · ${result.score} Punkte`,
     `Zeit ${formatTime(result.elapsedSeconds)} · Fliegen ${result.fliesCollected}/${result.totalFlies} · Treffer ${result.falls}`,
-    `Missionen ${completedMissions}/${missionResults.length}`,
+    `Beste Combo ×${result.bestCombo ?? 0} · Missionen ${completedMissions}/${missionResults.length}`,
   ].join("\n");
 };
 

@@ -33,6 +33,9 @@ import { calculateRouteProgress } from "./route-progress.js";
 import { resolveReplayLevel } from "./run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.js";
 import { calculateCareerAverages } from "./career-stats.js";
+import { calculateCheckpointProgress } from "./checkpoint-progress.js";
+import { buildFlyBreakdown } from "./fly-preview.js";
+import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -58,6 +61,7 @@ export class Game {
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
     this.levelPreview = documentObject.getElementById("level-preview");
+    this.flyPreview = documentObject.getElementById("fly-preview");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -79,6 +83,7 @@ export class Game {
     this.levelMenuButton = documentObject.getElementById("level-menu-btn");
     this.resultBreakdown = documentObject.getElementById("result-breakdown");
     this.resultComparison = documentObject.getElementById("result-comparison");
+    this.resultPerformance = documentObject.getElementById("result-performance");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
     this.copyResultButton = documentObject.getElementById("copy-result-btn");
@@ -92,6 +97,7 @@ export class Game {
     this.runFallsElement = documentObject.getElementById("run-falls");
     this.comboElement = documentObject.getElementById("combo");
     this.currentMissionsElement = documentObject.getElementById("current-missions");
+    this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
     this.routeProgress = documentObject.getElementById("route-progress");
     this.routeProgressLabel = documentObject.getElementById("route-progress-label");
     this.routeProgressFill = documentObject.getElementById("route-progress-fill");
@@ -216,6 +222,12 @@ export class Game {
     this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
       const item = this.document.createElement("p");
       item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      return item;
+    }));
+    this.flyPreview.replaceChildren(...buildFlyBreakdown(definition.flies).map(({ type, label, effect, count }) => {
+      const item = this.document.createElement("p");
+      item.className = type;
+      item.innerHTML = `<span aria-hidden="true">●</span><strong>${count}× ${label}</strong><small>${effect}</small>`;
       return item;
     }));
     const stats = buildLevelRecordStats(record, definition.missions.length);
@@ -423,6 +435,7 @@ export class Game {
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
     this.resultComparison.hidden = true;
+    this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.copyResultButton.hidden = true;
@@ -521,6 +534,8 @@ export class Game {
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
     if (this.level) {
+      const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
+      this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;
       const routePercent = calculateRouteProgress(this.level);
       this.routeProgress.setAttribute("aria-valuenow", String(routePercent));
       this.routeProgressLabel.textContent = `Strecke: ${routePercent}%`;
@@ -624,6 +639,13 @@ export class Game {
       ? `<strong>Vergleich zum bisherigen Rekord</strong><p class="${comparison.score.improved ? "improved" : "behind"}">Score: ${comparison.score.text}</p>` +
         (comparison.time ? `<p class="${comparison.time.improved ? "improved" : "behind"}">Zeit: ${comparison.time.text}</p>` : "")
       : "";
+    const analysis = analyzeRun(result);
+    this.resultPerformance.hidden = false;
+    this.resultPerformance.innerHTML = [
+      ["Sammelquote", `${analysis.collectionPercent}%`],
+      ["Beste Combo", `×${analysis.bestCombo}`],
+      ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
+    ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
     this.resultSplits.hidden = result.checkpointSplits.length === 0;
     this.resultSplits.innerHTML = result.checkpointSplits.length
       ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map((split) =>
@@ -664,6 +686,7 @@ export class Game {
     this.checkpointScreen.classList.remove("results");
     this.resultBreakdown.hidden = true;
     this.resultComparison.hidden = true;
+    this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
     this.copyResultButton.hidden = true;

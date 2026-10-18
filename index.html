@@ -28,6 +28,7 @@
       <button class="random-level-btn" id="random-level-btn" type="button">Zufälliges freigeschaltetes Level</button>
       <p class="level-description" id="level-description"></p>
       <div class="level-preview" id="level-preview" aria-label="Levelvorschau"></div>
+      <div class="fly-preview" id="fly-preview" aria-label="Fliegenarten in diesem Level"></div>
       <section class="level-record-card" id="level-record-card" aria-live="polite"></section>
       <section class="mission-panel" aria-labelledby="mission-title">
         <h2 id="mission-title">Level-Missionen <span id="mission-stars"></span></h2>
@@ -73,6 +74,7 @@
       <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
       <p class="combo" id="combo" aria-live="polite"></p>
       <p class="current-missions" id="current-missions"></p>
+      <p class="checkpoint-progress" id="checkpoint-progress">Toiletten: 0/0</p>
       <div class="route-progress" id="route-progress" role="progressbar" aria-label="Levelstrecke" aria-valuemin="0" aria-valuemax="100">
         <span id="route-progress-label">Strecke: 0%</span><i id="route-progress-fill"></i>
       </div>
@@ -86,6 +88,7 @@
       <p id="checkpoint-message">Dein Kothaufen hat die Toilette erreicht!</p>
         <div class="result-breakdown" id="result-breakdown" hidden></div>
         <div class="result-comparison" id="result-comparison" hidden></div>
+        <div class="result-performance" id="result-performance" hidden></div>
         <div class="result-splits" id="result-splits" hidden></div>
         <div class="result-missions" id="result-missions" hidden></div>
         <button class="btn secondary-btn" id="copy-result-btn" type="button" hidden>Ergebnis kopieren</button>

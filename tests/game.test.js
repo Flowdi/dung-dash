@@ -44,6 +44,17 @@ import { resolveReplayLevel } from "../src/run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
 import { calculateCareerAverages } from "../src/career-stats.js";
 import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
+import { buildFlyBreakdown } from "../src/fly-preview.js";
+
+test("fly previews count every collectible type and explain its effect", () => {
+  assert.deepEqual(buildFlyBreakdown([
+    [0, 0], [1, 0, "normal"], [2, 0, "gold"], [3, 0, "time"], [4, 0, "gold"],
+  ]), [
+    { type: "normal", label: "Normal", effect: "500 Punkte", count: 2 },
+    { type: "gold", label: "Gold", effect: "dreifacher Wert", count: 2 },
+    { type: "time", label: "Zeit", effect: "−5 Sekunden", count: 1 },
+  ]);
+});
 
 test("checkpoint progress counts reached toilets", () => {
   assert.deepEqual(calculateCheckpointProgress([

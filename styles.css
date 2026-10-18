@@ -120,6 +120,33 @@ body {
   font-size: 0.78rem;
 }
 
+.fly-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: min(100%, 620px);
+  margin: 6px auto 8px;
+}
+
+.fly-preview p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.67rem;
+}
+
+.fly-preview small {
+  color: #bbb;
+}
+
+.fly-preview .normal > span { color: #d8d8d8; }
+.fly-preview .gold > span { color: #ffd700; }
+.fly-preview .time > span { color: #6ee7ff; }
+
 .level-record-card {
   display: grid;
   gap: 7px;

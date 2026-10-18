@@ -1539,6 +1539,21 @@
     total: checkpoints.length
   });
 
+  // src/fly-preview.js
+  var buildFlyBreakdown = (flies = []) => {
+    const counts = { normal: 0, gold: 0, time: 0 };
+    flies.forEach((fly) => {
+      var _a;
+      const type = (_a = fly[2]) != null ? _a : "normal";
+      if (type in counts) counts[type] += 1;
+    });
+    return [
+      { type: "normal", label: "Normal", effect: "500 Punkte", count: counts.normal },
+      { type: "gold", label: "Gold", effect: "dreifacher Wert", count: counts.gold },
+      { type: "time", label: "Zeit", effect: "\u22125 Sekunden", count: counts.time }
+    ];
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1675,6 +1690,7 @@
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
       this.levelPreview = documentObject.getElementById("level-preview");
+      this.flyPreview = documentObject.getElementById("fly-preview");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1828,6 +1844,12 @@
       this.levelPreview.replaceChildren(...buildLevelPreview(definition).map(([label, value]) => {
         const item = this.document.createElement("p");
         item.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return item;
+      }));
+      this.flyPreview.replaceChildren(...buildFlyBreakdown(definition.flies).map(({ type, label, effect, count }) => {
+        const item = this.document.createElement("p");
+        item.className = type;
+        item.innerHTML = `<span aria-hidden="true">\u25CF</span><strong>${count}\xD7 ${label}</strong><small>${effect}</small>`;
         return item;
       }));
       const stats = buildLevelRecordStats(record, definition.missions.length);

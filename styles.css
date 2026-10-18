@@ -575,6 +575,13 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.checkpoint-progress {
+  margin-top: 5px;
+  color: #d8d8d8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .route-progress {
   position: relative;
   min-height: 20px;

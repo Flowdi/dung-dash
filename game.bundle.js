@@ -1533,6 +1533,12 @@
     };
   };
 
+  // src/checkpoint-progress.js
+  var calculateCheckpointProgress = (checkpoints = []) => ({
+    reached: checkpoints.filter(({ claimed }) => claimed).length,
+    total: checkpoints.length
+  });
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1703,6 +1709,7 @@
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
+      this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
       this.routeProgress = documentObject.getElementById("route-progress");
       this.routeProgressLabel = documentObject.getElementById("route-progress-label");
       this.routeProgressFill = documentObject.getElementById("route-progress-fill");
@@ -2108,6 +2115,8 @@
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       if (this.level) {
+        const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
+        this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;
         const routePercent = calculateRouteProgress(this.level);
         this.routeProgress.setAttribute("aria-valuenow", String(routePercent));
         this.routeProgressLabel.textContent = `Strecke: ${routePercent}%`;

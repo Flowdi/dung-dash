@@ -40,6 +40,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 - direkter Ergebnisvergleich mit bisherigem Level-Highscore und Bestzeit
 - laufende Streckenanzeige für horizontale und vertikale Level
+- sichtbarer Toiletten- und Checkpoint-Fortschritt während des Laufs
 
 ## Spielen
 

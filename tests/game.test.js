@@ -43,6 +43,14 @@ import { calculateRouteProgress } from "../src/route-progress.js";
 import { resolveReplayLevel } from "../src/run-history.js";
 import { parseProgressBackup, serializeProgressBackup } from "../src/progress-backup.js";
 import { calculateCareerAverages } from "../src/career-stats.js";
+import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
+
+test("checkpoint progress counts reached toilets", () => {
+  assert.deepEqual(calculateCheckpointProgress([
+    { claimed: true }, { claimed: false }, { claimed: true },
+  ]), { reached: 2, total: 3 });
+  assert.deepEqual(calculateCheckpointProgress(), { reached: 0, total: 0 });
+});
 
 test("career averages remain useful before and after completed runs", () => {
   assert.deepEqual(calculateCareerAverages({ totalRuns: 0 }), { score: 0, falls: 0 });

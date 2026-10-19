@@ -22,6 +22,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="level-record-card"/);
   assert.match(html, /id="level-preview"/);
   assert.match(html, /id="fly-preview"/);
+  assert.match(html, /id="platform-preview"/);
   assert.match(html, /id="random-level-btn"/);
   assert.match(html, /id="continue-btn"/);
   assert.match(html, /class="control-guide"/);
@@ -88,6 +89,8 @@ test("start screen exposes career stats and achievements", async () => {
   assert.match(html, /id="export-progress-btn"/);
   assert.match(html, /id="import-progress-btn"/);
   assert.match(html, /id="reduced-motion-toggle"/);
+  assert.match(html, /id="high-contrast-toggle"/);
+  assert.match(html, /id="large-hud-toggle"/);
 });
 
 test("start screen exposes persistent level missions", async () => {

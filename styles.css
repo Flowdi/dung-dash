@@ -147,6 +147,35 @@ body {
 .fly-preview .gold > span { color: #ffd700; }
 .fly-preview .time > span { color: #6ee7ff; }
 
+.platform-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  width: min(100%, 620px);
+  margin: 0 auto 8px;
+}
+
+.platform-preview p {
+  display: grid;
+  gap: 1px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.65rem;
+}
+
+.platform-preview small {
+  color: #aaa;
+}
+
+.platform-preview .bounce { border-color: rgba(126, 231, 135, 0.5); }
+.platform-preview .fragile { border-color: rgba(255, 177, 102, 0.5); }
+.platform-preview .moving { border-color: rgba(110, 231, 255, 0.5); }
+.platform-preview .timed { border-color: rgba(255, 110, 110, 0.5); }
+.platform-preview .conveyor { border-color: rgba(196, 143, 255, 0.5); }
+
 .level-record-card {
   display: grid;
   gap: 7px;
@@ -491,7 +520,7 @@ body {
   margin-top: 12px;
 }
 
-.motion-preference {
+.preference-toggle {
   display: flex;
   gap: 9px;
   align-items: center;
@@ -504,21 +533,60 @@ body {
   cursor: pointer;
 }
 
-.motion-preference input {
+.preference-toggle input {
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
 }
 
-.motion-preference strong,
-.motion-preference small {
+.preference-toggle strong,
+.preference-toggle small {
   display: block;
 }
 
-.motion-preference small {
+.preference-toggle small {
   margin-top: 2px;
   color: #bbb;
   font-size: 0.68rem;
+}
+
+body.high-contrast {
+  --background: #000;
+  --panel: #050505;
+  --panel-text: #fff;
+  --focus: #ffe600;
+}
+
+body.high-contrast .start-screen,
+body.high-contrast .checkpoint-screen,
+body.high-contrast .score,
+body.high-contrast .progress-panel,
+body.high-contrast .mission-panel,
+body.high-contrast .level-record-card {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff;
+}
+
+body.large-hud .score {
+  width: 286px;
+  font-size: 1.05rem;
+}
+
+body.large-hud .current-missions,
+body.large-hud .checkpoint-progress,
+body.large-hud .route-progress span {
+  font-size: 0.82rem;
+}
+
+body.large-hud .hud-button {
+  min-height: 48px;
+  font-size: 0.9rem;
+}
+
+body.large-hud .touch-controls button {
+  width: 72px;
+  height: 72px;
+  font-size: 1.6rem;
 }
 
 body.reduce-motion .checkpoint-screen.toast {

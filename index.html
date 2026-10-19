@@ -29,6 +29,7 @@
       <p class="level-description" id="level-description"></p>
       <div class="level-preview" id="level-preview" aria-label="Levelvorschau"></div>
       <div class="fly-preview" id="fly-preview" aria-label="Fliegenarten in diesem Level"></div>
+      <div class="platform-preview" id="platform-preview" aria-label="Plattformtypen in diesem Level"></div>
       <section class="level-record-card" id="level-record-card" aria-live="polite"></section>
       <section class="mission-panel" aria-labelledby="mission-title">
         <h2 id="mission-title">Level-Missionen <span id="mission-stars"></span></h2>
@@ -51,9 +52,17 @@
           <div id="recent-runs-list"></div>
         </section>
         <div class="achievement-list" id="achievement-list"></div>
-        <label class="motion-preference" for="reduced-motion-toggle">
+        <label class="preference-toggle" for="reduced-motion-toggle">
           <input id="reduced-motion-toggle" type="checkbox" />
           <span><strong>Animationen reduzieren</strong><small>Deaktiviert Einblend- und Fortschrittsanimationen.</small></span>
+        </label>
+        <label class="preference-toggle" for="high-contrast-toggle">
+          <input id="high-contrast-toggle" type="checkbox" />
+          <span><strong>Hoher Kontrast</strong><small>Verstärkt Flächen, Texte und Umrandungen.</small></span>
+        </label>
+        <label class="preference-toggle" for="large-hud-toggle">
+          <input id="large-hud-toggle" type="checkbox" />
+          <span><strong>Große Spielanzeigen</strong><small>Vergrößert HUD, Texte und Bildschirmtasten.</small></span>
         </label>
         <div class="progress-backup-actions">
           <button class="btn secondary-btn" id="export-progress-btn" type="button">Spielstand kopieren</button>

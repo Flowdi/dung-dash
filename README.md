@@ -17,12 +17,15 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - separat löschbare Laufhistorie ohne Verlust von Rekorden oder Karrierefortschritt
 - validierter Export und Import des lokalen Spielstands über die Zwischenablage
 - dauerhaft gespeicherte Option zum Reduzieren nicht notwendiger Animationen
+- optionaler, dauerhaft gespeicherter Hochkontrastmodus
+- vergrößerbares HUD und größere Touch-Steuerung als gespeicherte Einstellung
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen
 - kontextbezogene Empfehlung für das nächste sinnvolle Ziel jedes Levels
 - Levelvorschau mit Routentyp, Größe, Fliegen, Checkpoints und Gefahren
 - Aufschlüsselung und Erklärung normaler, goldener und zeitgebender Fliegen
+- levelbezogene Übersicht aller vorkommenden Plattformmechaniken
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung

@@ -35,6 +35,7 @@ import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.
 import { calculateCareerAverages } from "./career-stats.js";
 import { calculateCheckpointProgress } from "./checkpoint-progress.js";
 import { buildFlyBreakdown } from "./fly-preview.js";
+import { buildPlatformBreakdown } from "./platform-preview.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -62,6 +63,7 @@ export class Game {
     this.levelDescription = documentObject.getElementById("level-description");
     this.levelPreview = documentObject.getElementById("level-preview");
     this.flyPreview = documentObject.getElementById("fly-preview");
+    this.platformPreview = documentObject.getElementById("platform-preview");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -77,6 +79,8 @@ export class Game {
     this.exportProgressButton = documentObject.getElementById("export-progress-btn");
     this.importProgressButton = documentObject.getElementById("import-progress-btn");
     this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
+    this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
+    this.largeHudToggle = documentObject.getElementById("large-hud-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -168,6 +172,14 @@ export class Game {
       this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
       this.applyMotionPreference(this.reducedMotionToggle.checked);
     });
+    this.highContrastToggle.addEventListener("change", () => {
+      this.progressStore.setHighContrast(this.highContrastToggle.checked);
+      this.applyHighContrastPreference(this.highContrastToggle.checked);
+    });
+    this.largeHudToggle.addEventListener("change", () => {
+      this.progressStore.setLargeHud(this.largeHudToggle.checked);
+      this.applyLargeHudPreference(this.largeHudToggle.checked);
+    });
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -230,6 +242,12 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">●</span><strong>${count}× ${label}</strong><small>${effect}</small>`;
       return item;
     }));
+    this.platformPreview.replaceChildren(...buildPlatformBreakdown(definition.platforms).map(({ type, label, effect, count }) => {
+      const item = this.document.createElement("p");
+      item.className = type;
+      item.innerHTML = `<strong>${count}× ${label}</strong><small>${effect}</small>`;
+      return item;
+    }));
     const stats = buildLevelRecordStats(record, definition.missions.length);
     const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
@@ -273,6 +291,10 @@ export class Game {
     const progress = this.progressStore.load();
     this.reducedMotionToggle.checked = progress.preferences?.reducedMotion === true;
     this.applyMotionPreference(this.reducedMotionToggle.checked);
+    this.highContrastToggle.checked = progress.preferences?.highContrast === true;
+    this.applyHighContrastPreference(this.highContrastToggle.checked);
+    this.largeHudToggle.checked = progress.preferences?.largeHud === true;
+    this.applyLargeHudPreference(this.largeHudToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -341,6 +363,14 @@ export class Game {
 
   applyMotionPreference(reduced) {
     this.document.body.classList.toggle("reduce-motion", reduced);
+  }
+
+  applyHighContrastPreference(enabled) {
+    this.document.body.classList.toggle("high-contrast", enabled);
+  }
+
+  applyLargeHudPreference(enabled) {
+    this.document.body.classList.toggle("large-hud", enabled);
   }
 
   replayHistoryLevel(levelId) {

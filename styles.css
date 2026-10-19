@@ -147,6 +147,35 @@ body {
 .fly-preview .gold > span { color: #ffd700; }
 .fly-preview .time > span { color: #6ee7ff; }
 
+.platform-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  width: min(100%, 620px);
+  margin: 0 auto 8px;
+}
+
+.platform-preview p {
+  display: grid;
+  gap: 1px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.65rem;
+}
+
+.platform-preview small {
+  color: #aaa;
+}
+
+.platform-preview .bounce { border-color: rgba(126, 231, 135, 0.5); }
+.platform-preview .fragile { border-color: rgba(255, 177, 102, 0.5); }
+.platform-preview .moving { border-color: rgba(110, 231, 255, 0.5); }
+.platform-preview .timed { border-color: rgba(255, 110, 110, 0.5); }
+.platform-preview .conveyor { border-color: rgba(196, 143, 255, 0.5); }
+
 .level-record-card {
   display: grid;
   gap: 7px;

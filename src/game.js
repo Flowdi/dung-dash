@@ -35,6 +35,7 @@ import { parseProgressBackup, serializeProgressBackup } from "./progress-backup.
 import { calculateCareerAverages } from "./career-stats.js";
 import { calculateCheckpointProgress } from "./checkpoint-progress.js";
 import { buildFlyBreakdown } from "./fly-preview.js";
+import { buildPlatformBreakdown } from "./platform-preview.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -62,6 +63,7 @@ export class Game {
     this.levelDescription = documentObject.getElementById("level-description");
     this.levelPreview = documentObject.getElementById("level-preview");
     this.flyPreview = documentObject.getElementById("fly-preview");
+    this.platformPreview = documentObject.getElementById("platform-preview");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -238,6 +240,12 @@ export class Game {
       const item = this.document.createElement("p");
       item.className = type;
       item.innerHTML = `<span aria-hidden="true">●</span><strong>${count}× ${label}</strong><small>${effect}</small>`;
+      return item;
+    }));
+    this.platformPreview.replaceChildren(...buildPlatformBreakdown(definition.platforms).map(({ type, label, effect, count }) => {
+      const item = this.document.createElement("p");
+      item.className = type;
+      item.innerHTML = `<strong>${count}× ${label}</strong><small>${effect}</small>`;
       return item;
     }));
     const stats = buildLevelRecordStats(record, definition.missions.length);

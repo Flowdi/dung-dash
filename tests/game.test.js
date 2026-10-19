@@ -46,6 +46,20 @@ import { calculateCareerAverages } from "../src/career-stats.js";
 import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
 import { buildFlyBreakdown } from "../src/fly-preview.js";
 import { analyzeRun } from "../src/run-analysis.js";
+import { buildPlatformBreakdown } from "../src/platform-preview.js";
+
+test("platform previews group related mechanics and omit absent types", () => {
+  assert.deepEqual(buildPlatformBreakdown([
+    [0, 0], [1, 0, "bounce"], [2, 0, "moving-x"], [3, 0, "moving-y"],
+    [4, 0, "conveyor-left"], [5, 0, "timed"],
+  ]), [
+    { type: "normal", count: 1, label: "Fest", effect: "solide" },
+    { type: "bounce", count: 1, label: "Sprung", effect: "katapultiert" },
+    { type: "moving", count: 2, label: "Beweglich", effect: "fährt eine Route" },
+    { type: "timed", count: 1, label: "Zeit", effect: "verschwindet" },
+    { type: "conveyor", count: 1, label: "Förderband", effect: "schiebt seitlich" },
+  ]);
+});
 
 test("run analysis summarizes collection, combo and clean play", () => {
   assert.deepEqual(analyzeRun({

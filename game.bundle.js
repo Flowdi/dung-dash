@@ -1573,6 +1573,26 @@
     ];
   };
 
+  // src/platform-preview.js
+  var GROUPS = {
+    normal: { label: "Fest", effect: "solide" },
+    bounce: { label: "Sprung", effect: "katapultiert" },
+    fragile: { label: "Br\xFCchig", effect: "kehrt zur\xFCck" },
+    moving: { label: "Beweglich", effect: "f\xE4hrt eine Route" },
+    timed: { label: "Zeit", effect: "verschwindet" },
+    conveyor: { label: "F\xF6rderband", effect: "schiebt seitlich" }
+  };
+  var groupType = (type = "normal") => {
+    if (type.startsWith("moving-")) return "moving";
+    if (type.startsWith("conveyor-")) return "conveyor";
+    return type in GROUPS ? type : "normal";
+  };
+  var buildPlatformBreakdown = (platforms = []) => {
+    const counts = Object.fromEntries(Object.keys(GROUPS).map((type) => [type, 0]));
+    platforms.forEach((platform) => counts[groupType(platform[2])] += 1);
+    return Object.entries(GROUPS).filter(([type]) => counts[type] > 0).map(([type, details]) => ({ type, count: counts[type], ...details }));
+  };
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1717,6 +1737,7 @@
       this.levelDescription = documentObject.getElementById("level-description");
       this.levelPreview = documentObject.getElementById("level-preview");
       this.flyPreview = documentObject.getElementById("fly-preview");
+      this.platformPreview = documentObject.getElementById("platform-preview");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -1887,6 +1908,12 @@
         const item = this.document.createElement("p");
         item.className = type;
         item.innerHTML = `<span aria-hidden="true">\u25CF</span><strong>${count}\xD7 ${label}</strong><small>${effect}</small>`;
+        return item;
+      }));
+      this.platformPreview.replaceChildren(...buildPlatformBreakdown(definition.platforms).map(({ type, label, effect, count }) => {
+        const item = this.document.createElement("p");
+        item.className = type;
+        item.innerHTML = `<strong>${count}\xD7 ${label}</strong><small>${effect}</small>`;
         return item;
       }));
       const stats = buildLevelRecordStats(record, definition.missions.length);

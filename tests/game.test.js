@@ -771,6 +771,18 @@ test("reduced motion preference persists without changing career data", () => {
   assert.equal(store.load().preferences.reducedMotion, true);
 });
 
+test("high contrast preference persists independently from reduced motion", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.setReducedMotion(true);
+  const updated = store.setHighContrast(true);
+  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true });
+});
+
 test("level missions evaluate time, collection, combo and score goals", () => {
   const missions = [
     { id: "fast", type: "time", target: 60 },

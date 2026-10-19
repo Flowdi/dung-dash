@@ -14,7 +14,7 @@ const emptyProgress = () => ({
   bestCombo: 0,
   flawlessRuns: 0,
   recentRuns: [],
-  preferences: { reducedMotion: false },
+  preferences: { reducedMotion: false, highContrast: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
@@ -64,7 +64,10 @@ export const normalizeProgress = (saved) => {
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
-  base.preferences = { reducedMotion: source.preferences?.reducedMotion === true };
+  base.preferences = {
+    reducedMotion: source.preferences?.reducedMotion === true,
+    highContrast: source.preferences?.highContrast === true,
+  };
   base.unlockedLevels = migrateUnlockedLevels(base);
   base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
     ? source.selectedLevelId
@@ -127,6 +130,14 @@ export class ProgressStore {
     return this.replace({
       ...progress,
       preferences: { ...progress.preferences, reducedMotion: Boolean(enabled) },
+    });
+  }
+
+  setHighContrast(enabled) {
+    const progress = this.load();
+    return this.replace({
+      ...progress,
+      preferences: { ...progress.preferences, highContrast: Boolean(enabled) },
     });
   }
 

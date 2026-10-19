@@ -491,7 +491,7 @@ body {
   margin-top: 12px;
 }
 
-.motion-preference {
+.preference-toggle {
   display: flex;
   gap: 9px;
   align-items: center;
@@ -504,21 +504,38 @@ body {
   cursor: pointer;
 }
 
-.motion-preference input {
+.preference-toggle input {
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
 }
 
-.motion-preference strong,
-.motion-preference small {
+.preference-toggle strong,
+.preference-toggle small {
   display: block;
 }
 
-.motion-preference small {
+.preference-toggle small {
   margin-top: 2px;
   color: #bbb;
   font-size: 0.68rem;
+}
+
+body.high-contrast {
+  --background: #000;
+  --panel: #050505;
+  --panel-text: #fff;
+  --focus: #ffe600;
+}
+
+body.high-contrast .start-screen,
+body.high-contrast .checkpoint-screen,
+body.high-contrast .score,
+body.high-contrast .progress-panel,
+body.high-contrast .mission-panel,
+body.high-contrast .level-record-card {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff;
 }
 
 body.reduce-motion .checkpoint-screen.toast {

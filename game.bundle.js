@@ -1120,7 +1120,7 @@
     bestCombo: 0,
     flawlessRuns: 0,
     recentRuns: [],
-    preferences: { reducedMotion: false },
+    preferences: { reducedMotion: false, highContrast: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1146,7 +1146,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1174,7 +1174,10 @@
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
-    base.preferences = { reducedMotion: ((_d = source.preferences) == null ? void 0 : _d.reducedMotion) === true };
+    base.preferences = {
+      reducedMotion: ((_d = source.preferences) == null ? void 0 : _d.reducedMotion) === true,
+      highContrast: ((_e = source.preferences) == null ? void 0 : _e.highContrast) === true
+    };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
     return base;
@@ -1229,6 +1232,13 @@
       return this.replace({
         ...progress,
         preferences: { ...progress.preferences, reducedMotion: Boolean(enabled) }
+      });
+    }
+    setHighContrast(enabled) {
+      const progress = this.load();
+      return this.replace({
+        ...progress,
+        preferences: { ...progress.preferences, highContrast: Boolean(enabled) }
       });
     }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
@@ -1714,6 +1724,7 @@
       this.exportProgressButton = documentObject.getElementById("export-progress-btn");
       this.importProgressButton = documentObject.getElementById("import-progress-btn");
       this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
+      this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1801,6 +1812,10 @@
       this.reducedMotionToggle.addEventListener("change", () => {
         this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
         this.applyMotionPreference(this.reducedMotionToggle.checked);
+      });
+      this.highContrastToggle.addEventListener("change", () => {
+        this.progressStore.setHighContrast(this.highContrastToggle.checked);
+        this.applyHighContrastPreference(this.highContrastToggle.checked);
       });
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
@@ -1899,10 +1914,12 @@
       }));
     }
     renderProgress() {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       const progress = this.progressStore.load();
       this.reducedMotionToggle.checked = ((_a = progress.preferences) == null ? void 0 : _a.reducedMotion) === true;
       this.applyMotionPreference(this.reducedMotionToggle.checked);
+      this.highContrastToggle.checked = ((_b = progress.preferences) == null ? void 0 : _b.highContrast) === true;
+      this.applyHighContrastPreference(this.highContrastToggle.checked);
       const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -1934,7 +1951,7 @@
         item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b2 = progress.medals[medal]) != null ? _b2 : 0}</strong>`;
         return item;
       }));
-      const recentRuns = (_b = progress.recentRuns) != null ? _b : [];
+      const recentRuns = (_c = progress.recentRuns) != null ? _c : [];
       this.clearRecentRunsButton.hidden = recentRuns.length === 0;
       this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
       this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
@@ -1958,7 +1975,7 @@
         item.textContent = "Noch keine L\xE4ufe gespeichert.";
         return item;
       })()]);
-      const unlocked = new Set((_c = progress.achievements) != null ? _c : []);
+      const unlocked = new Set((_d = progress.achievements) != null ? _d : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);
@@ -1971,6 +1988,9 @@
     }
     applyMotionPreference(reduced) {
       this.document.body.classList.toggle("reduce-motion", reduced);
+    }
+    applyHighContrastPreference(enabled) {
+      this.document.body.classList.toggle("high-contrast", enabled);
     }
     replayHistoryLevel(levelId) {
       const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);

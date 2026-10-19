@@ -77,6 +77,7 @@ export class Game {
     this.exportProgressButton = documentObject.getElementById("export-progress-btn");
     this.importProgressButton = documentObject.getElementById("import-progress-btn");
     this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
+    this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -167,6 +168,10 @@ export class Game {
     this.reducedMotionToggle.addEventListener("change", () => {
       this.progressStore.setReducedMotion(this.reducedMotionToggle.checked);
       this.applyMotionPreference(this.reducedMotionToggle.checked);
+    });
+    this.highContrastToggle.addEventListener("change", () => {
+      this.progressStore.setHighContrast(this.highContrastToggle.checked);
+      this.applyHighContrastPreference(this.highContrastToggle.checked);
     });
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
@@ -273,6 +278,8 @@ export class Game {
     const progress = this.progressStore.load();
     this.reducedMotionToggle.checked = progress.preferences?.reducedMotion === true;
     this.applyMotionPreference(this.reducedMotionToggle.checked);
+    this.highContrastToggle.checked = progress.preferences?.highContrast === true;
+    this.applyHighContrastPreference(this.highContrastToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -341,6 +348,10 @@ export class Game {
 
   applyMotionPreference(reduced) {
     this.document.body.classList.toggle("reduce-motion", reduced);
+  }
+
+  applyHighContrastPreference(enabled) {
+    this.document.body.classList.toggle("high-contrast", enabled);
   }
 
   replayHistoryLevel(levelId) {

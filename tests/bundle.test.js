@@ -88,6 +88,7 @@ test("start screen exposes career stats and achievements", async () => {
   assert.match(html, /id="export-progress-btn"/);
   assert.match(html, /id="import-progress-btn"/);
   assert.match(html, /id="reduced-motion-toggle"/);
+  assert.match(html, /id="high-contrast-toggle"/);
 });
 
 test("start screen exposes persistent level missions", async () => {

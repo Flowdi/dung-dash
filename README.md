@@ -18,6 +18,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - validierter Export und Import des lokalen Spielstands über die Zwischenablage
 - dauerhaft gespeicherte Option zum Reduzieren nicht notwendiger Animationen
 - optionaler, dauerhaft gespeicherter Hochkontrastmodus
+- vergrößerbares HUD und größere Touch-Steuerung als gespeicherte Einstellung
 - kompakte Rekordkarte für Medaille, Highscore, Bestzeit und Missionssterne je Level
 - visueller Kampagnenfortschritt über alle abgeschlossenen Level
 - intelligenter Fortsetzen-Button für das nächste Level oder offene Missionen

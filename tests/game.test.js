@@ -780,7 +780,20 @@ test("high contrast preference persists independently from reduced motion", () =
   const store = new ProgressStore(storage);
   store.setReducedMotion(true);
   const updated = store.setHighContrast(true);
-  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true });
+  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true, largeHud: false });
+});
+
+test("large HUD preference persists with other accessibility settings", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const store = new ProgressStore(storage);
+  store.setHighContrast(true);
+  const updated = store.setLargeHud(true);
+  assert.equal(updated.preferences.highContrast, true);
+  assert.equal(updated.preferences.largeHud, true);
 });
 
 test("level missions evaluate time, collection, combo and score goals", () => {

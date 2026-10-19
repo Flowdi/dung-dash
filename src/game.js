@@ -78,6 +78,7 @@ export class Game {
     this.importProgressButton = documentObject.getElementById("import-progress-btn");
     this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
     this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
+    this.largeHudToggle = documentObject.getElementById("large-hud-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -172,6 +173,10 @@ export class Game {
     this.highContrastToggle.addEventListener("change", () => {
       this.progressStore.setHighContrast(this.highContrastToggle.checked);
       this.applyHighContrastPreference(this.highContrastToggle.checked);
+    });
+    this.largeHudToggle.addEventListener("change", () => {
+      this.progressStore.setLargeHud(this.largeHudToggle.checked);
+      this.applyLargeHudPreference(this.largeHudToggle.checked);
     });
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
@@ -280,6 +285,8 @@ export class Game {
     this.applyMotionPreference(this.reducedMotionToggle.checked);
     this.highContrastToggle.checked = progress.preferences?.highContrast === true;
     this.applyHighContrastPreference(this.highContrastToggle.checked);
+    this.largeHudToggle.checked = progress.preferences?.largeHud === true;
+    this.applyLargeHudPreference(this.largeHudToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -352,6 +359,10 @@ export class Game {
 
   applyHighContrastPreference(enabled) {
     this.document.body.classList.toggle("high-contrast", enabled);
+  }
+
+  applyLargeHudPreference(enabled) {
+    this.document.body.classList.toggle("large-hud", enabled);
   }
 
   replayHistoryLevel(levelId) {

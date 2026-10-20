@@ -27,6 +27,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Aufschlüsselung und Erklärung normaler, goldener und zeitgebender Fliegen
 - levelbezogene Übersicht aller vorkommenden Plattformmechaniken
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
+- Pausenansicht mit Zeit, Fliegen, Toiletten, Strecke und Treffern des aktuellen Laufs
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung
 - goldene Fliegen, Zeitfliegen, Sprungplattformen und warnend zerbrechende Plattformen, die wiederkehren

@@ -36,6 +36,7 @@ import { calculateCareerAverages } from "./career-stats.js";
 import { calculateCheckpointProgress } from "./checkpoint-progress.js";
 import { buildFlyBreakdown } from "./fly-preview.js";
 import { buildPlatformBreakdown } from "./platform-preview.js";
+import { buildPauseSummary } from "./pause-summary.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -759,7 +760,11 @@ export class Game {
       this.pauseButton.setAttribute("aria-pressed", "true");
       this.restartButton.style.display = "inline-block";
       this.levelMenuButton.style.display = "inline-block";
-      this.showMessage("Pause", "Drücke P, Escape oder Fortsetzen.", false);
+      this.showMessage(
+        "Pause",
+        `${buildPauseSummary(this.level, this.stats)} · P/Escape zum Fortsetzen`,
+        false
+      );
     } else if (this.state === GameState.PAUSED) {
       this.state = GameState.PLAYING;
       this.previousFrameTime = null;

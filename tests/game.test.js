@@ -47,6 +47,23 @@ import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
 import { buildFlyBreakdown } from "../src/fly-preview.js";
 import { analyzeRun } from "../src/run-analysis.js";
 import { buildPlatformBreakdown } from "../src/platform-preview.js";
+import { buildPauseSummary } from "../src/pause-summary.js";
+
+test("pause summary captures the complete current run state", () => {
+  const level = {
+    mode: "horizontal",
+    spawn: { x: 0, y: 0 },
+    player: { position: { x: 50, y: 0 } },
+    flies: [{}, {}, {}, {}],
+    checkpoints: [
+      { order: 1, claimed: true, position: { x: 50, y: 0 } },
+      { order: 2, claimed: false, position: { x: 100, y: 0 } },
+    ],
+  };
+  assert.equal(buildPauseSummary(level, {
+    elapsedSeconds: 65.4, fliesCollected: 3, falls: 1,
+  }), "Zeit 01:05.4 · Fliegen 3/4 · Toiletten 1/2 · Strecke 50% · Treffer 1");
+});
 
 test("platform previews group related mechanics and omit absent types", () => {
   assert.deepEqual(buildPlatformBreakdown([

@@ -1596,6 +1596,18 @@
     return Object.entries(GROUPS).filter(([type]) => counts[type] > 0).map(([type, details]) => ({ type, count: counts[type], ...details }));
   };
 
+  // src/pause-summary.js
+  var buildPauseSummary = (level, stats) => {
+    const checkpoints = calculateCheckpointProgress(level.checkpoints);
+    return [
+      `Zeit ${formatTime(stats.elapsedSeconds)}`,
+      `Fliegen ${stats.fliesCollected}/${level.flies.length}`,
+      `Toiletten ${checkpoints.reached}/${checkpoints.total}`,
+      `Strecke ${calculateRouteProgress(level)}%`,
+      `Treffer ${stats.falls}`
+    ].join(" \xB7 ");
+  };
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -2390,7 +2402,11 @@
         this.pauseButton.setAttribute("aria-pressed", "true");
         this.restartButton.style.display = "inline-block";
         this.levelMenuButton.style.display = "inline-block";
-        this.showMessage("Pause", "Dr\xFCcke P, Escape oder Fortsetzen.", false);
+        this.showMessage(
+          "Pause",
+          `${buildPauseSummary(this.level, this.stats)} \xB7 P/Escape zum Fortsetzen`,
+          false
+        );
       } else if (this.state === GameState.PAUSED) {
         this.state = GameState.PLAYING;
         this.previousFrameTime = null;

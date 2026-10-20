@@ -55,6 +55,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Leertaste, Pfeiltaste hoch oder W: springen
 - P oder Escape: pausieren/fortsetzen
 - R: aktuelles Level sofort neu starten
+- C: zum letzten Checkpoint zurückkehren und einen Treffer verbuchen
 - Vollbild: über den Button im HUD ein- und ausschalten
 - F: Vollbildmodus direkt per Tastatur umschalten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.

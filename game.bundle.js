@@ -106,6 +106,8 @@
       onRestart = () => {
       },
       onFullscreen = () => {
+      },
+      onCheckpoint = () => {
       }
     } = {}) {
       windowObject.addEventListener("keydown", (event) => {
@@ -120,6 +122,7 @@
         }
         if (!event.repeat && key === "r") onRestart();
         if (!event.repeat && key === "f") onFullscreen();
+        if (!event.repeat && key === "c") onCheckpoint();
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
           this.queueJump();
         }
@@ -1767,6 +1770,7 @@
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
+      this.checkpointRetryButton = documentObject.getElementById("checkpoint-retry-btn");
       this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -1816,7 +1820,8 @@
         {
           onPause: () => this.togglePause(),
           onRestart: () => this.restartCurrentLevel(),
-          onFullscreen: () => this.toggleFullscreen()
+          onFullscreen: () => this.toggleFullscreen(),
+          onCheckpoint: () => this.retryCheckpoint()
         }
       );
       this.startButton.addEventListener("click", () => this.start());
@@ -1832,6 +1837,7 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.checkpointRetryButton.addEventListener("click", () => this.retryCheckpoint());
       this.copyResultButton.addEventListener("click", () => this.copyRunResult());
       this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
@@ -2132,6 +2138,7 @@
       this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
       this.resetRunButton.hidden = false;
+      this.checkpointRetryButton.hidden = false;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
@@ -2253,6 +2260,7 @@
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.checkpointRetryButton.hidden = true;
       this.updateFullscreenButton();
       this.restartButton.focus();
       this.renderLevelOptions();
@@ -2330,6 +2338,14 @@
       if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
       this.reset();
     }
+    retryCheckpoint() {
+      if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
+      respawnAtCheckpoint(this.level.player, this.lastSafePosition, this.stats, this.input);
+      this.updateHud();
+      if (this.state === GameState.PLAYING) {
+        this.showMessage("Checkpoint-Neustart", "Zur letzten sicheren Position zur\xFCckgesetzt \xB7 +1 Treffer");
+      }
+    }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
         this.window.cancelAnimationFrame(this.animationFrameId);
@@ -2354,6 +2370,7 @@
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.checkpointRetryButton.hidden = true;
       this.updateFullscreenButton();
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";

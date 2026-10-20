@@ -93,6 +93,7 @@ export class Game {
     this.copyResultButton = documentObject.getElementById("copy-result-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
+    this.checkpointRetryButton = documentObject.getElementById("checkpoint-retry-btn");
     this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -146,6 +147,7 @@ export class Game {
         onPause: () => this.togglePause(),
         onRestart: () => this.restartCurrentLevel(),
         onFullscreen: () => this.toggleFullscreen(),
+        onCheckpoint: () => this.retryCheckpoint(),
       }
     );
     this.startButton.addEventListener("click", () => this.start());
@@ -161,6 +163,7 @@ export class Game {
     this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
     this.pauseButton.addEventListener("click", () => this.togglePause());
     this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+    this.checkpointRetryButton.addEventListener("click", () => this.retryCheckpoint());
     this.copyResultButton.addEventListener("click", () => this.copyRunResult());
     this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
     this.document.addEventListener?.("fullscreenchange", () => this.updateFullscreenButton());
@@ -476,6 +479,7 @@ export class Game {
     this.levelMenuButton.style.display = "none";
     this.pauseButton.hidden = false;
     this.resetRunButton.hidden = false;
+    this.checkpointRetryButton.hidden = false;
     this.pauseButton.textContent = "Pause";
     this.pauseButton.setAttribute("aria-pressed", "false");
     this.previousFrameTime = null;
@@ -611,6 +615,7 @@ export class Game {
     this.levelMenuButton.style.display = "inline-block";
     this.pauseButton.hidden = true;
     this.resetRunButton.hidden = true;
+    this.checkpointRetryButton.hidden = true;
     this.updateFullscreenButton();
     this.restartButton.focus();
     this.renderLevelOptions();
@@ -700,6 +705,15 @@ export class Game {
     this.reset();
   }
 
+  retryCheckpoint() {
+    if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
+    respawnAtCheckpoint(this.level.player, this.lastSafePosition, this.stats, this.input);
+    this.updateHud();
+    if (this.state === GameState.PLAYING) {
+      this.showMessage("Checkpoint-Neustart", "Zur letzten sicheren Position zurückgesetzt · +1 Treffer");
+    }
+  }
+
   returnToLevelSelect() {
     if (this.animationFrameId !== null) {
       this.window.cancelAnimationFrame(this.animationFrameId);
@@ -724,6 +738,7 @@ export class Game {
     this.score.style.display = "none";
     this.pauseButton.hidden = true;
     this.resetRunButton.hidden = true;
+    this.checkpointRetryButton.hidden = true;
     this.updateFullscreenButton();
     this.restartButton.style.display = "none";
     this.nextLevelButton.style.display = "none";

@@ -47,6 +47,39 @@ import { calculateCheckpointProgress } from "../src/checkpoint-progress.js";
 import { buildFlyBreakdown } from "../src/fly-preview.js";
 import { analyzeRun } from "../src/run-analysis.js";
 import { buildPlatformBreakdown } from "../src/platform-preview.js";
+import { buildPauseSummary } from "../src/pause-summary.js";
+import { compareCheckpointSplits } from "../src/split-comparison.js";
+
+test("checkpoint results compare every split with its personal best", () => {
+  const compared = compareCheckpointSplits([
+    { order: 1, elapsedSeconds: 20, sectionSeconds: 20 },
+    { order: 2, elapsedSeconds: 45, sectionSeconds: 25 },
+    { order: 3, elapsedSeconds: 70, sectionSeconds: 25 },
+  ], [
+    { order: 1, elapsedSeconds: 22 },
+    { order: 2, elapsedSeconds: 45 },
+  ]);
+  assert.equal(compared[0].comparison, "PB −00:02.0");
+  assert.equal(compared[0].improved, true);
+  assert.equal(compared[1].comparison, "PB eingestellt");
+  assert.equal(compared[2].comparison, "Erste Zeit");
+});
+
+test("pause summary captures the complete current run state", () => {
+  const level = {
+    mode: "horizontal",
+    spawn: { x: 0, y: 0 },
+    player: { position: { x: 50, y: 0 } },
+    flies: [{}, {}, {}, {}],
+    checkpoints: [
+      { order: 1, claimed: true, position: { x: 50, y: 0 } },
+      { order: 2, claimed: false, position: { x: 100, y: 0 } },
+    ],
+  };
+  assert.equal(buildPauseSummary(level, {
+    elapsedSeconds: 65.4, fliesCollected: 3, falls: 1,
+  }), "Zeit 01:05.4 · Fliegen 3/4 · Toiletten 1/2 · Strecke 50% · Treffer 1");
+});
 
 test("platform previews group related mechanics and omit absent types", () => {
   assert.deepEqual(buildPlatformBreakdown([
@@ -396,7 +429,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P, Escape, R and F expose game controls without repeating", () => {
+test("P, Escape, R, C and F expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -407,10 +440,12 @@ test("P, Escape, R and F expose game controls without repeating", () => {
   let pauseCalls = 0;
   let restartCalls = 0;
   let fullscreenCalls = 0;
+  let checkpointCalls = 0;
   input.bind(windowObject, [], {
     onPause: () => pauseCalls += 1,
     onRestart: () => restartCalls += 1,
     onFullscreen: () => fullscreenCalls += 1,
+    onCheckpoint: () => checkpointCalls += 1,
   });
 
   const event = (key, repeat = false) => ({
@@ -426,9 +461,12 @@ test("P, Escape, R and F expose game controls without repeating", () => {
   listeners.get("keydown")(event("r", true));
   listeners.get("keydown")(event("f"));
   listeners.get("keydown")(event("f", true));
+  listeners.get("keydown")(event("c"));
+  listeners.get("keydown")(event("c", true));
   assert.equal(pauseCalls, 2);
   assert.equal(restartCalls, 1);
   assert.equal(fullscreenCalls, 1);
+  assert.equal(checkpointCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {

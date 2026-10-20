@@ -27,6 +27,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Aufschlüsselung und Erklärung normaler, goldener und zeitgebender Fliegen
 - levelbezogene Übersicht aller vorkommenden Plattformmechaniken
 - pausierbarer Spiellauf mit direktem Neustart und Rückkehr zur Levelauswahl
+- Pausenansicht mit Zeit, Fliegen, Toiletten, Strecke und Treffern des aktuellen Laufs
 - responsive Tastatur- und Touchsteuerung
 - sechs datengetriebene Level mit Auswahl und Freischaltung
 - goldene Fliegen, Zeitfliegen, Sprungplattformen und warnend zerbrechende Plattformen, die wiederkehren
@@ -44,6 +45,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Ergebnisanalyse mit Sammelquote, bester Combo und Kennzeichnung fehlerfreier Läufe
 - kopierbare Laufzusammenfassung zum Teilen von Medaille, Score, Zeit und Missionen
 - direkter Ergebnisvergleich mit bisherigem Level-Highscore und Bestzeit
+- Checkpoint-Auswertung mit Vergleich zu jeder gespeicherten persönlichen Zwischenzeit
 - laufende Streckenanzeige für horizontale und vertikale Level
 - sichtbarer Toiletten- und Checkpoint-Fortschritt während des Laufs
 
@@ -55,6 +57,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - Leertaste, Pfeiltaste hoch oder W: springen
 - P oder Escape: pausieren/fortsetzen
 - R: aktuelles Level sofort neu starten
+- C: zum letzten Checkpoint zurückkehren und einen Treffer verbuchen
 - Vollbild: über den Button im HUD ein- und ausschalten
 - F: Vollbildmodus direkt per Tastatur umschalten
 - Auf Geräten mit Touchscreen erscheinen Bildschirmtasten.

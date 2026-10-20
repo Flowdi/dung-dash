@@ -106,6 +106,8 @@
       onRestart = () => {
       },
       onFullscreen = () => {
+      },
+      onCheckpoint = () => {
       }
     } = {}) {
       windowObject.addEventListener("keydown", (event) => {
@@ -120,6 +122,7 @@
         }
         if (!event.repeat && key === "r") onRestart();
         if (!event.repeat && key === "f") onFullscreen();
+        if (!event.repeat && key === "c") onCheckpoint();
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
           this.queueJump();
         }
@@ -1593,6 +1596,30 @@
     return Object.entries(GROUPS).filter(([type]) => counts[type] > 0).map(([type, details]) => ({ type, count: counts[type], ...details }));
   };
 
+  // src/pause-summary.js
+  var buildPauseSummary = (level, stats) => {
+    const checkpoints = calculateCheckpointProgress(level.checkpoints);
+    return [
+      `Zeit ${formatTime(stats.elapsedSeconds)}`,
+      `Fliegen ${stats.fliesCollected}/${level.flies.length}`,
+      `Toiletten ${checkpoints.reached}/${checkpoints.total}`,
+      `Strecke ${calculateRouteProgress(level)}%`,
+      `Treffer ${stats.falls}`
+    ].join(" \xB7 ");
+  };
+
+  // src/split-comparison.js
+  var compareCheckpointSplits = (splits = [], bestSplits = []) => splits.map((split) => {
+    const best = bestSplits.find(({ order }) => order === split.order);
+    if (!best) return { ...split, comparison: "Erste Zeit", improved: false };
+    const delta = split.elapsedSeconds - best.elapsedSeconds;
+    return {
+      ...split,
+      comparison: delta === 0 ? "PB eingestellt" : `PB ${formatTimeDelta(delta)}`,
+      improved: delta < 0
+    };
+  });
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1767,6 +1794,7 @@
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
+      this.checkpointRetryButton = documentObject.getElementById("checkpoint-retry-btn");
       this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
@@ -1816,7 +1844,8 @@
         {
           onPause: () => this.togglePause(),
           onRestart: () => this.restartCurrentLevel(),
-          onFullscreen: () => this.toggleFullscreen()
+          onFullscreen: () => this.toggleFullscreen(),
+          onCheckpoint: () => this.retryCheckpoint()
         }
       );
       this.startButton.addEventListener("click", () => this.start());
@@ -1832,6 +1861,7 @@
       this.levelMenuButton.addEventListener("click", () => this.returnToLevelSelect());
       this.pauseButton.addEventListener("click", () => this.togglePause());
       this.resetRunButton.addEventListener("click", () => this.restartCurrentLevel());
+      this.checkpointRetryButton.addEventListener("click", () => this.retryCheckpoint());
       this.copyResultButton.addEventListener("click", () => this.copyRunResult());
       this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
       (_b = (_a = this.document).addEventListener) == null ? void 0 : _b.call(_a, "fullscreenchange", () => this.updateFullscreenButton());
@@ -2132,6 +2162,7 @@
       this.levelMenuButton.style.display = "none";
       this.pauseButton.hidden = false;
       this.resetRunButton.hidden = false;
+      this.checkpointRetryButton.hidden = false;
       this.pauseButton.textContent = "Pause";
       this.pauseButton.setAttribute("aria-pressed", "false");
       this.previousFrameTime = null;
@@ -2253,6 +2284,7 @@
       this.levelMenuButton.style.display = "inline-block";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.checkpointRetryButton.hidden = true;
       this.updateFullscreenButton();
       this.restartButton.focus();
       this.renderLevelOptions();
@@ -2311,9 +2343,10 @@
         ["Beste Combo", `\xD7${analysis.bestCombo}`],
         ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
       ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
-      this.resultSplits.hidden = result.checkpointSplits.length === 0;
-      this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
-        (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+      const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord == null ? void 0 : previousRecord.bestSplits);
+      this.resultSplits.hidden = comparedSplits.length === 0;
+      this.resultSplits.innerHTML = comparedSplits.length ? `<strong>Checkpoint-Zeiten</strong>${comparedSplits.map(
+        (split) => `<p class="${split.improved ? "improved" : ""}"><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)} \xB7 ${split.comparison}</small></p>`
       ).join("")}` : "";
       this.resultMissions.hidden = false;
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
@@ -2329,6 +2362,14 @@
     restartCurrentLevel() {
       if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
       this.reset();
+    }
+    retryCheckpoint() {
+      if (this.state !== GameState.PLAYING && this.state !== GameState.PAUSED) return;
+      respawnAtCheckpoint(this.level.player, this.lastSafePosition, this.stats, this.input);
+      this.updateHud();
+      if (this.state === GameState.PLAYING) {
+        this.showMessage("Checkpoint-Neustart", "Zur letzten sicheren Position zur\xFCckgesetzt \xB7 +1 Treffer");
+      }
     }
     returnToLevelSelect() {
       if (this.animationFrameId !== null) {
@@ -2354,6 +2395,7 @@
       this.score.style.display = "none";
       this.pauseButton.hidden = true;
       this.resetRunButton.hidden = true;
+      this.checkpointRetryButton.hidden = true;
       this.updateFullscreenButton();
       this.restartButton.style.display = "none";
       this.nextLevelButton.style.display = "none";
@@ -2373,7 +2415,11 @@
         this.pauseButton.setAttribute("aria-pressed", "true");
         this.restartButton.style.display = "inline-block";
         this.levelMenuButton.style.display = "inline-block";
-        this.showMessage("Pause", "Dr\xFCcke P, Escape oder Fortsetzen.", false);
+        this.showMessage(
+          "Pause",
+          `${buildPauseSummary(this.level, this.stats)} \xB7 P/Escape zum Fortsetzen`,
+          false
+        );
       } else if (this.state === GameState.PAUSED) {
         this.state = GameState.PLAYING;
         this.previousFrameTime = null;

@@ -844,6 +844,11 @@ button:focus-visible {
   color: #aaa;
 }
 
+.result-splits p.improved strong,
+.result-splits p.improved small {
+  color: #8ff0a4;
+}
+
 .result-missions p {
   margin: 0;
   color: #aaa;

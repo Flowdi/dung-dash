@@ -37,6 +37,7 @@ import { calculateCheckpointProgress } from "./checkpoint-progress.js";
 import { buildFlyBreakdown } from "./fly-preview.js";
 import { buildPlatformBreakdown } from "./platform-preview.js";
 import { buildPauseSummary } from "./pause-summary.js";
+import { compareCheckpointSplits } from "./split-comparison.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -682,10 +683,11 @@ export class Game {
       ["Beste Combo", `×${analysis.bestCombo}`],
       ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
     ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
-    this.resultSplits.hidden = result.checkpointSplits.length === 0;
-    this.resultSplits.innerHTML = result.checkpointSplits.length
-      ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map((split) =>
-          `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+    const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord?.bestSplits);
+    this.resultSplits.hidden = comparedSplits.length === 0;
+    this.resultSplits.innerHTML = comparedSplits.length
+      ? `<strong>Checkpoint-Zeiten</strong>${comparedSplits.map((split) =>
+          `<p class="${split.improved ? "improved" : ""}"><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)} · ${split.comparison}</small></p>`
         ).join("")}`
       : "";
     this.resultMissions.hidden = false;

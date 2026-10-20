@@ -1608,6 +1608,18 @@
     ].join(" \xB7 ");
   };
 
+  // src/split-comparison.js
+  var compareCheckpointSplits = (splits = [], bestSplits = []) => splits.map((split) => {
+    const best = bestSplits.find(({ order }) => order === split.order);
+    if (!best) return { ...split, comparison: "Erste Zeit", improved: false };
+    const delta = split.elapsedSeconds - best.elapsedSeconds;
+    return {
+      ...split,
+      comparison: delta === 0 ? "PB eingestellt" : `PB ${formatTimeDelta(delta)}`,
+      improved: delta < 0
+    };
+  });
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -2331,9 +2343,10 @@
         ["Beste Combo", `\xD7${analysis.bestCombo}`],
         ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
       ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
-      this.resultSplits.hidden = result.checkpointSplits.length === 0;
-      this.resultSplits.innerHTML = result.checkpointSplits.length ? `<strong>Checkpoint-Zeiten</strong>${result.checkpointSplits.map(
-        (split) => `<p><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)}</small></p>`
+      const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord == null ? void 0 : previousRecord.bestSplits);
+      this.resultSplits.hidden = comparedSplits.length === 0;
+      this.resultSplits.innerHTML = comparedSplits.length ? `<strong>Checkpoint-Zeiten</strong>${comparedSplits.map(
+        (split) => `<p class="${split.improved ? "improved" : ""}"><span>Checkpoint ${split.order}</span><strong>${formatTime(split.elapsedSeconds)}</strong><small>Abschnitt ${formatTime(split.sectionSeconds)} \xB7 ${split.comparison}</small></p>`
       ).join("")}` : "";
       this.resultMissions.hidden = false;
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(

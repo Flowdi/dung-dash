@@ -48,6 +48,22 @@ import { buildFlyBreakdown } from "../src/fly-preview.js";
 import { analyzeRun } from "../src/run-analysis.js";
 import { buildPlatformBreakdown } from "../src/platform-preview.js";
 import { buildPauseSummary } from "../src/pause-summary.js";
+import { compareCheckpointSplits } from "../src/split-comparison.js";
+
+test("checkpoint results compare every split with its personal best", () => {
+  const compared = compareCheckpointSplits([
+    { order: 1, elapsedSeconds: 20, sectionSeconds: 20 },
+    { order: 2, elapsedSeconds: 45, sectionSeconds: 25 },
+    { order: 3, elapsedSeconds: 70, sectionSeconds: 25 },
+  ], [
+    { order: 1, elapsedSeconds: 22 },
+    { order: 2, elapsedSeconds: 45 },
+  ]);
+  assert.equal(compared[0].comparison, "PB −00:02.0");
+  assert.equal(compared[0].improved, true);
+  assert.equal(compared[1].comparison, "PB eingestellt");
+  assert.equal(compared[2].comparison, "Erste Zeit");
+});
 
 test("pause summary captures the complete current run state", () => {
   const level = {

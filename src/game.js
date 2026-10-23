@@ -41,6 +41,7 @@ import { compareCheckpointSplits } from "./split-comparison.js";
 import { calculateComboProgress } from "./combo-progress.js";
 import { calculateCollectionProgress } from "./collection-progress.js";
 import { projectCurrentMedal } from "./medal-projection.js";
+import { buildRunImprovementTips } from "./run-tips.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -95,6 +96,7 @@ export class Game {
     this.resultPerformance = documentObject.getElementById("result-performance");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
+    this.resultTips = documentObject.getElementById("result-tips");
     this.copyResultButton = documentObject.getElementById("copy-result-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -481,6 +483,7 @@ export class Game {
     this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.resultTips.hidden = true;
     this.copyResultButton.hidden = true;
     this.copyResultButton.textContent = "Ergebnis kopieren";
     this.lastRunSummary = "";
@@ -712,6 +715,9 @@ export class Game {
     this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map((mission) =>
       `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "★" : "☆"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " · Neu!" : ""}</p>`
     ).join("")}`;
+    this.resultTips.hidden = false;
+    this.resultTips.innerHTML = `<strong>Tipp für den nächsten Lauf</strong>${buildRunImprovementTips(result)
+      .map((tip) => `<p>→ ${tip}</p>`).join("")}`;
   }
 
   startNextLevel() {
@@ -754,6 +760,7 @@ export class Game {
     this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.resultTips.hidden = true;
     this.copyResultButton.hidden = true;
     this.lastRunSummary = "";
     this.score.style.display = "none";

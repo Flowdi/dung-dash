@@ -1640,6 +1640,17 @@
     falls: stats.falls
   });
 
+  // src/run-tips.js
+  var buildRunImprovementTips = (result) => {
+    const tips = [];
+    const missingFlies = Math.max(0, result.totalFlies - result.fliesCollected);
+    if (missingFlies > 0) tips.push(`Noch ${missingFlies} Fliege${missingFlies === 1 ? "" : "n"} sammeln.`);
+    if (result.falls > 0) tips.push("Ohne Treffer bleibt die Goldmedaille erreichbar.");
+    if (result.bestCombo < 4) tips.push("Fliegen schneller nacheinander sammeln, um \xD74 zu erreichen.");
+    if (result.elapsedSeconds > 75) tips.push("Unter 75 Sekunden bleiben, um die Goldzeit zu erf\xFCllen.");
+    return tips.length ? tips.slice(0, 3) : ["Perfekter Lauf \u2013 jetzt z\xE4hlt nur noch ein neuer pers\xF6nlicher Rekord!"];
+  };
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1811,6 +1822,7 @@
       this.resultPerformance = documentObject.getElementById("result-performance");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
+      this.resultTips = documentObject.getElementById("result-tips");
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -2179,6 +2191,7 @@
       this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.resultTips.hidden = true;
       this.copyResultButton.hidden = true;
       this.copyResultButton.textContent = "Ergebnis kopieren";
       this.lastRunSummary = "";
@@ -2388,6 +2401,8 @@
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
         (mission) => `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "\u2605" : "\u2606"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " \xB7 Neu!" : ""}</p>`
       ).join("")}`;
+      this.resultTips.hidden = false;
+      this.resultTips.innerHTML = `<strong>Tipp f\xFCr den n\xE4chsten Lauf</strong>${buildRunImprovementTips(result).map((tip) => `<p>\u2192 ${tip}</p>`).join("")}`;
     }
     startNextLevel() {
       if (!this.nextLevelId) return;
@@ -2426,6 +2441,7 @@
       this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.resultTips.hidden = true;
       this.copyResultButton.hidden = true;
       this.lastRunSummary = "";
       this.score.style.display = "none";

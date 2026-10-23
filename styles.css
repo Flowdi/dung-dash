@@ -812,6 +812,10 @@ button:focus-visible {
   display: none;
 }
 
+.result-tips[hidden] {
+  display: none;
+}
+
 .result-performance {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -879,7 +883,8 @@ button:focus-visible {
 }
 
 .result-missions,
-.result-splits {
+.result-splits,
+.result-tips {
   display: grid;
   gap: 5px;
   margin-top: 12px;
@@ -887,6 +892,12 @@ button:focus-visible {
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.2);
   text-align: left;
+}
+
+.result-tips p {
+  margin: 0;
+  color: #d8d8d8;
+  font-size: 0.82rem;
 }
 
 .result-splits p {

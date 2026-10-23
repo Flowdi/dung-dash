@@ -3,7 +3,7 @@ const COMPLETION_BONUS = 2000;
 const ALL_FLIES_BONUS = 3000;
 const MAX_TIME_BONUS = 6000;
 const TIME_BONUS_PER_SECOND = 40;
-const COMBO_WINDOW = 4;
+export const COMBO_WINDOW = 4;
 
 export const formatTime = (seconds) => {
   const safeSeconds = Math.max(0, seconds);

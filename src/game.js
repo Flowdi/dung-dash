@@ -38,6 +38,10 @@ import { buildFlyBreakdown } from "./fly-preview.js";
 import { buildPlatformBreakdown } from "./platform-preview.js";
 import { buildPauseSummary } from "./pause-summary.js";
 import { compareCheckpointSplits } from "./split-comparison.js";
+import { calculateComboProgress } from "./combo-progress.js";
+import { calculateCollectionProgress } from "./collection-progress.js";
+import { projectCurrentMedal } from "./medal-projection.js";
+import { buildRunImprovementTips } from "./run-tips.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -92,6 +96,7 @@ export class Game {
     this.resultPerformance = documentObject.getElementById("result-performance");
     this.resultSplits = documentObject.getElementById("result-splits");
     this.resultMissions = documentObject.getElementById("result-missions");
+    this.resultTips = documentObject.getElementById("result-tips");
     this.copyResultButton = documentObject.getElementById("copy-result-btn");
     this.pauseButton = documentObject.getElementById("pause-btn");
     this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -99,10 +104,15 @@ export class Game {
     this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
+    this.collectionProgress = documentObject.getElementById("collection-progress");
+    this.collectionProgressFill = documentObject.getElementById("collection-progress-fill");
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
+    this.medalProjectionElement = documentObject.getElementById("medal-projection");
     this.comboElement = documentObject.getElementById("combo");
+    this.comboProgress = documentObject.getElementById("combo-progress");
+    this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
     this.currentMissionsElement = documentObject.getElementById("current-missions");
     this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
     this.routeProgress = documentObject.getElementById("route-progress");
@@ -473,6 +483,7 @@ export class Game {
     this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.resultTips.hidden = true;
     this.copyResultButton.hidden = true;
     this.copyResultButton.textContent = "Ergebnis kopieren";
     this.lastRunSummary = "";
@@ -565,10 +576,20 @@ export class Game {
   }
 
   updateHud() {
+    const collection = calculateCollectionProgress(this.fliesCollected, this.level?.flies.length ?? 0);
+    this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
+    this.collectionProgress.classList.toggle("complete", collection.complete);
+    this.collectionProgressFill.style.width = `${collection.percent}%`;
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.runFallsElement.textContent = String(this.stats.falls);
+    const projectedMedal = projectCurrentMedal(this.stats, this.level?.flies.length ?? 0);
+    this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
+    this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
+    const comboProgress = calculateComboProgress(this.stats.comboRemaining);
+    this.comboProgress.hidden = !comboProgress.active;
+    this.comboProgressFill.style.width = `${comboProgress.percent}%`;
     if (this.level) {
       const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
       this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;
@@ -694,6 +715,9 @@ export class Game {
     this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map((mission) =>
       `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "★" : "☆"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " · Neu!" : ""}</p>`
     ).join("")}`;
+    this.resultTips.hidden = false;
+    this.resultTips.innerHTML = `<strong>Tipp für den nächsten Lauf</strong>${buildRunImprovementTips(result)
+      .map((tip) => `<p>→ ${tip}</p>`).join("")}`;
   }
 
   startNextLevel() {
@@ -736,6 +760,7 @@ export class Game {
     this.resultPerformance.hidden = true;
     this.resultSplits.hidden = true;
     this.resultMissions.hidden = true;
+    this.resultTips.hidden = true;
     this.copyResultButton.hidden = true;
     this.lastRunSummary = "";
     this.score.style.display = "none";

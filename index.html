@@ -80,8 +80,15 @@
     <!-- Score-Bereich -->
     <div class="score" role="status" aria-live="polite">
       <p>Fliegen eingesammelt: <span id="flies-collected">0</span>/<span id="total-flies">20</span></p>
+      <div class="collection-progress" id="collection-progress" role="progressbar" aria-label="Gesammelte Fliegen" aria-valuemin="0" aria-valuemax="100">
+        <i id="collection-progress-fill"></i>
+      </div>
       <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
+      <p class="medal-projection bronze" id="medal-projection">Aktuelle Medaille: Bronze</p>
       <p class="combo" id="combo" aria-live="polite"></p>
+      <div class="combo-progress" id="combo-progress" aria-label="Verbleibende Combo-Zeit" hidden>
+        <i id="combo-progress-fill"></i>
+      </div>
       <p class="current-missions" id="current-missions"></p>
       <p class="checkpoint-progress" id="checkpoint-progress">Toiletten: 0/0</p>
       <div class="route-progress" id="route-progress" role="progressbar" aria-label="Levelstrecke" aria-valuemin="0" aria-valuemax="100">
@@ -101,6 +108,7 @@
         <div class="result-performance" id="result-performance" hidden></div>
         <div class="result-splits" id="result-splits" hidden></div>
         <div class="result-missions" id="result-missions" hidden></div>
+        <div class="result-tips" id="result-tips" hidden></div>
         <button class="btn secondary-btn" id="copy-result-btn" type="button" hidden>Ergebnis kopieren</button>
         <button class="btn" id="next-level-btn" type="button">Nächstes Level</button>
         <button class="btn" id="restart-btn" type="button">Erneut spielen</button>

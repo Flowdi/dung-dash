@@ -1620,6 +1620,37 @@
     };
   });
 
+  // src/combo-progress.js
+  var calculateComboProgress = (remaining) => ({
+    active: remaining > 0,
+    percent: Math.round(Math.max(0, Math.min(1, remaining / COMBO_WINDOW)) * 100)
+  });
+
+  // src/collection-progress.js
+  var calculateCollectionProgress = (collected, total) => ({
+    percent: total <= 0 ? 100 : Math.round(Math.max(0, Math.min(1, collected / total)) * 100),
+    complete: total <= 0 || collected >= total
+  });
+
+  // src/medal-projection.js
+  var projectCurrentMedal = (stats, totalFlies) => calculateMedal({
+    elapsedSeconds: stats.elapsedSeconds,
+    fliesCollected: stats.fliesCollected,
+    totalFlies,
+    falls: stats.falls
+  });
+
+  // src/run-tips.js
+  var buildRunImprovementTips = (result) => {
+    const tips = [];
+    const missingFlies = Math.max(0, result.totalFlies - result.fliesCollected);
+    if (missingFlies > 0) tips.push(`Noch ${missingFlies} Fliege${missingFlies === 1 ? "" : "n"} sammeln.`);
+    if (result.falls > 0) tips.push("Ohne Treffer bleibt die Goldmedaille erreichbar.");
+    if (result.bestCombo < 4) tips.push("Fliegen schneller nacheinander sammeln, um \xD74 zu erreichen.");
+    if (result.elapsedSeconds > 75) tips.push("Unter 75 Sekunden bleiben, um die Goldzeit zu erf\xFCllen.");
+    return tips.length ? tips.slice(0, 3) : ["Perfekter Lauf \u2013 jetzt z\xE4hlt nur noch ein neuer pers\xF6nlicher Rekord!"];
+  };
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1791,6 +1822,7 @@
       this.resultPerformance = documentObject.getElementById("result-performance");
       this.resultSplits = documentObject.getElementById("result-splits");
       this.resultMissions = documentObject.getElementById("result-missions");
+      this.resultTips = documentObject.getElementById("result-tips");
       this.copyResultButton = documentObject.getElementById("copy-result-btn");
       this.pauseButton = documentObject.getElementById("pause-btn");
       this.resetRunButton = documentObject.getElementById("reset-run-btn");
@@ -1798,10 +1830,15 @@
       this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
+      this.collectionProgress = documentObject.getElementById("collection-progress");
+      this.collectionProgressFill = documentObject.getElementById("collection-progress-fill");
       this.timerElement = documentObject.getElementById("run-time");
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
+      this.medalProjectionElement = documentObject.getElementById("medal-projection");
       this.comboElement = documentObject.getElementById("combo");
+      this.comboProgress = documentObject.getElementById("combo-progress");
+      this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
       this.routeProgress = documentObject.getElementById("route-progress");
@@ -2154,6 +2191,7 @@
       this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.resultTips.hidden = true;
       this.copyResultButton.hidden = true;
       this.copyResultButton.textContent = "Ergebnis kopieren";
       this.lastRunSummary = "";
@@ -2238,10 +2276,21 @@
       this.updateHud();
     }
     updateHud() {
+      var _a, _b, _c, _d;
+      const collection = calculateCollectionProgress(this.fliesCollected, (_b = (_a = this.level) == null ? void 0 : _a.flies.length) != null ? _b : 0);
+      this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
+      this.collectionProgress.classList.toggle("complete", collection.complete);
+      this.collectionProgressFill.style.width = `${collection.percent}%`;
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);
+      const projectedMedal = projectCurrentMedal(this.stats, (_d = (_c = this.level) == null ? void 0 : _c.flies.length) != null ? _d : 0);
+      this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
+      this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
+      const comboProgress = calculateComboProgress(this.stats.comboRemaining);
+      this.comboProgress.hidden = !comboProgress.active;
+      this.comboProgressFill.style.width = `${comboProgress.percent}%`;
       if (this.level) {
         const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
         this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;
@@ -2352,6 +2401,8 @@
       this.resultMissions.innerHTML = `<strong>Missionen dieses Laufs</strong>${missionResults.map(
         (mission) => `<p class="${mission.completed ? "completed" : ""}">${mission.completed ? "\u2605" : "\u2606"} ${mission.label}${newMissions.some(({ id }) => id === mission.id) ? " \xB7 Neu!" : ""}</p>`
       ).join("")}`;
+      this.resultTips.hidden = false;
+      this.resultTips.innerHTML = `<strong>Tipp f\xFCr den n\xE4chsten Lauf</strong>${buildRunImprovementTips(result).map((tip) => `<p>\u2192 ${tip}</p>`).join("")}`;
     }
     startNextLevel() {
       if (!this.nextLevelId) return;
@@ -2390,6 +2441,7 @@
       this.resultPerformance.hidden = true;
       this.resultSplits.hidden = true;
       this.resultMissions.hidden = true;
+      this.resultTips.hidden = true;
       this.copyResultButton.hidden = true;
       this.lastRunSummary = "";
       this.score.style.display = "none";

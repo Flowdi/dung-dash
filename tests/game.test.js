@@ -49,6 +49,47 @@ import { analyzeRun } from "../src/run-analysis.js";
 import { buildPlatformBreakdown } from "../src/platform-preview.js";
 import { buildPauseSummary } from "../src/pause-summary.js";
 import { compareCheckpointSplits } from "../src/split-comparison.js";
+import { calculateComboProgress } from "../src/combo-progress.js";
+import { calculateCollectionProgress } from "../src/collection-progress.js";
+import { projectCurrentMedal } from "../src/medal-projection.js";
+import { buildRunImprovementTips } from "../src/run-tips.js";
+
+test("run tips prioritize collection, clean play and combo improvement", () => {
+  assert.deepEqual(buildRunImprovementTips({
+    totalFlies: 10, fliesCollected: 8, falls: 2, bestCombo: 2, elapsedSeconds: 90,
+  }), [
+    "Noch 2 Fliegen sammeln.",
+    "Ohne Treffer bleibt die Goldmedaille erreichbar.",
+    "Fliegen schneller nacheinander sammeln, um ×4 zu erreichen.",
+  ]);
+  assert.deepEqual(buildRunImprovementTips({
+    totalFlies: 10, fliesCollected: 10, falls: 0, bestCombo: 4, elapsedSeconds: 70,
+  }), ["Perfekter Lauf – jetzt zählt nur noch ein neuer persönlicher Rekord!"]);
+});
+
+test("live medal projection follows collection, time and falls", () => {
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 40, fliesCollected: 20, falls: 0,
+  }, 20), "Gold");
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 80, fliesCollected: 15, falls: 1,
+  }, 20), "Silber");
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 130, fliesCollected: 20, falls: 0,
+  }, 20), "Bronze");
+});
+
+test("collection progress handles partial, complete and empty levels", () => {
+  assert.deepEqual(calculateCollectionProgress(3, 12), { percent: 25, complete: false });
+  assert.deepEqual(calculateCollectionProgress(12, 12), { percent: 100, complete: true });
+  assert.deepEqual(calculateCollectionProgress(0, 0), { percent: 100, complete: true });
+});
+
+test("combo progress exposes a clamped countdown percentage", () => {
+  assert.deepEqual(calculateComboProgress(4), { active: true, percent: 100 });
+  assert.deepEqual(calculateComboProgress(2), { active: true, percent: 50 });
+  assert.deepEqual(calculateComboProgress(0), { active: false, percent: 0 });
+});
 
 test("checkpoint results compare every split with its personal best", () => {
   const compared = compareCheckpointSplits([

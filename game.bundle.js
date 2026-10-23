@@ -1620,6 +1620,12 @@
     };
   });
 
+  // src/combo-progress.js
+  var calculateComboProgress = (remaining) => ({
+    active: remaining > 0,
+    percent: Math.round(Math.max(0, Math.min(1, remaining / COMBO_WINDOW)) * 100)
+  });
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1802,6 +1808,8 @@
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.comboElement = documentObject.getElementById("combo");
+      this.comboProgress = documentObject.getElementById("combo-progress");
+      this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
       this.currentMissionsElement = documentObject.getElementById("current-missions");
       this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
       this.routeProgress = documentObject.getElementById("route-progress");
@@ -2242,6 +2250,9 @@
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
+      const comboProgress = calculateComboProgress(this.stats.comboRemaining);
+      this.comboProgress.hidden = !comboProgress.active;
+      this.comboProgressFill.style.width = `${comboProgress.percent}%`;
       if (this.level) {
         const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
         this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;

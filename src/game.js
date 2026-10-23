@@ -38,6 +38,7 @@ import { buildFlyBreakdown } from "./fly-preview.js";
 import { buildPlatformBreakdown } from "./platform-preview.js";
 import { buildPauseSummary } from "./pause-summary.js";
 import { compareCheckpointSplits } from "./split-comparison.js";
+import { calculateComboProgress } from "./combo-progress.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -103,6 +104,8 @@ export class Game {
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
     this.comboElement = documentObject.getElementById("combo");
+    this.comboProgress = documentObject.getElementById("combo-progress");
+    this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
     this.currentMissionsElement = documentObject.getElementById("current-missions");
     this.checkpointProgressElement = documentObject.getElementById("checkpoint-progress");
     this.routeProgress = documentObject.getElementById("route-progress");
@@ -569,6 +572,9 @@ export class Game {
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.runFallsElement.textContent = String(this.stats.falls);
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
+    const comboProgress = calculateComboProgress(this.stats.comboRemaining);
+    this.comboProgress.hidden = !comboProgress.active;
+    this.comboProgressFill.style.width = `${comboProgress.percent}%`;
     if (this.level) {
       const checkpointProgress = calculateCheckpointProgress(this.level.checkpoints);
       this.checkpointProgressElement.textContent = `Toiletten: ${checkpointProgress.reached}/${checkpointProgress.total}`;

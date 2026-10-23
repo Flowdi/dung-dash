@@ -635,6 +635,30 @@ body.reduce-motion .route-progress i {
   font-weight: 800;
 }
 
+.combo-progress {
+  height: 5px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.combo-progress[hidden] {
+  display: none;
+}
+
+.combo-progress i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--focus);
+  transition: width 80ms linear;
+}
+
+body.reduce-motion .combo-progress i {
+  transition: none;
+}
+
 .btn:hover,
 .hud-button:hover {
   background: var(--accent-hover);
@@ -990,7 +1014,8 @@ button:focus-visible {
   }
 
   .campaign-progress i,
-  .route-progress i {
+  .route-progress i,
+  .combo-progress i {
     transition: none;
   }
 }

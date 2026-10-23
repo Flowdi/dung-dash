@@ -49,6 +49,13 @@ import { analyzeRun } from "../src/run-analysis.js";
 import { buildPlatformBreakdown } from "../src/platform-preview.js";
 import { buildPauseSummary } from "../src/pause-summary.js";
 import { compareCheckpointSplits } from "../src/split-comparison.js";
+import { calculateComboProgress } from "../src/combo-progress.js";
+
+test("combo progress exposes a clamped countdown percentage", () => {
+  assert.deepEqual(calculateComboProgress(4), { active: true, percent: 100 });
+  assert.deepEqual(calculateComboProgress(2), { active: true, percent: 50 });
+  assert.deepEqual(calculateComboProgress(0), { active: false, percent: 0 });
+});
 
 test("checkpoint results compare every split with its personal best", () => {
   const compared = compareCheckpointSplits([

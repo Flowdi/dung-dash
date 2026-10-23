@@ -1626,6 +1626,12 @@
     percent: Math.round(Math.max(0, Math.min(1, remaining / COMBO_WINDOW)) * 100)
   });
 
+  // src/collection-progress.js
+  var calculateCollectionProgress = (collected, total) => ({
+    percent: total <= 0 ? 100 : Math.round(Math.max(0, Math.min(1, collected / total)) * 100),
+    complete: total <= 0 || collected >= total
+  });
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1804,6 +1810,8 @@
       this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
       this.fliesCollectedElement = documentObject.getElementById("flies-collected");
       this.totalFliesElement = documentObject.getElementById("total-flies");
+      this.collectionProgress = documentObject.getElementById("collection-progress");
+      this.collectionProgressFill = documentObject.getElementById("collection-progress-fill");
       this.timerElement = documentObject.getElementById("run-time");
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
@@ -2246,6 +2254,11 @@
       this.updateHud();
     }
     updateHud() {
+      var _a, _b;
+      const collection = calculateCollectionProgress(this.fliesCollected, (_b = (_a = this.level) == null ? void 0 : _a.flies.length) != null ? _b : 0);
+      this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
+      this.collectionProgress.classList.toggle("complete", collection.complete);
+      this.collectionProgressFill.style.width = `${collection.percent}%`;
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);

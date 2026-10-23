@@ -39,6 +39,7 @@ import { buildPlatformBreakdown } from "./platform-preview.js";
 import { buildPauseSummary } from "./pause-summary.js";
 import { compareCheckpointSplits } from "./split-comparison.js";
 import { calculateComboProgress } from "./combo-progress.js";
+import { calculateCollectionProgress } from "./collection-progress.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -100,6 +101,8 @@ export class Game {
     this.fullscreenButton = documentObject.getElementById("fullscreen-btn");
     this.fliesCollectedElement = documentObject.getElementById("flies-collected");
     this.totalFliesElement = documentObject.getElementById("total-flies");
+    this.collectionProgress = documentObject.getElementById("collection-progress");
+    this.collectionProgressFill = documentObject.getElementById("collection-progress-fill");
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
@@ -568,6 +571,10 @@ export class Game {
   }
 
   updateHud() {
+    const collection = calculateCollectionProgress(this.fliesCollected, this.level?.flies.length ?? 0);
+    this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
+    this.collectionProgress.classList.toggle("complete", collection.complete);
+    this.collectionProgressFill.style.width = `${collection.percent}%`;
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.runFallsElement.textContent = String(this.stats.falls);

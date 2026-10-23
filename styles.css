@@ -629,6 +629,30 @@ body.reduce-motion .route-progress i {
   font-variant-numeric: tabular-nums;
 }
 
+.collection-progress {
+  height: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.collection-progress i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #8fc7e8;
+  transition: width 180ms ease-out;
+}
+
+.collection-progress.complete i {
+  background: #8ff0a4;
+}
+
+body.reduce-motion .collection-progress i {
+  transition: none;
+}
+
 .combo {
   min-height: 1.25em;
   color: var(--focus);
@@ -1015,7 +1039,8 @@ button:focus-visible {
 
   .campaign-progress i,
   .route-progress i,
-  .combo-progress i {
+  .combo-progress i,
+  .collection-progress i {
     transition: none;
   }
 }

@@ -15,6 +15,7 @@ test("index loads the classic bundle for direct file usage", async () => {
   assert.match(html, /id="pause-btn"/);
   assert.match(html, /id="current-missions"/);
   assert.match(html, /id="combo-progress"/);
+  assert.match(html, /id="collection-progress"/);
   assert.match(html, /id="checkpoint-progress"/);
   assert.match(html, /id="route-progress"/);
   assert.match(html, /id="reset-run-btn"/);

@@ -50,6 +50,13 @@ import { buildPlatformBreakdown } from "../src/platform-preview.js";
 import { buildPauseSummary } from "../src/pause-summary.js";
 import { compareCheckpointSplits } from "../src/split-comparison.js";
 import { calculateComboProgress } from "../src/combo-progress.js";
+import { calculateCollectionProgress } from "../src/collection-progress.js";
+
+test("collection progress handles partial, complete and empty levels", () => {
+  assert.deepEqual(calculateCollectionProgress(3, 12), { percent: 25, complete: false });
+  assert.deepEqual(calculateCollectionProgress(12, 12), { percent: 100, complete: true });
+  assert.deepEqual(calculateCollectionProgress(0, 0), { percent: 100, complete: true });
+});
 
 test("combo progress exposes a clamped countdown percentage", () => {
   assert.deepEqual(calculateComboProgress(4), { active: true, percent: 100 });

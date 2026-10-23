@@ -51,6 +51,19 @@ import { buildPauseSummary } from "../src/pause-summary.js";
 import { compareCheckpointSplits } from "../src/split-comparison.js";
 import { calculateComboProgress } from "../src/combo-progress.js";
 import { calculateCollectionProgress } from "../src/collection-progress.js";
+import { projectCurrentMedal } from "../src/medal-projection.js";
+
+test("live medal projection follows collection, time and falls", () => {
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 40, fliesCollected: 20, falls: 0,
+  }, 20), "Gold");
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 80, fliesCollected: 15, falls: 1,
+  }, 20), "Silber");
+  assert.equal(projectCurrentMedal({
+    elapsedSeconds: 130, fliesCollected: 20, falls: 0,
+  }, 20), "Bronze");
+});
 
 test("collection progress handles partial, complete and empty levels", () => {
   assert.deepEqual(calculateCollectionProgress(3, 12), { percent: 25, complete: false });

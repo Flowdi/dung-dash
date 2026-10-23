@@ -40,6 +40,7 @@ import { buildPauseSummary } from "./pause-summary.js";
 import { compareCheckpointSplits } from "./split-comparison.js";
 import { calculateComboProgress } from "./combo-progress.js";
 import { calculateCollectionProgress } from "./collection-progress.js";
+import { projectCurrentMedal } from "./medal-projection.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -106,6 +107,7 @@ export class Game {
     this.timerElement = documentObject.getElementById("run-time");
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
+    this.medalProjectionElement = documentObject.getElementById("medal-projection");
     this.comboElement = documentObject.getElementById("combo");
     this.comboProgress = documentObject.getElementById("combo-progress");
     this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
@@ -578,6 +580,9 @@ export class Game {
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
     this.runScoreElement.textContent = String(this.stats.flyScore);
     this.runFallsElement.textContent = String(this.stats.falls);
+    const projectedMedal = projectCurrentMedal(this.stats, this.level?.flies.length ?? 0);
+    this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
+    this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
     this.comboElement.textContent = this.stats.combo > 1 ? `Combo ×${this.stats.combo}` : "";
     const comboProgress = calculateComboProgress(this.stats.comboRemaining);
     this.comboProgress.hidden = !comboProgress.active;

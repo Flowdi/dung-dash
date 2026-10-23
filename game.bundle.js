@@ -1632,6 +1632,14 @@
     complete: total <= 0 || collected >= total
   });
 
+  // src/medal-projection.js
+  var projectCurrentMedal = (stats, totalFlies) => calculateMedal({
+    elapsedSeconds: stats.elapsedSeconds,
+    fliesCollected: stats.fliesCollected,
+    totalFlies,
+    falls: stats.falls
+  });
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1815,6 +1823,7 @@
       this.timerElement = documentObject.getElementById("run-time");
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
+      this.medalProjectionElement = documentObject.getElementById("medal-projection");
       this.comboElement = documentObject.getElementById("combo");
       this.comboProgress = documentObject.getElementById("combo-progress");
       this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
@@ -2254,7 +2263,7 @@
       this.updateHud();
     }
     updateHud() {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const collection = calculateCollectionProgress(this.fliesCollected, (_b = (_a = this.level) == null ? void 0 : _a.flies.length) != null ? _b : 0);
       this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
       this.collectionProgress.classList.toggle("complete", collection.complete);
@@ -2262,6 +2271,9 @@
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
       this.runScoreElement.textContent = String(this.stats.flyScore);
       this.runFallsElement.textContent = String(this.stats.falls);
+      const projectedMedal = projectCurrentMedal(this.stats, (_d = (_c = this.level) == null ? void 0 : _c.flies.length) != null ? _d : 0);
+      this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
+      this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";
       const comboProgress = calculateComboProgress(this.stats.comboRemaining);
       this.comboProgress.hidden = !comboProgress.active;

@@ -659,6 +659,16 @@ body.reduce-motion .collection-progress i {
   font-weight: 800;
 }
 
+.medal-projection {
+  margin-top: 4px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.medal-projection.bronze { color: #d89b6a; }
+.medal-projection.silber { color: #d8e0e8; }
+.medal-projection.gold { color: #ffd85a; }
+
 .combo-progress {
   height: 5px;
   margin-top: 2px;

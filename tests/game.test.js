@@ -55,6 +55,14 @@ import { projectCurrentMedal } from "../src/medal-projection.js";
 import { buildRunImprovementTips } from "../src/run-tips.js";
 import { calculateProjectedScore } from "../src/score-projection.js";
 import { compareProjectedScore } from "../src/score-pace.js";
+import { buildMedalRequirements } from "../src/medal-guide.js";
+
+test("medal guide translates scoring rules for the selected fly count", () => {
+  const requirements = buildMedalRequirements(11);
+  assert.equal(requirements[0].requirement, "Alle 11 Fliegen · höchstens 75 Sekunden · keine Treffer");
+  assert.equal(requirements[1].requirement, "Mindestens 9 Fliegen · höchstens 120 Sekunden");
+  assert.equal(requirements[2].requirement, "Level erfolgreich abschließen");
+});
 
 test("score pace compares the projection with the cached level highscore", () => {
   assert.deepEqual(compareProjectedScore(8000, 0), {

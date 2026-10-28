@@ -44,6 +44,7 @@ import { projectCurrentMedal } from "./medal-projection.js";
 import { buildRunImprovementTips } from "./run-tips.js";
 import { calculateProjectedScore } from "./score-projection.js";
 import { compareProjectedScore } from "./score-pace.js";
+import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -72,6 +73,7 @@ export class Game {
     this.levelPreview = documentObject.getElementById("level-preview");
     this.flyPreview = documentObject.getElementById("fly-preview");
     this.platformPreview = documentObject.getElementById("platform-preview");
+    this.medalGuideList = documentObject.getElementById("medal-guide-list");
     this.levelRecordCard = documentObject.getElementById("level-record-card");
     this.missionList = documentObject.getElementById("mission-list");
     this.missionStars = documentObject.getElementById("mission-stars");
@@ -265,6 +267,11 @@ export class Game {
       const item = this.document.createElement("p");
       item.className = type;
       item.innerHTML = `<strong>${count}× ${label}</strong><small>${effect}</small>`;
+      return item;
+    }));
+    this.medalGuideList.replaceChildren(...buildMedalRequirements(definition.flies.length).map(({ medal, icon, requirement }) => {
+      const item = this.document.createElement("p");
+      item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${medal}</strong><small>${requirement}</small>`;
       return item;
     }));
     const stats = buildLevelRecordStats(record, definition.missions.length);

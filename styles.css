@@ -176,6 +176,40 @@ body {
 .platform-preview .timed { border-color: rgba(255, 110, 110, 0.5); }
 .platform-preview .conveyor { border-color: rgba(196, 143, 255, 0.5); }
 
+.medal-guide {
+  width: min(100%, 620px);
+  margin: 8px auto;
+  text-align: left;
+}
+
+.medal-guide > strong {
+  color: var(--focus);
+  font-size: 0.78rem;
+}
+
+#medal-guide-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 5px;
+}
+
+#medal-guide-list p {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 5px;
+  padding: 7px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.68rem;
+}
+
+#medal-guide-list small {
+  grid-column: 1 / -1;
+  color: #aaa;
+  line-height: 1.25;
+}
+
 .level-record-card {
   display: grid;
   gap: 7px;
@@ -1089,6 +1123,10 @@ button:focus-visible {
 }
 
 @media (max-width: 540px) {
+  #medal-guide-list {
+    grid-template-columns: 1fr;
+  }
+
   .level-preview {
     grid-template-columns: repeat(3, 1fr);
   }

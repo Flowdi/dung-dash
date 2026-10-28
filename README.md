@@ -12,6 +12,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 - prozentualer Sammelfortschritt mit Abschlussmarkierung im HUD
 - Bronze-, Silber- und Goldmedaillen
 - laufende Medaillenprognose anhand von Zeit, Sammlung und Treffern
+- konkrete Gold-, Silber- und Bronze-Anforderungen vor jedem Levelstart
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
 - Levelversuche sowie durchschnittlicher Score und durchschnittliche Treffer pro Lauf

@@ -1672,6 +1672,25 @@
     };
   };
 
+  // src/medal-guide.js
+  var buildMedalRequirements = (totalFlies) => [
+    {
+      medal: "Gold",
+      icon: "\u{1F947}",
+      requirement: `Alle ${totalFlies} Fliegen \xB7 h\xF6chstens 75 Sekunden \xB7 keine Treffer`
+    },
+    {
+      medal: "Silber",
+      icon: "\u{1F948}",
+      requirement: `Mindestens ${Math.ceil(totalFlies * 0.75)} Fliegen \xB7 h\xF6chstens 120 Sekunden`
+    },
+    {
+      medal: "Bronze",
+      icon: "\u{1F949}",
+      requirement: "Level erfolgreich abschlie\xDFen"
+    }
+  ];
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1817,6 +1836,7 @@
       this.levelPreview = documentObject.getElementById("level-preview");
       this.flyPreview = documentObject.getElementById("fly-preview");
       this.platformPreview = documentObject.getElementById("platform-preview");
+      this.medalGuideList = documentObject.getElementById("medal-guide-list");
       this.levelRecordCard = documentObject.getElementById("level-record-card");
       this.missionList = documentObject.getElementById("mission-list");
       this.missionStars = documentObject.getElementById("mission-stars");
@@ -2004,6 +2024,11 @@
         const item = this.document.createElement("p");
         item.className = type;
         item.innerHTML = `<strong>${count}\xD7 ${label}</strong><small>${effect}</small>`;
+        return item;
+      }));
+      this.medalGuideList.replaceChildren(...buildMedalRequirements(definition.flies.length).map(({ medal, icon, requirement }) => {
+        const item = this.document.createElement("p");
+        item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${medal}</strong><small>${requirement}</small>`;
         return item;
       }));
       const stats = buildLevelRecordStats(record, definition.missions.length);

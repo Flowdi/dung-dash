@@ -5,11 +5,14 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 ## Aktuelle Features
 
 - Zeitmessung ab der ersten Spielerbewegung
+- laufende Scoreprognose mit Combo, Zeitbonus, Sammlung und Trefferabzug
+- Live-Abstand zum persönlichen Highscore des aktuellen Levels
 - Fliegen-Score mit zeitlich begrenzter Combo bis ×4
 - sichtbare Restzeit der laufenden Combo im HUD
 - prozentualer Sammelfortschritt mit Abschlussmarkierung im HUD
 - Bronze-, Silber- und Goldmedaillen
 - laufende Medaillenprognose anhand von Zeit, Sammlung und Treffern
+- konkrete Gold-, Silber- und Bronze-Anforderungen vor jedem Levelstart
 - persönliche Bestzeit, Highscore und Gesamtstatistik im lokalen Browserspeicher
 - dauerhaft gespeicherte Gesamtspielzeit und Trefferstatistik
 - Levelversuche sowie durchschnittlicher Score und durchschnittliche Treffer pro Lauf

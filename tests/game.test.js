@@ -53,6 +53,36 @@ import { calculateComboProgress } from "../src/combo-progress.js";
 import { calculateCollectionProgress } from "../src/collection-progress.js";
 import { projectCurrentMedal } from "../src/medal-projection.js";
 import { buildRunImprovementTips } from "../src/run-tips.js";
+import { calculateProjectedScore } from "../src/score-projection.js";
+import { compareProjectedScore } from "../src/score-pace.js";
+import { buildMedalRequirements } from "../src/medal-guide.js";
+
+test("medal guide translates scoring rules for the selected fly count", () => {
+  const requirements = buildMedalRequirements(11);
+  assert.equal(requirements[0].requirement, "Alle 11 Fliegen · höchstens 75 Sekunden · keine Treffer");
+  assert.equal(requirements[1].requirement, "Mindestens 9 Fliegen · höchstens 120 Sekunden");
+  assert.equal(requirements[2].requirement, "Level erfolgreich abschließen");
+});
+
+test("score pace compares the projection with the cached level highscore", () => {
+  assert.deepEqual(compareProjectedScore(8000, 0), {
+    hasRecord: false, ahead: false, text: "Noch kein Level-Highscore",
+  });
+  assert.deepEqual(compareProjectedScore(12000, 10500), {
+    hasRecord: true, ahead: true, text: "+1500 zum Highscore",
+  });
+  assert.deepEqual(compareProjectedScore(9000, 10500), {
+    hasRecord: true, ahead: false, text: "−1500 zum Highscore",
+  });
+});
+
+test("score projection uses the same complete formula as final scoring", () => {
+  const stats = { elapsedSeconds: 50, fliesCollected: 10, flyScore: 7500, falls: 1 };
+  assert.equal(calculateProjectedScore(stats, 10), calculateFinalScore({
+    ...stats,
+    totalFlies: 10,
+  }));
+});
 
 test("run tips prioritize collection, clean play and combo improvement", () => {
   assert.deepEqual(buildRunImprovementTips({

@@ -30,6 +30,10 @@
       <div class="level-preview" id="level-preview" aria-label="Levelvorschau"></div>
       <div class="fly-preview" id="fly-preview" aria-label="Fliegenarten in diesem Level"></div>
       <div class="platform-preview" id="platform-preview" aria-label="Plattformtypen in diesem Level"></div>
+      <section class="medal-guide" aria-labelledby="medal-guide-title">
+        <strong id="medal-guide-title">Medaillenanforderungen</strong>
+        <div id="medal-guide-list"></div>
+      </section>
       <section class="level-record-card" id="level-record-card" aria-live="polite"></section>
       <section class="mission-panel" aria-labelledby="mission-title">
         <h2 id="mission-title">Level-Missionen <span id="mission-stars"></span></h2>
@@ -83,8 +87,9 @@
       <div class="collection-progress" id="collection-progress" role="progressbar" aria-label="Gesammelte Fliegen" aria-valuemin="0" aria-valuemax="100">
         <i id="collection-progress-fill"></i>
       </div>
-      <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Score: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
+      <p class="run-stats"><span>Zeit: <strong id="run-time">00:00.0</strong></span><span>Prognose: <strong id="run-score">0</strong></span><span>Treffer: <strong id="run-falls">0</strong></span></p>
       <p class="medal-projection bronze" id="medal-projection">Aktuelle Medaille: Bronze</p>
+      <p class="score-pace" id="score-pace">Noch kein Level-Highscore</p>
       <p class="combo" id="combo" aria-live="polite"></p>
       <div class="combo-progress" id="combo-progress" aria-label="Verbleibende Combo-Zeit" hidden>
         <i id="combo-progress-fill"></i>

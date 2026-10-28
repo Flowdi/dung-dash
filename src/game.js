@@ -42,6 +42,7 @@ import { calculateComboProgress } from "./combo-progress.js";
 import { calculateCollectionProgress } from "./collection-progress.js";
 import { projectCurrentMedal } from "./medal-projection.js";
 import { buildRunImprovementTips } from "./run-tips.js";
+import { calculateProjectedScore } from "./score-projection.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -581,7 +582,10 @@ export class Game {
     this.collectionProgress.classList.toggle("complete", collection.complete);
     this.collectionProgressFill.style.width = `${collection.percent}%`;
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
-    this.runScoreElement.textContent = String(this.stats.flyScore);
+    this.runScoreElement.textContent = String(calculateProjectedScore(
+      this.stats,
+      this.level?.flies.length ?? 0
+    ));
     this.runFallsElement.textContent = String(this.stats.falls);
     const projectedMedal = projectCurrentMedal(this.stats, this.level?.flies.length ?? 0);
     this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;

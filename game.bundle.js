@@ -1651,6 +1651,15 @@
     return tips.length ? tips.slice(0, 3) : ["Perfekter Lauf \u2013 jetzt z\xE4hlt nur noch ein neuer pers\xF6nlicher Rekord!"];
   };
 
+  // src/score-projection.js
+  var calculateProjectedScore = (stats, totalFlies) => calculateScoreBreakdown({
+    elapsedSeconds: stats.elapsedSeconds,
+    fliesCollected: stats.fliesCollected,
+    totalFlies,
+    falls: stats.falls,
+    flyScore: stats.flyScore
+  }).total;
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -2276,15 +2285,18 @@
       this.updateHud();
     }
     updateHud() {
-      var _a, _b, _c, _d;
+      var _a, _b, _c, _d, _e, _f;
       const collection = calculateCollectionProgress(this.fliesCollected, (_b = (_a = this.level) == null ? void 0 : _a.flies.length) != null ? _b : 0);
       this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
       this.collectionProgress.classList.toggle("complete", collection.complete);
       this.collectionProgressFill.style.width = `${collection.percent}%`;
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
-      this.runScoreElement.textContent = String(this.stats.flyScore);
+      this.runScoreElement.textContent = String(calculateProjectedScore(
+        this.stats,
+        (_d = (_c = this.level) == null ? void 0 : _c.flies.length) != null ? _d : 0
+      ));
       this.runFallsElement.textContent = String(this.stats.falls);
-      const projectedMedal = projectCurrentMedal(this.stats, (_d = (_c = this.level) == null ? void 0 : _c.flies.length) != null ? _d : 0);
+      const projectedMedal = projectCurrentMedal(this.stats, (_f = (_e = this.level) == null ? void 0 : _e.flies.length) != null ? _f : 0);
       this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
       this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";

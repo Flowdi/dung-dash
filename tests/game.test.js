@@ -53,6 +53,15 @@ import { calculateComboProgress } from "../src/combo-progress.js";
 import { calculateCollectionProgress } from "../src/collection-progress.js";
 import { projectCurrentMedal } from "../src/medal-projection.js";
 import { buildRunImprovementTips } from "../src/run-tips.js";
+import { calculateProjectedScore } from "../src/score-projection.js";
+
+test("score projection uses the same complete formula as final scoring", () => {
+  const stats = { elapsedSeconds: 50, fliesCollected: 10, flyScore: 7500, falls: 1 };
+  assert.equal(calculateProjectedScore(stats, 10), calculateFinalScore({
+    ...stats,
+    totalFlies: 10,
+  }));
+});
 
 test("run tips prioritize collection, clean play and combo improvement", () => {
   assert.deepEqual(buildRunImprovementTips({

@@ -5,6 +5,7 @@ Ein kleiner Canvas-Platformer: Sammle Fliegen, erreiche die Toiletten in der ric
 ## Aktuelle Features
 
 - Zeitmessung ab der ersten Spielerbewegung
+- laufende Scoreprognose mit Combo, Zeitbonus, Sammlung und Trefferabzug
 - Fliegen-Score mit zeitlich begrenzter Combo bis ×4
 - sichtbare Restzeit der laufenden Combo im HUD
 - prozentualer Sammelfortschritt mit Abschlussmarkierung im HUD

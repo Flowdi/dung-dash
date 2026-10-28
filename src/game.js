@@ -43,6 +43,7 @@ import { calculateCollectionProgress } from "./collection-progress.js";
 import { projectCurrentMedal } from "./medal-projection.js";
 import { buildRunImprovementTips } from "./run-tips.js";
 import { calculateProjectedScore } from "./score-projection.js";
+import { compareProjectedScore } from "./score-pace.js";
 import { analyzeRun } from "./run-analysis.js";
 import {
   findReachedCheckpoint,
@@ -111,6 +112,7 @@ export class Game {
     this.runScoreElement = documentObject.getElementById("run-score");
     this.runFallsElement = documentObject.getElementById("run-falls");
     this.medalProjectionElement = documentObject.getElementById("medal-projection");
+    this.scorePaceElement = documentObject.getElementById("score-pace");
     this.comboElement = documentObject.getElementById("combo");
     this.comboProgress = documentObject.getElementById("combo-progress");
     this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
@@ -136,6 +138,7 @@ export class Game {
     this.stats = new RunStats();
     this.lastSafePosition = { x: 100, y: 400 };
     this.nextLevelId = null;
+    this.activeLevelRecord = null;
     this.lastRunSummary = "";
     let storage = null;
     try {
@@ -466,6 +469,7 @@ export class Game {
     if (this.animationFrameId !== null) this.window.cancelAnimationFrame(this.animationFrameId);
     if (this.messageTimeout !== null) this.window.clearTimeout(this.messageTimeout);
     this.level = createLevel(this.selectedLevelId);
+    this.activeLevelRecord = this.progressStore.load().levelRecords?.[this.selectedLevelId] ?? null;
     this.document.body.classList.add("game-running");
     this.input.reset();
     this.cameraX = 0;
@@ -582,10 +586,14 @@ export class Game {
     this.collectionProgress.classList.toggle("complete", collection.complete);
     this.collectionProgressFill.style.width = `${collection.percent}%`;
     this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
-    this.runScoreElement.textContent = String(calculateProjectedScore(
+    const projectedScore = calculateProjectedScore(
       this.stats,
       this.level?.flies.length ?? 0
-    ));
+    );
+    this.runScoreElement.textContent = String(projectedScore);
+    const scorePace = compareProjectedScore(projectedScore, this.activeLevelRecord?.bestScore);
+    this.scorePaceElement.textContent = scorePace.text;
+    this.scorePaceElement.className = `score-pace${scorePace.ahead ? " ahead" : ""}`;
     this.runFallsElement.textContent = String(this.stats.falls);
     const projectedMedal = projectCurrentMedal(this.stats, this.level?.flies.length ?? 0);
     this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;

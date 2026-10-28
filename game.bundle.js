@@ -1660,6 +1660,18 @@
     flyScore: stats.flyScore
   }).total;
 
+  // src/score-pace.js
+  var compareProjectedScore = (projectedScore, bestScore) => {
+    if (!(bestScore > 0)) return { hasRecord: false, ahead: false, text: "Noch kein Level-Highscore" };
+    const delta = projectedScore - bestScore;
+    if (delta === 0) return { hasRecord: true, ahead: false, text: "Highscore eingestellt" };
+    return {
+      hasRecord: true,
+      ahead: delta > 0,
+      text: `${delta > 0 ? "+" : "\u2212"}${Math.abs(delta)} zum Highscore`
+    };
+  };
+
   // src/run-analysis.js
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
@@ -1845,6 +1857,7 @@
       this.runScoreElement = documentObject.getElementById("run-score");
       this.runFallsElement = documentObject.getElementById("run-falls");
       this.medalProjectionElement = documentObject.getElementById("medal-projection");
+      this.scorePaceElement = documentObject.getElementById("score-pace");
       this.comboElement = documentObject.getElementById("combo");
       this.comboProgress = documentObject.getElementById("combo-progress");
       this.comboProgressFill = documentObject.getElementById("combo-progress-fill");
@@ -1868,6 +1881,7 @@
       this.stats = new RunStats();
       this.lastSafePosition = { x: 100, y: 400 };
       this.nextLevelId = null;
+      this.activeLevelRecord = null;
       this.lastRunSummary = "";
       let storage = null;
       try {
@@ -2179,9 +2193,11 @@
       }
     }
     reset() {
+      var _a, _b;
       if (this.animationFrameId !== null) this.window.cancelAnimationFrame(this.animationFrameId);
       if (this.messageTimeout !== null) this.window.clearTimeout(this.messageTimeout);
       this.level = createLevel(this.selectedLevelId);
+      this.activeLevelRecord = (_b = (_a = this.progressStore.load().levelRecords) == null ? void 0 : _a[this.selectedLevelId]) != null ? _b : null;
       this.document.body.classList.add("game-running");
       this.input.reset();
       this.cameraX = 0;
@@ -2285,18 +2301,22 @@
       this.updateHud();
     }
     updateHud() {
-      var _a, _b, _c, _d, _e, _f;
+      var _a, _b, _c, _d, _e, _f, _g;
       const collection = calculateCollectionProgress(this.fliesCollected, (_b = (_a = this.level) == null ? void 0 : _a.flies.length) != null ? _b : 0);
       this.collectionProgress.setAttribute("aria-valuenow", String(collection.percent));
       this.collectionProgress.classList.toggle("complete", collection.complete);
       this.collectionProgressFill.style.width = `${collection.percent}%`;
       this.timerElement.textContent = formatTime(this.stats.elapsedSeconds);
-      this.runScoreElement.textContent = String(calculateProjectedScore(
+      const projectedScore = calculateProjectedScore(
         this.stats,
         (_d = (_c = this.level) == null ? void 0 : _c.flies.length) != null ? _d : 0
-      ));
+      );
+      this.runScoreElement.textContent = String(projectedScore);
+      const scorePace = compareProjectedScore(projectedScore, (_e = this.activeLevelRecord) == null ? void 0 : _e.bestScore);
+      this.scorePaceElement.textContent = scorePace.text;
+      this.scorePaceElement.className = `score-pace${scorePace.ahead ? " ahead" : ""}`;
       this.runFallsElement.textContent = String(this.stats.falls);
-      const projectedMedal = projectCurrentMedal(this.stats, (_f = (_e = this.level) == null ? void 0 : _e.flies.length) != null ? _f : 0);
+      const projectedMedal = projectCurrentMedal(this.stats, (_g = (_f = this.level) == null ? void 0 : _f.flies.length) != null ? _g : 0);
       this.medalProjectionElement.textContent = `Aktuelle Medaille: ${projectedMedal}`;
       this.medalProjectionElement.className = `medal-projection ${projectedMedal.toLowerCase()}`;
       this.comboElement.textContent = this.stats.combo > 1 ? `Combo \xD7${this.stats.combo}` : "";

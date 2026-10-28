@@ -54,6 +54,19 @@ import { calculateCollectionProgress } from "../src/collection-progress.js";
 import { projectCurrentMedal } from "../src/medal-projection.js";
 import { buildRunImprovementTips } from "../src/run-tips.js";
 import { calculateProjectedScore } from "../src/score-projection.js";
+import { compareProjectedScore } from "../src/score-pace.js";
+
+test("score pace compares the projection with the cached level highscore", () => {
+  assert.deepEqual(compareProjectedScore(8000, 0), {
+    hasRecord: false, ahead: false, text: "Noch kein Level-Highscore",
+  });
+  assert.deepEqual(compareProjectedScore(12000, 10500), {
+    hasRecord: true, ahead: true, text: "+1500 zum Highscore",
+  });
+  assert.deepEqual(compareProjectedScore(9000, 10500), {
+    hasRecord: true, ahead: false, text: "−1500 zum Highscore",
+  });
+});
 
 test("score projection uses the same complete formula as final scoring", () => {
   const stats = { elapsedSeconds: 50, fliesCollected: 10, flyScore: 7500, falls: 1 };

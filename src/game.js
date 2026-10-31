@@ -92,6 +92,7 @@ export class Game {
     this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
     this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
     this.largeHudToggle = documentObject.getElementById("large-hud-toggle");
+    this.focusModeToggle = documentObject.getElementById("focus-mode-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -167,6 +168,7 @@ export class Game {
         onRestart: () => this.restartCurrentLevel(),
         onFullscreen: () => this.toggleFullscreen(),
         onCheckpoint: () => this.retryCheckpoint(),
+        onFocus: () => this.toggleFocusMode(),
       }
     );
     this.startButton.addEventListener("click", () => this.start());
@@ -202,6 +204,7 @@ export class Game {
       this.progressStore.setLargeHud(this.largeHudToggle.checked);
       this.applyLargeHudPreference(this.largeHudToggle.checked);
     });
+    this.focusModeToggle.addEventListener("change", () => this.setFocusMode(this.focusModeToggle.checked));
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -322,6 +325,8 @@ export class Game {
     this.applyHighContrastPreference(this.highContrastToggle.checked);
     this.largeHudToggle.checked = progress.preferences?.largeHud === true;
     this.applyLargeHudPreference(this.largeHudToggle.checked);
+    this.focusModeToggle.checked = progress.preferences?.focusMode === true;
+    this.applyFocusMode(this.focusModeToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -400,6 +405,20 @@ export class Game {
 
   applyLargeHudPreference(enabled) {
     this.document.body.classList.toggle("large-hud", enabled);
+  }
+
+  applyFocusMode(enabled) {
+    this.document.body.classList.toggle("focus-mode", enabled);
+  }
+
+  setFocusMode(enabled) {
+    const progress = this.progressStore.setFocusMode(enabled);
+    this.focusModeToggle.checked = progress.preferences.focusMode;
+    this.applyFocusMode(progress.preferences.focusMode);
+  }
+
+  toggleFocusMode() {
+    this.setFocusMode(!this.document.body.classList.contains("focus-mode"));
   }
 
   replayHistoryLevel(levelId) {

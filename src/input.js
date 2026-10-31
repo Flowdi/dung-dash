@@ -30,7 +30,7 @@ export class InputController {
   }
 
   bind(windowObject, touchControls = [], {
-    onPause = () => {}, onRestart = () => {}, onFullscreen = () => {}, onCheckpoint = () => {},
+    onPause = () => {}, onRestart = () => {}, onFullscreen = () => {}, onCheckpoint = () => {}, onFocus = () => {},
   } = {}) {
     windowObject.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
@@ -45,6 +45,7 @@ export class InputController {
       if (!event.repeat && key === "r") onRestart();
       if (!event.repeat && key === "f") onFullscreen();
       if (!event.repeat && key === "c") onCheckpoint();
+      if (!event.repeat && key === "h") onFocus();
       if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
         this.queueJump();
       }

@@ -108,6 +108,8 @@
       onFullscreen = () => {
       },
       onCheckpoint = () => {
+      },
+      onFocus = () => {
       }
     } = {}) {
       windowObject.addEventListener("keydown", (event) => {
@@ -123,6 +125,7 @@
         if (!event.repeat && key === "r") onRestart();
         if (!event.repeat && key === "f") onFullscreen();
         if (!event.repeat && key === "c") onCheckpoint();
+        if (!event.repeat && key === "h") onFocus();
         if (!event.repeat && (event.key === "ArrowUp" || event.key === " " || event.code === "Space" || key === "w")) {
           this.queueJump();
         }
@@ -987,6 +990,7 @@
       this.elapsedSeconds = 0;
       this.started = false;
       this.fliesCollected = 0;
+      this.specialFlies = { gold: 0, time: 0 };
       this.flyScore = 0;
       this.combo = 0;
       this.bestCombo = 0;
@@ -1003,6 +1007,7 @@
     }
     collectFly(type = "normal") {
       this.fliesCollected += 1;
+      if (type === "gold" || type === "time") this.specialFlies[type] += 1;
       this.combo = this.comboRemaining > 0 ? this.combo + 1 : 1;
       this.bestCombo = Math.max(this.bestCombo, this.combo);
       this.comboRemaining = COMBO_WINDOW;
@@ -1034,6 +1039,7 @@
         falls: this.falls,
         bestCombo: this.bestCombo,
         flyScore: this.flyScore,
+        specialFlies: { ...this.specialFlies },
         checkpointSplits: this.checkpointSplits.map((split) => ({ ...split }))
       };
       const breakdown = calculateScoreBreakdown(result);
@@ -1118,12 +1124,13 @@
     bestTime: null,
     totalRuns: 0,
     totalFlies: 0,
+    specialFlies: { gold: 0, time: 0 },
     totalPlayTime: 0,
     totalFalls: 0,
     bestCombo: 0,
     flawlessRuns: 0,
     recentRuns: [],
-    preferences: { reducedMotion: false, highContrast: false, largeHud: false },
+    preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
     unlockedLevels: ["bathroom-run"],
     levelRecords: {},
@@ -1149,7 +1156,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1172,15 +1179,20 @@
     base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
     base.totalScore = Math.max(0, Number(base.totalScore) || 0);
     base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
+    base.specialFlies = {
+      gold: Math.max(0, Number((_d = source.specialFlies) == null ? void 0 : _d.gold) || 0),
+      time: Math.max(0, Number((_e = source.specialFlies) == null ? void 0 : _e.time) || 0)
+    };
     base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
-      reducedMotion: ((_d = source.preferences) == null ? void 0 : _d.reducedMotion) === true,
-      highContrast: ((_e = source.preferences) == null ? void 0 : _e.highContrast) === true,
-      largeHud: ((_f = source.preferences) == null ? void 0 : _f.largeHud) === true
+      reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
+      highContrast: ((_g = source.preferences) == null ? void 0 : _g.highContrast) === true,
+      largeHud: ((_h = source.preferences) == null ? void 0 : _h.largeHud) === true,
+      focusMode: ((_i = source.preferences) == null ? void 0 : _i.focusMode) === true
     };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
@@ -1252,8 +1264,15 @@
         preferences: { ...progress.preferences, largeHud: Boolean(enabled) }
       });
     }
+    setFocusMode(enabled) {
+      const progress = this.load();
+      return this.replace({
+        ...progress,
+        preferences: { ...progress.preferences, focusMode: Boolean(enabled) }
+      });
+    }
     record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -1265,6 +1284,10 @@
         bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
         totalRuns: progress.totalRuns + 1,
         totalFlies: progress.totalFlies + result.fliesCollected,
+        specialFlies: {
+          gold: progress.specialFlies.gold + Math.max(0, Number((_c = result.specialFlies) == null ? void 0 : _c.gold) || 0),
+          time: progress.specialFlies.time + Math.max(0, Number((_d = result.specialFlies) == null ? void 0 : _d.time) || 0)
+        },
         totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
@@ -1276,36 +1299,37 @@
           medal: result.medal,
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
           falls: Math.max(0, Number(result.falls) || 0)
-        }, ...(_c = progress.recentRuns) != null ? _c : []].slice(0, 5),
+        }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
-          [result.medal]: ((_d = progress.medals[result.medal]) != null ? _d : 0) + 1
+          [result.medal]: ((_f = progress.medals[result.medal]) != null ? _f : 0) + 1
         },
         unlockedLevels: [.../* @__PURE__ */ new Set([
-          ...(_e = progress.unlockedLevels) != null ? _e : ["bathroom-run"],
+          ...(_g = progress.unlockedLevels) != null ? _g : ["bathroom-run"],
           ...nextLevelId ? [nextLevelId] : []
         ])],
         levelRecords: {
-          ...(_f = progress.levelRecords) != null ? _f : {},
+          ...(_h = progress.levelRecords) != null ? _h : {},
           [levelId]: {
-            attempts: ((_g = previousLevelRecord == null ? void 0 : previousLevelRecord.attempts) != null ? _g : 0) + 1,
-            bestScore: Math.max((_j = (_i = (_h = progress.levelRecords) == null ? void 0 : _h[levelId]) == null ? void 0 : _i.bestScore) != null ? _j : 0, result.score),
-            bestTime: ((_l = (_k = progress.levelRecords) == null ? void 0 : _k[levelId]) == null ? void 0 : _l.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
-            bestSplits: isNewBestTime ? ((_m = result.checkpointSplits) != null ? _m : []).map((split) => ({ ...split })) : (_n = previousLevelRecord.bestSplits) != null ? _n : [],
-            medal: this.bestMedal((_p = (_o = progress.levelRecords) == null ? void 0 : _o[levelId]) == null ? void 0 : _p.medal, result.medal),
-            bestCombo: Math.max((_q = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _q : 0, Number(result.bestCombo) || 0),
-            flawlessRuns: ((_r = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _r : 0) + (result.falls === 0 ? 1 : 0),
+            attempts: ((_i = previousLevelRecord == null ? void 0 : previousLevelRecord.attempts) != null ? _i : 0) + 1,
+            bestScore: Math.max((_l = (_k = (_j = progress.levelRecords) == null ? void 0 : _j[levelId]) == null ? void 0 : _k.bestScore) != null ? _l : 0, result.score),
+            bestTime: ((_n = (_m = progress.levelRecords) == null ? void 0 : _m[levelId]) == null ? void 0 : _n.bestTime) == null ? result.elapsedSeconds : Math.min(progress.levelRecords[levelId].bestTime, result.elapsedSeconds),
+            bestSplits: isNewBestTime ? ((_o = result.checkpointSplits) != null ? _o : []).map((split) => ({ ...split })) : (_p = previousLevelRecord.bestSplits) != null ? _p : [],
+            medal: this.bestMedal((_r = (_q = progress.levelRecords) == null ? void 0 : _q[levelId]) == null ? void 0 : _r.medal, result.medal),
+            bestCombo: Math.max((_s = previousLevelRecord == null ? void 0 : previousLevelRecord.bestCombo) != null ? _s : 0, Number(result.bestCombo) || 0),
+            bestFlies: Math.max((_t = previousLevelRecord == null ? void 0 : previousLevelRecord.bestFlies) != null ? _t : 0, Number(result.fliesCollected) || 0),
+            flawlessRuns: ((_u = previousLevelRecord == null ? void 0 : previousLevelRecord.flawlessRuns) != null ? _u : 0) + (result.falls === 0 ? 1 : 0),
             missions: [.../* @__PURE__ */ new Set([
-              ...(_u = (_t = (_s = progress.levelRecords) == null ? void 0 : _s[levelId]) == null ? void 0 : _t.missions) != null ? _u : [],
+              ...(_x = (_w = (_v = progress.levelRecords) == null ? void 0 : _v[levelId]) == null ? void 0 : _w.missions) != null ? _x : [],
               ...completedMissions
             ])]
           }
         }
       };
       const newAchievements = findNewAchievements(next, result);
-      next.achievements = [...(_v = progress.achievements) != null ? _v : [], ...newAchievements.map(({ id }) => id)];
+      next.achievements = [...(_y = progress.achievements) != null ? _y : [], ...newAchievements.map(({ id }) => id)];
       try {
-        (_w = this.storage) == null ? void 0 : _w.setItem(STORAGE_KEY, JSON.stringify(next));
+        (_z = this.storage) == null ? void 0 : _z.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch (e) {
       }
       return {
@@ -1411,16 +1435,29 @@
     return copied;
   };
 
+  // src/collection-mastery.js
+  var calculateBestCollection = (collected, total) => {
+    const safeTotal = Math.max(0, Number(total) || 0);
+    const safeCollected = Math.min(safeTotal, Math.max(0, Number(collected) || 0));
+    return {
+      collected: safeCollected,
+      percent: safeTotal === 0 ? 0 : Math.round(safeCollected / safeTotal * 100),
+      complete: safeTotal > 0 && safeCollected === safeTotal
+    };
+  };
+
   // src/level-record.js
-  var buildLevelRecordStats = (record, missionTotal) => {
+  var buildLevelRecordStats = (record, missionTotal, totalFlies = 0) => {
     var _a, _b, _c, _d, _e, _f;
     if (!record) return null;
     const completedMissions = new Set((_a = record.missions) != null ? _a : []).size;
+    const collection = calculateBestCollection(record.bestFlies, totalFlies);
     return [
       ["Medaille", (_b = record.medal) != null ? _b : "\u2013"],
       ["Highscore", (_c = record.bestScore) != null ? _c : 0],
       ["Bestzeit", record.bestTime == null ? "\u2013" : formatTime(record.bestTime)],
       ["Beste Combo", `\xD7${(_d = record.bestCombo) != null ? _d : 0}`],
+      ["Beste Sammelquote", `${collection.collected}/${totalFlies} \xB7 ${collection.percent}%`],
       ["Fehlerfrei", (_e = record.flawlessRuns) != null ? _e : 0],
       ["Versuche", (_f = record.attempts) != null ? _f : 1],
       ["Sterne", `${completedMissions}/${missionTotal}`]
@@ -1698,6 +1735,15 @@
     flawless: result.falls === 0
   });
 
+  // src/pause-help.js
+  var buildPauseHelp = ({ hasCheckpoint = false } = {}) => [
+    "P/Escape fortsetzen",
+    "R Level neu starten",
+    ...hasCheckpoint ? ["C zum Checkpoint"] : [],
+    "F Vollbild",
+    "H Fokusmodus"
+  ].join(" \xB7 ");
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -1854,6 +1900,7 @@
       this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
       this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
       this.largeHudToggle = documentObject.getElementById("large-hud-toggle");
+      this.focusModeToggle = documentObject.getElementById("focus-mode-toggle");
       this.progressResetStatus = documentObject.getElementById("progress-reset-status");
       this.restartButton = documentObject.getElementById("restart-btn");
       this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -1925,7 +1972,8 @@
           onPause: () => this.togglePause(),
           onRestart: () => this.restartCurrentLevel(),
           onFullscreen: () => this.toggleFullscreen(),
-          onCheckpoint: () => this.retryCheckpoint()
+          onCheckpoint: () => this.retryCheckpoint(),
+          onFocus: () => this.toggleFocusMode()
         }
       );
       this.startButton.addEventListener("click", () => this.start());
@@ -1961,6 +2009,7 @@
         this.progressStore.setLargeHud(this.largeHudToggle.checked);
         this.applyLargeHudPreference(this.largeHudToggle.checked);
       });
+      this.focusModeToggle.addEventListener("change", () => this.setFocusMode(this.focusModeToggle.checked));
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
@@ -2031,7 +2080,7 @@
         item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${medal}</strong><small>${requirement}</small>`;
         return item;
       }));
-      const stats = buildLevelRecordStats(record, definition.missions.length);
+      const stats = buildLevelRecordStats(record, definition.missions.length, definition.flies.length);
       const nextGoal = describeNextLevelGoal(definition, record);
       this.levelRecordCard.classList.toggle("empty", !stats);
       if (!stats) {
@@ -2069,7 +2118,7 @@
       }));
     }
     renderProgress() {
-      var _a, _b, _c, _d, _e;
+      var _a, _b, _c, _d, _e, _f;
       const progress = this.progressStore.load();
       this.reducedMotionToggle.checked = ((_a = progress.preferences) == null ? void 0 : _a.reducedMotion) === true;
       this.applyMotionPreference(this.reducedMotionToggle.checked);
@@ -2077,6 +2126,8 @@
       this.applyHighContrastPreference(this.highContrastToggle.checked);
       this.largeHudToggle.checked = ((_c = progress.preferences) == null ? void 0 : _c.largeHud) === true;
       this.applyLargeHudPreference(this.largeHudToggle.checked);
+      this.focusModeToggle.checked = ((_d = progress.preferences) == null ? void 0 : _d.focusMode) === true;
+      this.applyFocusMode(this.focusModeToggle.checked);
       const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -2085,6 +2136,8 @@
       const stats = [
         ["L\xE4ufe", progress.totalRuns],
         ["Fliegen", progress.totalFlies],
+        ["Goldfliegen", progress.specialFlies.gold],
+        ["Zeitfliegen", progress.specialFlies.time],
         ["Spielzeit", formatTime(progress.totalPlayTime)],
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
@@ -2108,7 +2161,7 @@
         item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${(_b2 = progress.medals[medal]) != null ? _b2 : 0}</strong>`;
         return item;
       }));
-      const recentRuns = (_d = progress.recentRuns) != null ? _d : [];
+      const recentRuns = (_e = progress.recentRuns) != null ? _e : [];
       this.clearRecentRunsButton.hidden = recentRuns.length === 0;
       this.recentRunsList.classList.toggle("empty", recentRuns.length === 0);
       this.recentRunsList.replaceChildren(...recentRuns.length ? recentRuns.map((run) => {
@@ -2132,7 +2185,7 @@
         item.textContent = "Noch keine L\xE4ufe gespeichert.";
         return item;
       })()]);
-      const unlocked = new Set((_e = progress.achievements) != null ? _e : []);
+      const unlocked = new Set((_f = progress.achievements) != null ? _f : []);
       this.achievementList.replaceChildren(...ACHIEVEMENTS.map((achievement) => {
         const item = this.document.createElement("article");
         const isUnlocked = unlocked.has(achievement.id);
@@ -2151,6 +2204,17 @@
     }
     applyLargeHudPreference(enabled) {
       this.document.body.classList.toggle("large-hud", enabled);
+    }
+    applyFocusMode(enabled) {
+      this.document.body.classList.toggle("focus-mode", enabled);
+    }
+    setFocusMode(enabled) {
+      const progress = this.progressStore.setFocusMode(enabled);
+      this.focusModeToggle.checked = progress.preferences.focusMode;
+      this.applyFocusMode(progress.preferences.focusMode);
+    }
+    toggleFocusMode() {
+      this.setFocusMode(!this.document.body.classList.contains("focus-mode"));
     }
     replayHistoryLevel(levelId) {
       const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
@@ -2526,7 +2590,9 @@
         this.levelMenuButton.style.display = "inline-block";
         this.showMessage(
           "Pause",
-          `${buildPauseSummary(this.level, this.stats)} \xB7 P/Escape zum Fortsetzen`,
+          `${buildPauseSummary(this.level, this.stats)} \xB7 ${buildPauseHelp({
+            hasCheckpoint: this.level.checkpoints.some(({ reached }) => reached)
+          })}`,
           false
         );
       } else if (this.state === GameState.PAUSED) {

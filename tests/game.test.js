@@ -515,7 +515,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P, Escape, R, C and F expose game controls without repeating", () => {
+test("P, Escape, R, C, F and H expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -527,11 +527,13 @@ test("P, Escape, R, C and F expose game controls without repeating", () => {
   let restartCalls = 0;
   let fullscreenCalls = 0;
   let checkpointCalls = 0;
+  let focusCalls = 0;
   input.bind(windowObject, [], {
     onPause: () => pauseCalls += 1,
     onRestart: () => restartCalls += 1,
     onFullscreen: () => fullscreenCalls += 1,
     onCheckpoint: () => checkpointCalls += 1,
+    onFocus: () => focusCalls += 1,
   });
 
   const event = (key, repeat = false) => ({
@@ -549,10 +551,13 @@ test("P, Escape, R, C and F expose game controls without repeating", () => {
   listeners.get("keydown")(event("f", true));
   listeners.get("keydown")(event("c"));
   listeners.get("keydown")(event("c", true));
+  listeners.get("keydown")(event("h"));
+  listeners.get("keydown")(event("h", true));
   assert.equal(pauseCalls, 2);
   assert.equal(restartCalls, 1);
   assert.equal(fullscreenCalls, 1);
   assert.equal(checkpointCalls, 1);
+  assert.equal(focusCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {
@@ -918,7 +923,7 @@ test("high contrast preference persists independently from reduced motion", () =
   const store = new ProgressStore(storage);
   store.setReducedMotion(true);
   const updated = store.setHighContrast(true);
-  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true, largeHud: false });
+  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true, largeHud: false, focusMode: false });
 });
 
 test("large HUD preference persists with other accessibility settings", () => {

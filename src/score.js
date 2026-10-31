@@ -48,6 +48,7 @@ export class RunStats {
     this.elapsedSeconds = 0;
     this.started = false;
     this.fliesCollected = 0;
+    this.specialFlies = { gold: 0, time: 0 };
     this.flyScore = 0;
     this.combo = 0;
     this.bestCombo = 0;
@@ -66,6 +67,7 @@ export class RunStats {
 
   collectFly(type = "normal") {
     this.fliesCollected += 1;
+    if (type === "gold" || type === "time") this.specialFlies[type] += 1;
     this.combo = this.comboRemaining > 0 ? this.combo + 1 : 1;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     this.comboRemaining = COMBO_WINDOW;
@@ -99,6 +101,7 @@ export class RunStats {
       falls: this.falls,
       bestCombo: this.bestCombo,
       flyScore: this.flyScore,
+      specialFlies: { ...this.specialFlies },
       checkpointSplits: this.checkpointSplits.map((split) => ({ ...split })),
     };
     const breakdown = calculateScoreBreakdown(result);

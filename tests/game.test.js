@@ -1084,6 +1084,8 @@ test("special flies modify score and time", () => {
   assert.equal(stats.flyScore, 1500);
   stats.collectFly("time");
   assert.equal(stats.elapsedSeconds, 5);
+  assert.deepEqual(stats.specialFlies, { gold: 1, time: 1 });
+  assert.deepEqual(stats.finish(2).specialFlies, { gold: 1, time: 1 });
 });
 
 test("finishing a level unlocks the next level and stores its record", () => {

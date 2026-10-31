@@ -329,6 +329,8 @@ export class Game {
     const stats = [
       ["Läufe", progress.totalRuns],
       ["Fliegen", progress.totalFlies],
+      ["Goldfliegen", progress.specialFlies.gold],
+      ["Zeitfliegen", progress.specialFlies.time],
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],

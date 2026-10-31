@@ -9,12 +9,13 @@ const emptyProgress = () => ({
   bestTime: null,
   totalRuns: 0,
   totalFlies: 0,
+  specialFlies: { gold: 0, time: 0 },
   totalPlayTime: 0,
   totalFalls: 0,
   bestCombo: 0,
   flawlessRuns: 0,
   recentRuns: [],
-  preferences: { reducedMotion: false, highContrast: false, largeHud: false },
+  preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
   unlockedLevels: ["bathroom-run"],
   levelRecords: {},
@@ -57,6 +58,10 @@ export const normalizeProgress = (saved) => {
   base.totalRuns = Math.max(0, Number(base.totalRuns) || 0);
   base.totalScore = Math.max(0, Number(base.totalScore) || 0);
   base.totalFlies = Math.max(0, Number(base.totalFlies) || 0);
+  base.specialFlies = {
+    gold: Math.max(0, Number(source.specialFlies?.gold) || 0),
+    time: Math.max(0, Number(source.specialFlies?.time) || 0),
+  };
   base.totalPlayTime = Math.max(0, Number(base.totalPlayTime) || 0);
   base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
   base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
@@ -68,6 +73,7 @@ export const normalizeProgress = (saved) => {
     reducedMotion: source.preferences?.reducedMotion === true,
     highContrast: source.preferences?.highContrast === true,
     largeHud: source.preferences?.largeHud === true,
+    focusMode: source.preferences?.focusMode === true,
   };
   base.unlockedLevels = migrateUnlockedLevels(base);
   base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId)
@@ -150,6 +156,14 @@ export class ProgressStore {
     });
   }
 
+  setFocusMode(enabled) {
+    const progress = this.load();
+    return this.replace({
+      ...progress,
+      preferences: { ...progress.preferences, focusMode: Boolean(enabled) },
+    });
+  }
+
   record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
     const progress = this.load();
     const previousLevelRecord = progress.levelRecords?.[levelId];
@@ -162,6 +176,10 @@ export class ProgressStore {
       bestTime: progress.bestTime === null ? result.elapsedSeconds : Math.min(progress.bestTime, result.elapsedSeconds),
       totalRuns: progress.totalRuns + 1,
       totalFlies: progress.totalFlies + result.fliesCollected,
+      specialFlies: {
+        gold: progress.specialFlies.gold + Math.max(0, Number(result.specialFlies?.gold) || 0),
+        time: progress.specialFlies.time + Math.max(0, Number(result.specialFlies?.time) || 0),
+      },
       totalPlayTime: progress.totalPlayTime + Math.max(0, Number(result.elapsedSeconds) || 0),
       totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
       bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
@@ -195,6 +213,7 @@ export class ProgressStore {
             : (previousLevelRecord.bestSplits ?? []),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
           bestCombo: Math.max(previousLevelRecord?.bestCombo ?? 0, Number(result.bestCombo) || 0),
+          bestFlies: Math.max(previousLevelRecord?.bestFlies ?? 0, Number(result.fliesCollected) || 0),
           flawlessRuns: (previousLevelRecord?.flawlessRuns ?? 0) + (result.falls === 0 ? 1 : 0),
           missions: [...new Set([
             ...(progress.levelRecords?.[levelId]?.missions ?? []),

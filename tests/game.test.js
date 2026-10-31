@@ -56,6 +56,19 @@ import { buildRunImprovementTips } from "../src/run-tips.js";
 import { calculateProjectedScore } from "../src/score-projection.js";
 import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
+import { calculateBestCollection } from "../src/collection-mastery.js";
+import { buildPauseHelp } from "../src/pause-help.js";
+
+test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {
+  assert.match(buildPauseHelp(), /R Level neu starten/);
+  assert.doesNotMatch(buildPauseHelp(), /C zum Checkpoint/);
+  assert.match(buildPauseHelp({ hasCheckpoint: true }), /C zum Checkpoint/);
+});
+
+test("collection mastery clamps saved values and reports completion", () => {
+  assert.deepEqual(calculateBestCollection(8, 10), { collected: 8, percent: 80, complete: false });
+  assert.deepEqual(calculateBestCollection(15, 10), { collected: 10, percent: 100, complete: true });
+});
 
 test("medal guide translates scoring rules for the selected fly count", () => {
   const requirements = buildMedalRequirements(11);
@@ -302,14 +315,16 @@ test("level record cards format completed progress at a glance", () => {
     bestScore: 9876,
     bestTime: 72.3,
     bestCombo: 4,
+    bestFlies: 9,
     flawlessRuns: 2,
     attempts: 7,
     missions: ["fast", "fast", "flies"],
-  }, 3), [
+  }, 3, 12), [
     ["Medaille", "Silber"],
     ["Highscore", 9876],
     ["Bestzeit", "01:12.3"],
     ["Beste Combo", "×4"],
+    ["Beste Sammelquote", "9/12 · 75%"],
     ["Fehlerfrei", 2],
     ["Versuche", 7],
     ["Sterne", "2/3"],
@@ -500,7 +515,7 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
-test("P, Escape, R, C and F expose game controls without repeating", () => {
+test("P, Escape, R, C, F and H expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {
     addEventListener(type, listener) {
@@ -512,11 +527,13 @@ test("P, Escape, R, C and F expose game controls without repeating", () => {
   let restartCalls = 0;
   let fullscreenCalls = 0;
   let checkpointCalls = 0;
+  let focusCalls = 0;
   input.bind(windowObject, [], {
     onPause: () => pauseCalls += 1,
     onRestart: () => restartCalls += 1,
     onFullscreen: () => fullscreenCalls += 1,
     onCheckpoint: () => checkpointCalls += 1,
+    onFocus: () => focusCalls += 1,
   });
 
   const event = (key, repeat = false) => ({
@@ -534,10 +551,13 @@ test("P, Escape, R, C and F expose game controls without repeating", () => {
   listeners.get("keydown")(event("f", true));
   listeners.get("keydown")(event("c"));
   listeners.get("keydown")(event("c", true));
+  listeners.get("keydown")(event("h"));
+  listeners.get("keydown")(event("h", true));
   assert.equal(pauseCalls, 2);
   assert.equal(restartCalls, 1);
   assert.equal(fullscreenCalls, 1);
   assert.equal(checkpointCalls, 1);
+  assert.equal(focusCalls, 1);
 });
 
 test("run timer starts with the first player input and pauses without updates", () => {
@@ -903,7 +923,7 @@ test("high contrast preference persists independently from reduced motion", () =
   const store = new ProgressStore(storage);
   store.setReducedMotion(true);
   const updated = store.setHighContrast(true);
-  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true, largeHud: false });
+  assert.deepEqual(updated.preferences, { reducedMotion: true, highContrast: true, largeHud: false, focusMode: false });
 });
 
 test("large HUD preference persists with other accessibility settings", () => {
@@ -1076,6 +1096,8 @@ test("special flies modify score and time", () => {
   assert.equal(stats.flyScore, 1500);
   stats.collectFly("time");
   assert.equal(stats.elapsedSeconds, 5);
+  assert.deepEqual(stats.specialFlies, { gold: 1, time: 1 });
+  assert.deepEqual(stats.finish(2).specialFlies, { gold: 1, time: 1 });
 });
 
 test("finishing a level unlocks the next level and stores its record", () => {

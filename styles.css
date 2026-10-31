@@ -623,6 +623,15 @@ body.large-hud .touch-controls button {
   font-size: 1.6rem;
 }
 
+body.focus-mode.game-running .score > :not(.hud-button) {
+  display: none;
+}
+
+body.focus-mode.game-running .score {
+  width: min-content;
+  min-width: 132px;
+}
+
 body.reduce-motion .checkpoint-screen.toast {
   animation: none;
 }

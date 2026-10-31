@@ -46,6 +46,7 @@ import { calculateProjectedScore } from "./score-projection.js";
 import { compareProjectedScore } from "./score-pace.js";
 import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
+import { buildPauseHelp } from "./pause-help.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -91,6 +92,7 @@ export class Game {
     this.reducedMotionToggle = documentObject.getElementById("reduced-motion-toggle");
     this.highContrastToggle = documentObject.getElementById("high-contrast-toggle");
     this.largeHudToggle = documentObject.getElementById("large-hud-toggle");
+    this.focusModeToggle = documentObject.getElementById("focus-mode-toggle");
     this.progressResetStatus = documentObject.getElementById("progress-reset-status");
     this.restartButton = documentObject.getElementById("restart-btn");
     this.nextLevelButton = documentObject.getElementById("next-level-btn");
@@ -166,6 +168,7 @@ export class Game {
         onRestart: () => this.restartCurrentLevel(),
         onFullscreen: () => this.toggleFullscreen(),
         onCheckpoint: () => this.retryCheckpoint(),
+        onFocus: () => this.toggleFocusMode(),
       }
     );
     this.startButton.addEventListener("click", () => this.start());
@@ -201,6 +204,7 @@ export class Game {
       this.progressStore.setLargeHud(this.largeHudToggle.checked);
       this.applyLargeHudPreference(this.largeHudToggle.checked);
     });
+    this.focusModeToggle.addEventListener("change", () => this.setFocusMode(this.focusModeToggle.checked));
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
@@ -274,7 +278,7 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${medal}</strong><small>${requirement}</small>`;
       return item;
     }));
-    const stats = buildLevelRecordStats(record, definition.missions.length);
+    const stats = buildLevelRecordStats(record, definition.missions.length, definition.flies.length);
     const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
     if (!stats) {
@@ -321,6 +325,8 @@ export class Game {
     this.applyHighContrastPreference(this.highContrastToggle.checked);
     this.largeHudToggle.checked = progress.preferences?.largeHud === true;
     this.applyLargeHudPreference(this.largeHudToggle.checked);
+    this.focusModeToggle.checked = progress.preferences?.focusMode === true;
+    this.applyFocusMode(this.focusModeToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
@@ -329,6 +335,8 @@ export class Game {
     const stats = [
       ["Läufe", progress.totalRuns],
       ["Fliegen", progress.totalFlies],
+      ["Goldfliegen", progress.specialFlies.gold],
+      ["Zeitfliegen", progress.specialFlies.time],
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
@@ -397,6 +405,20 @@ export class Game {
 
   applyLargeHudPreference(enabled) {
     this.document.body.classList.toggle("large-hud", enabled);
+  }
+
+  applyFocusMode(enabled) {
+    this.document.body.classList.toggle("focus-mode", enabled);
+  }
+
+  setFocusMode(enabled) {
+    const progress = this.progressStore.setFocusMode(enabled);
+    this.focusModeToggle.checked = progress.preferences.focusMode;
+    this.applyFocusMode(progress.preferences.focusMode);
+  }
+
+  toggleFocusMode() {
+    this.setFocusMode(!this.document.body.classList.contains("focus-mode"));
   }
 
   replayHistoryLevel(levelId) {
@@ -808,7 +830,9 @@ export class Game {
       this.levelMenuButton.style.display = "inline-block";
       this.showMessage(
         "Pause",
-        `${buildPauseSummary(this.level, this.stats)} · P/Escape zum Fortsetzen`,
+        `${buildPauseSummary(this.level, this.stats)} · ${buildPauseHelp({
+          hasCheckpoint: this.level.checkpoints.some(({ reached }) => reached),
+        })}`,
         false
       );
     } else if (this.state === GameState.PAUSED) {

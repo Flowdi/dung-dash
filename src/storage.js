@@ -195,6 +195,7 @@ export class ProgressStore {
             : (previousLevelRecord.bestSplits ?? []),
           medal: this.bestMedal(progress.levelRecords?.[levelId]?.medal, result.medal),
           bestCombo: Math.max(previousLevelRecord?.bestCombo ?? 0, Number(result.bestCombo) || 0),
+          bestFlies: Math.max(previousLevelRecord?.bestFlies ?? 0, Number(result.fliesCollected) || 0),
           flawlessRuns: (previousLevelRecord?.flawlessRuns ?? 0) + (result.falls === 0 ? 1 : 0),
           missions: [...new Set([
             ...(progress.levelRecords?.[levelId]?.missions ?? []),

@@ -274,7 +274,7 @@ export class Game {
       item.innerHTML = `<span aria-hidden="true">${icon}</span><strong>${medal}</strong><small>${requirement}</small>`;
       return item;
     }));
-    const stats = buildLevelRecordStats(record, definition.missions.length);
+    const stats = buildLevelRecordStats(record, definition.missions.length, definition.flies.length);
     const nextGoal = describeNextLevelGoal(definition, record);
     this.levelRecordCard.classList.toggle("empty", !stats);
     if (!stats) {

@@ -56,6 +56,12 @@ import { buildRunImprovementTips } from "../src/run-tips.js";
 import { calculateProjectedScore } from "../src/score-projection.js";
 import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
+import { calculateBestCollection } from "../src/collection-mastery.js";
+
+test("collection mastery clamps saved values and reports completion", () => {
+  assert.deepEqual(calculateBestCollection(8, 10), { collected: 8, percent: 80, complete: false });
+  assert.deepEqual(calculateBestCollection(15, 10), { collected: 10, percent: 100, complete: true });
+});
 
 test("medal guide translates scoring rules for the selected fly count", () => {
   const requirements = buildMedalRequirements(11);
@@ -302,14 +308,16 @@ test("level record cards format completed progress at a glance", () => {
     bestScore: 9876,
     bestTime: 72.3,
     bestCombo: 4,
+    bestFlies: 9,
     flawlessRuns: 2,
     attempts: 7,
     missions: ["fast", "fast", "flies"],
-  }, 3), [
+  }, 3, 12), [
     ["Medaille", "Silber"],
     ["Highscore", 9876],
     ["Bestzeit", "01:12.3"],
     ["Beste Combo", "×4"],
+    ["Beste Sammelquote", "9/12 · 75%"],
     ["Fehlerfrei", 2],
     ["Versuche", 7],
     ["Sterne", "2/3"],

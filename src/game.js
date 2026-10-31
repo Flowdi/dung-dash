@@ -46,6 +46,7 @@ import { calculateProjectedScore } from "./score-projection.js";
 import { compareProjectedScore } from "./score-pace.js";
 import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
+import { buildPauseHelp } from "./pause-help.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -810,7 +811,9 @@ export class Game {
       this.levelMenuButton.style.display = "inline-block";
       this.showMessage(
         "Pause",
-        `${buildPauseSummary(this.level, this.stats)} · P/Escape zum Fortsetzen`,
+        `${buildPauseSummary(this.level, this.stats)} · ${buildPauseHelp({
+          hasCheckpoint: this.level.checkpoints.some(({ reached }) => reached),
+        })}`,
         false
       );
     } else if (this.state === GameState.PAUSED) {

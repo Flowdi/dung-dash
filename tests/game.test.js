@@ -57,6 +57,13 @@ import { calculateProjectedScore } from "../src/score-projection.js";
 import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
+import { buildPauseHelp } from "../src/pause-help.js";
+
+test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {
+  assert.match(buildPauseHelp(), /R Level neu starten/);
+  assert.doesNotMatch(buildPauseHelp(), /C zum Checkpoint/);
+  assert.match(buildPauseHelp({ hasCheckpoint: true }), /C zum Checkpoint/);
+});
 
 test("collection mastery clamps saved values and reports completion", () => {
   assert.deepEqual(calculateBestCollection(8, 10), { collected: 8, percent: 80, complete: false });

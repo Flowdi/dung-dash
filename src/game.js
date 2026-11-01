@@ -48,6 +48,7 @@ import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
 import { calculateBestCollection } from "./collection-mastery.js";
+import { calculateMasteryProgress } from "./level-mastery.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -332,8 +333,9 @@ export class Game {
     this.applyFocusMode(this.focusModeToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
+    const mastery = calculateMasteryProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · ${mastery.masteredLevels} gemeistert`;
     this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],
@@ -349,6 +351,7 @@ export class Game {
       ["Ø Treffer", averages.falls],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
+      ["Gemeistert", `${mastery.masteredLevels}/${mastery.totalLevels}`],
     ];
     this.careerStats.replaceChildren(...stats.map(([label, value]) => {
       const item = this.document.createElement("p");

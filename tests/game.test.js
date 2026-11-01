@@ -58,6 +58,17 @@ import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
+import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
+
+test("level mastery requires gold, every mission and every fly", () => {
+  const level = { id: "test", flies: [{}, {}], missions: [{ id: "a" }, { id: "b" }] };
+  const record = { medal: "Gold", bestFlies: 2, missions: ["a", "b"] };
+  assert.equal(isLevelMastered(level, record), true);
+  assert.equal(isLevelMastered(level, { ...record, bestFlies: 1 }), false);
+  assert.deepEqual(calculateMasteryProgress({ levelRecords: { test: record } }, [level]), {
+    masteredLevels: 1, totalLevels: 1,
+  });
+});
 
 test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {
   assert.match(buildPauseHelp(), /R Level neu starten/);

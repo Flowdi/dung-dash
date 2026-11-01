@@ -47,6 +47,7 @@ import { compareProjectedScore } from "./score-pace.js";
 import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
+import { calculateBestCollection } from "./collection-mastery.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -226,9 +227,11 @@ export class Game {
       option.value = definition.id;
       option.disabled = !unlocked;
       const stars = record?.missions?.length ?? 0;
+      const collection = record ? calculateBestCollection(record.bestFlies, definition.flies.length) : null;
       option.textContent = `${index + 1}. ${definition.name}` +
         ` · ${formatDifficulty(definition.difficulty)}` +
         `${record ? ` · ${record.medal} · ${formatTime(record.bestTime)}` : ""}` +
+        `${collection ? ` · ${collection.percent}% Fliegen` : ""}` +
         `${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
     });

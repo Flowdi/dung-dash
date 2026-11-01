@@ -60,6 +60,14 @@ import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
 import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
 import { isPerfectRun } from "../src/perfect-run.js";
+import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
+
+test("result summaries normalize special fly counts", () => {
+  assert.deepEqual(buildSpecialFlySummary({ gold: 2, time: 1 }), [
+    ["Goldfliegen", 2], ["Zeitfliegen", 1],
+  ]);
+  assert.deepEqual(buildSpecialFlySummary(), [["Goldfliegen", 0], ["Zeitfliegen", 0]]);
+});
 
 test("perfect runs require every fly and no falls", () => {
   assert.equal(isPerfectRun({ fliesCollected: 10, totalFlies: 10, falls: 0 }), true);

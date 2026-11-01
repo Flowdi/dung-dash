@@ -49,6 +49,7 @@ import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
 import { calculateBestCollection } from "./collection-mastery.js";
 import { calculateMasteryProgress } from "./level-mastery.js";
+import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -751,6 +752,7 @@ export class Game {
     this.resultPerformance.innerHTML = [
       ["Sammelquote", `${analysis.collectionPercent}%`],
       ["Beste Combo", `×${analysis.bestCombo}`],
+      ...buildSpecialFlySummary(result.specialFlies),
       ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
     ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
     const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord?.bestSplits);

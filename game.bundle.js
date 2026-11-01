@@ -1116,6 +1116,9 @@
     return (_j = values[achievementId]) != null ? _j : "";
   };
 
+  // src/perfect-run.js
+  var isPerfectRun = (result) => result.totalFlies > 0 && result.fliesCollected === result.totalFlies && result.falls === 0;
+
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
   var emptyProgress = () => ({
@@ -1129,6 +1132,7 @@
     totalFalls: 0,
     bestCombo: 0,
     flawlessRuns: 0,
+    perfectRuns: 0,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1187,6 +1191,7 @@
     base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
+    base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1292,12 +1297,14 @@
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
         flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
+        perfectRuns: progress.perfectRuns + (isPerfectRun(result) ? 1 : 0),
         recentRuns: [{
           levelId,
           score: Math.max(0, Number(result.score) || 0),
           elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),
           medal: result.medal,
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
+          totalFlies: Math.max(0, Number(result.totalFlies) || 0),
           falls: Math.max(0, Number(result.falls) || 0)
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
@@ -1744,6 +1751,25 @@
     "H Fokusmodus"
   ].join(" \xB7 ");
 
+  // src/level-mastery.js
+  var isLevelMastered = (level, record) => {
+    var _a, _b;
+    return Boolean(record) && record.medal === "Gold" && new Set((_a = record.missions) != null ? _a : []).size >= level.missions.length && ((_b = record.bestFlies) != null ? _b : 0) >= level.flies.length;
+  };
+  var calculateMasteryProgress = (progress, levels) => {
+    const masteredLevels = levels.filter((level) => {
+      var _a;
+      return isLevelMastered(level, (_a = progress.levelRecords) == null ? void 0 : _a[level.id]);
+    }).length;
+    return { masteredLevels, totalLevels: levels.length };
+  };
+
+  // src/special-fly-summary.js
+  var buildSpecialFlySummary = (specialFlies = {}) => [
+    ["Goldfliegen", Math.max(0, Number(specialFlies.gold) || 0)],
+    ["Zeitfliegen", Math.max(0, Number(specialFlies.time) || 0)]
+  ];
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -2032,7 +2058,8 @@
         option.value = definition.id;
         option.disabled = !unlocked;
         const stars = (_c = (_b = record == null ? void 0 : record.missions) == null ? void 0 : _b.length) != null ? _c : 0;
-        option.textContent = `${index + 1}. ${definition.name} \xB7 ${formatDifficulty(definition.difficulty)}${record ? ` \xB7 ${record.medal} \xB7 ${formatTime(record.bestTime)}` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
+        const collection = record ? calculateBestCollection(record.bestFlies, definition.flies.length) : null;
+        option.textContent = `${index + 1}. ${definition.name} \xB7 ${formatDifficulty(definition.difficulty)}${record ? ` \xB7 ${record.medal} \xB7 ${formatTime(record.bestTime)}` : ""}${collection ? ` \xB7 ${collection.percent}% Fliegen` : ""}${stars ? ` \xB7 ${stars}/3 \u2605` : ""}${unlocked ? "" : " \u{1F512}"}`;
         this.levelSelect.append(option);
       });
       if (![...this.levelSelect.options].some((option) => option.value === this.selectedLevelId && !option.disabled)) {
@@ -2130,8 +2157,9 @@
       this.applyFocusMode(this.focusModeToggle.checked);
       const averages = calculateCareerAverages(progress);
       const campaign = calculateCampaignProgress(progress, LEVELS);
+      const mastery = calculateMasteryProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}%`;
+      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}% \xB7 ${mastery.masteredLevels} gemeistert`;
       this.campaignProgressFill.style.width = `${campaign.percent}%`;
       const stats = [
         ["L\xE4ufe", progress.totalRuns],
@@ -2142,11 +2170,13 @@
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
+        ["Perfekte L\xE4ufe", progress.perfectRuns],
         ["Highscore", progress.bestScore],
         ["\xD8 Score", averages.score],
         ["\xD8 Treffer", averages.falls],
         ["Bestzeit", progress.bestTime === null ? "\u2013" : formatTime(progress.bestTime)],
-        ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`]
+        ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
+        ["Gemeistert", `${mastery.masteredLevels}/${mastery.totalLevels}`]
       ];
       this.careerStats.replaceChildren(...stats.map(([label, value]) => {
         const item = this.document.createElement("p");
@@ -2173,7 +2203,8 @@
         const score = this.document.createElement("span");
         score.textContent = `${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");
-        details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected} Fliegen \xB7 ${run.falls} Treffer`;
+        const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
+        details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected}${flyTotal} Fliegen \xB7 ${run.falls} Treffer`;
         const replay = this.document.createElement("button");
         replay.type = "button";
         replay.textContent = "Level wiederholen";
@@ -2511,6 +2542,7 @@
       this.resultPerformance.innerHTML = [
         ["Sammelquote", `${analysis.collectionPercent}%`],
         ["Beste Combo", `\xD7${analysis.bestCombo}`],
+        ...buildSpecialFlySummary(result.specialFlies),
         ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
       ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
       const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord == null ? void 0 : previousRecord.bestSplits);

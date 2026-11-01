@@ -370,7 +370,8 @@ export class Game {
       const score = this.document.createElement("span");
       score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
       const details = this.document.createElement("span");
-      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer`;
+      const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
+      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected}${flyTotal} Fliegen · ${run.falls} Treffer`;
       const replay = this.document.createElement("button");
       replay.type = "button";
       replay.textContent = "Level wiederholen";

@@ -47,6 +47,9 @@ import { compareProjectedScore } from "./score-pace.js";
 import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
+import { calculateBestCollection } from "./collection-mastery.js";
+import { calculateMasteryProgress } from "./level-mastery.js";
+import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -226,9 +229,11 @@ export class Game {
       option.value = definition.id;
       option.disabled = !unlocked;
       const stars = record?.missions?.length ?? 0;
+      const collection = record ? calculateBestCollection(record.bestFlies, definition.flies.length) : null;
       option.textContent = `${index + 1}. ${definition.name}` +
         ` · ${formatDifficulty(definition.difficulty)}` +
         `${record ? ` · ${record.medal} · ${formatTime(record.bestTime)}` : ""}` +
+        `${collection ? ` · ${collection.percent}% Fliegen` : ""}` +
         `${stars ? ` · ${stars}/3 ★` : ""}${unlocked ? "" : " 🔒"}`;
       this.levelSelect.append(option);
     });
@@ -329,8 +334,9 @@ export class Game {
     this.applyFocusMode(this.focusModeToggle.checked);
     const averages = calculateCareerAverages(progress);
     const campaign = calculateCampaignProgress(progress, LEVELS);
+    const mastery = calculateMasteryProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}%`;
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · ${mastery.masteredLevels} gemeistert`;
     this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],
@@ -341,11 +347,13 @@ export class Game {
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
+      ["Perfekte Läufe", progress.perfectRuns],
       ["Highscore", progress.bestScore],
       ["Ø Score", averages.score],
       ["Ø Treffer", averages.falls],
       ["Bestzeit", progress.bestTime === null ? "–" : formatTime(progress.bestTime)],
       ["Sterne", `${countCompletedMissions(progress)}/${LEVELS.length * 3}`],
+      ["Gemeistert", `${mastery.masteredLevels}/${mastery.totalLevels}`],
     ];
     this.careerStats.replaceChildren(...stats.map(([label, value]) => {
       const item = this.document.createElement("p");
@@ -370,7 +378,8 @@ export class Game {
       const score = this.document.createElement("span");
       score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
       const details = this.document.createElement("span");
-      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected} Fliegen · ${run.falls} Treffer`;
+      const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
+      details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected}${flyTotal} Fliegen · ${run.falls} Treffer`;
       const replay = this.document.createElement("button");
       replay.type = "button";
       replay.textContent = "Level wiederholen";
@@ -743,6 +752,7 @@ export class Game {
     this.resultPerformance.innerHTML = [
       ["Sammelquote", `${analysis.collectionPercent}%`],
       ["Beste Combo", `×${analysis.bestCombo}`],
+      ...buildSpecialFlySummary(result.specialFlies),
       ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
     ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
     const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord?.bestSplits);

@@ -58,6 +58,32 @@ import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
+import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
+import { isPerfectRun } from "../src/perfect-run.js";
+import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
+
+test("result summaries normalize special fly counts", () => {
+  assert.deepEqual(buildSpecialFlySummary({ gold: 2, time: 1 }), [
+    ["Goldfliegen", 2], ["Zeitfliegen", 1],
+  ]);
+  assert.deepEqual(buildSpecialFlySummary(), [["Goldfliegen", 0], ["Zeitfliegen", 0]]);
+});
+
+test("perfect runs require every fly and no falls", () => {
+  assert.equal(isPerfectRun({ fliesCollected: 10, totalFlies: 10, falls: 0 }), true);
+  assert.equal(isPerfectRun({ fliesCollected: 9, totalFlies: 10, falls: 0 }), false);
+  assert.equal(isPerfectRun({ fliesCollected: 10, totalFlies: 10, falls: 1 }), false);
+});
+
+test("level mastery requires gold, every mission and every fly", () => {
+  const level = { id: "test", flies: [{}, {}], missions: [{ id: "a" }, { id: "b" }] };
+  const record = { medal: "Gold", bestFlies: 2, missions: ["a", "b"] };
+  assert.equal(isLevelMastered(level, record), true);
+  assert.equal(isLevelMastered(level, { ...record, bestFlies: 1 }), false);
+  assert.deepEqual(calculateMasteryProgress({ levelRecords: { test: record } }, [level]), {
+    masteredLevels: 1, totalLevels: 1,
+  });
+});
 
 test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {
   assert.match(buildPauseHelp(), /R Level neu starten/);
@@ -621,6 +647,7 @@ test("progress store keeps personal records", () => {
     elapsedSeconds: 70,
     medal: "Silber",
     fliesCollected: 5,
+    totalFlies: 0,
     falls: 0,
   });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });

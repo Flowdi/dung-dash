@@ -114,6 +114,11 @@ test("level options and results surface personal records", async () => {
   assert.match(gameSource, /Neue Level-Bestzeit!/);
 });
 
+test("level selection exposes saved collection mastery", async () => {
+  const bundle = await readFile(new URL("../game.bundle.js", import.meta.url), "utf8");
+  assert.match(bundle, /% Fliegen/);
+});
+
 test("pause mode exposes restart and level-selection actions", async () => {
   const gameSource = await readFile(new URL("../src/game.js", import.meta.url), "utf8");
   assert.match(gameSource, /GameState\.PAUSED[\s\S]*?restartButton\.style\.display = "inline-block"/);

@@ -1,5 +1,6 @@
 import { ACHIEVEMENTS, findNewAchievements } from "./achievements.js";
 import { LEVELS } from "./levels.js";
+import { isPerfectRun } from "./perfect-run.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -14,6 +15,7 @@ const emptyProgress = () => ({
   totalFalls: 0,
   bestCombo: 0,
   flawlessRuns: 0,
+  perfectRuns: 0,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -66,6 +68,7 @@ export const normalizeProgress = (saved) => {
   base.totalFalls = Math.max(0, Number(base.totalFalls) || 0);
   base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
   base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
+  base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -184,6 +187,7 @@ export class ProgressStore {
       totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
       bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
       flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
+      perfectRuns: progress.perfectRuns + (isPerfectRun(result) ? 1 : 0),
       recentRuns: [{
         levelId,
         score: Math.max(0, Number(result.score) || 0),

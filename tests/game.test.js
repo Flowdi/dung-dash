@@ -59,6 +59,13 @@ import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
 import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
+import { isPerfectRun } from "../src/perfect-run.js";
+
+test("perfect runs require every fly and no falls", () => {
+  assert.equal(isPerfectRun({ fliesCollected: 10, totalFlies: 10, falls: 0 }), true);
+  assert.equal(isPerfectRun({ fliesCollected: 9, totalFlies: 10, falls: 0 }), false);
+  assert.equal(isPerfectRun({ fliesCollected: 10, totalFlies: 10, falls: 1 }), false);
+});
 
 test("level mastery requires gold, every mission and every fly", () => {
   const level = { id: "test", flies: [{}, {}], missions: [{ id: "a" }, { id: "b" }] };

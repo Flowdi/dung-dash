@@ -227,6 +227,13 @@ body {
   font-size: 0.82rem;
 }
 
+.mastery-status {
+  display: block;
+  margin: 6px 0;
+  color: #ffd166;
+  font-weight: 700;
+}
+
 .level-record-card > div {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

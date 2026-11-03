@@ -48,7 +48,7 @@ import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
 import { calculateBestCollection } from "./collection-mastery.js";
-import { calculateMasteryProgress } from "./level-mastery.js";
+import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js";
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import {
   findReachedCheckpoint,
@@ -290,7 +290,7 @@ export class Game {
       this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
       return;
     }
-    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
+    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span class="mastery-status">${levelMasteryLabel(definition, record)}</span><div>${stats.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value}</strong></p>`
     ).join("")}</div><small>${nextGoal}</small>`;
   }

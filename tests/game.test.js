@@ -58,7 +58,7 @@ import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
-import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
+import { calculateMasteryProgress, isLevelMastered, levelMasteryLabel } from "../src/level-mastery.js";
 import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 
@@ -83,6 +83,7 @@ test("level mastery requires gold, every mission and every fly", () => {
   assert.deepEqual(calculateMasteryProgress({ levelRecords: { test: record } }, [level]), {
     masteredLevels: 1, totalLevels: 1,
   });
+  assert.equal(levelMasteryLabel(level, record), "🏆 Level gemeistert");
 });
 
 test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {

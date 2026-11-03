@@ -7,3 +7,6 @@ export const calculateMasteryProgress = (progress, levels) => {
   const masteredLevels = levels.filter((level) => isLevelMastered(level, progress.levelRecords?.[level.id])).length;
   return { masteredLevels, totalLevels: levels.length };
 };
+
+export const levelMasteryLabel = (level, record) =>
+  isLevelMastered(level, record) ? "🏆 Level gemeistert" : "Meisterschaft noch offen";

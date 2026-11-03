@@ -753,7 +753,7 @@ export class Game {
       ["Sammelquote", `${analysis.collectionPercent}%`],
       ["Beste Combo", `×${analysis.bestCombo}`],
       ...buildSpecialFlySummary(result.specialFlies),
-      ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
+      ["Lauf", analysis.perfect ? "Perfekt 🏆" : analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
     ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
     const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord?.bestSplits);
     this.resultSplits.hidden = comparedSplits.length === 0;

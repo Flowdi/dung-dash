@@ -208,10 +208,11 @@ test("platform previews group related mechanics and omit absent types", () => {
 test("run analysis summarizes collection, combo and clean play", () => {
   assert.deepEqual(analyzeRun({
     fliesCollected: 9, totalFlies: 12, bestCombo: 4, falls: 0,
-  }), { collectionPercent: 75, bestCombo: 4, flawless: true });
+  }), { collectionPercent: 75, bestCombo: 4, flawless: true, perfect: false });
+  assert.equal(analyzeRun({ fliesCollected: 12, totalFlies: 12, bestCombo: 4, falls: 0 }).perfect, true);
   assert.deepEqual(analyzeRun({
     fliesCollected: 0, totalFlies: 0, bestCombo: 0, falls: 2,
-  }), { collectionPercent: 100, bestCombo: 0, flawless: false });
+  }), { collectionPercent: 100, bestCombo: 0, flawless: false, perfect: false });
 });
 
 test("fly previews count every collectible type and explain its effect", () => {

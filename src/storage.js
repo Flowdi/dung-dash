@@ -196,6 +196,7 @@ export class ProgressStore {
         fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
         totalFlies: Math.max(0, Number(result.totalFlies) || 0),
         falls: Math.max(0, Number(result.falls) || 0),
+        perfect: isPerfectRun(result),
       }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,

@@ -376,7 +376,7 @@ export class Game {
       const title = this.document.createElement("strong");
       title.textContent = levelName;
       const score = this.document.createElement("span");
-      score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
+      score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte`;
       const details = this.document.createElement("span");
       const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
       details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected}${flyTotal} Fliegen · ${run.falls} Treffer`;

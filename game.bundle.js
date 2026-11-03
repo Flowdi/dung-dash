@@ -1305,7 +1305,8 @@
           medal: result.medal,
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
           totalFlies: Math.max(0, Number(result.totalFlies) || 0),
-          falls: Math.max(0, Number(result.falls) || 0)
+          falls: Math.max(0, Number(result.falls) || 0),
+          perfect: isPerfectRun(result)
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
@@ -1512,11 +1513,14 @@
 
   // src/level-goal.js
   var describeNextLevelGoal = (level, record) => {
-    var _a;
+    var _a, _b, _c;
     if (!record) return "Erstes Ziel: Level abschlie\xDFen";
     const completed = new Set((_a = record.missions) != null ? _a : []);
     const nextMission = level.missions.find(({ id }) => !completed.has(id));
     if (nextMission) return `N\xE4chstes Ziel: ${nextMission.label}`;
+    if (((_b = level.flies) == null ? void 0 : _b.length) && ((_c = record.bestFlies) != null ? _c : 0) < level.flies.length) {
+      return `N\xE4chstes Ziel: alle ${level.flies.length} Fliegen sammeln`;
+    }
     if (record.medal !== "Gold") return "N\xE4chstes Ziel: Goldmedaille holen";
     return "Alle Ziele dieses Levels erreicht";
   };
@@ -1739,7 +1743,8 @@
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
     bestCombo: Math.max(0, Number(result.bestCombo) || 0),
-    flawless: result.falls === 0
+    flawless: result.falls === 0,
+    perfect: isPerfectRun(result)
   });
 
   // src/pause-help.js
@@ -1763,6 +1768,7 @@
     }).length;
     return { masteredLevels, totalLevels: levels.length };
   };
+  var levelMasteryLabel = (level, record) => isLevelMastered(level, record) ? "\u{1F3C6} Level gemeistert" : "Meisterschaft noch offen";
 
   // src/special-fly-summary.js
   var buildSpecialFlySummary = (specialFlies = {}) => [
@@ -2114,7 +2120,7 @@
         this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
         return;
       }
-      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span class="mastery-status">${levelMasteryLabel(definition, record)}</span><div>${stats.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
       ).join("")}</div><small>${nextGoal}</small>`;
     }
@@ -2201,7 +2207,7 @@
         const title = this.document.createElement("strong");
         title.textContent = levelName;
         const score = this.document.createElement("span");
-        score.textContent = `${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
+        score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");
         const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected}${flyTotal} Fliegen \xB7 ${run.falls} Treffer`;
@@ -2543,7 +2549,7 @@
         ["Sammelquote", `${analysis.collectionPercent}%`],
         ["Beste Combo", `\xD7${analysis.bestCombo}`],
         ...buildSpecialFlySummary(result.specialFlies),
-        ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
+        ["Lauf", analysis.perfect ? "Perfekt \u{1F3C6}" : analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
       ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
       const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord == null ? void 0 : previousRecord.bestSplits);
       this.resultSplits.hidden = comparedSplits.length === 0;

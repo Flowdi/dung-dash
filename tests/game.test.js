@@ -299,16 +299,18 @@ test("run comparisons explain gains and losses against personal records", () => 
 });
 
 test("level goals guide players from first finish to missions and gold", () => {
-  const level = { missions: [
+  const level = { flies: [{}, {}, {}], missions: [
     { id: "flies", label: "Sammle alle Fliegen" },
     { id: "speed", label: "Schaffe das Zeitlimit" },
   ] };
   assert.equal(describeNextLevelGoal(level, null), "Erstes Ziel: Level abschließen");
   assert.equal(describeNextLevelGoal(level, { missions: ["flies"], medal: "Gold" }),
     "Nächstes Ziel: Schaffe das Zeitlimit");
-  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber" }),
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber", bestFlies: 2 }),
+    "Nächstes Ziel: alle 3 Fliegen sammeln");
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber", bestFlies: 3 }),
     "Nächstes Ziel: Goldmedaille holen");
-  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Gold" }),
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Gold", bestFlies: 3 }),
     "Alle Ziele dieses Levels erreicht");
 });
 

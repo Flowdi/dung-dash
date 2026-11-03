@@ -3,6 +3,9 @@ export const describeNextLevelGoal = (level, record) => {
   const completed = new Set(record.missions ?? []);
   const nextMission = level.missions.find(({ id }) => !completed.has(id));
   if (nextMission) return `Nächstes Ziel: ${nextMission.label}`;
+  if (level.flies?.length && (record.bestFlies ?? 0) < level.flies.length) {
+    return `Nächstes Ziel: alle ${level.flies.length} Fliegen sammeln`;
+  }
   if (record.medal !== "Gold") return "Nächstes Ziel: Goldmedaille holen";
   return "Alle Ziele dieses Levels erreicht";
 };

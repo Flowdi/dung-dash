@@ -1,4 +1,5 @@
 import { LEVELS } from "./levels.js";
+import { isLevelMastered } from "./level-mastery.js";
 
 export const ACHIEVEMENTS = Object.freeze([
   { id: "first-flush", name: "Erste Spülung", description: "Schließe dein erstes Level ab." },
@@ -11,6 +12,8 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "long-haul", name: "Dauerspülung", description: "Spiele insgesamt 30 Minuten." },
   { id: "spotless-five", name: "Saubere Serie", description: "Schließe fünf Läufe fehlerfrei ab." },
   { id: "all-stars", name: "Sternenhimmel", description: "Schließe alle Level-Missionen ab." },
+  { id: "perfect-pile", name: "Makelloser Haufen", description: "Schaffe einen perfekten Lauf." },
+  { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollständig." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -28,6 +31,8 @@ export const findNewAchievements = (progress, result) => {
     "long-haul": progress.totalPlayTime >= 30 * 60,
     "spotless-five": progress.flawlessRuns >= 5,
     "all-stars": completedMissions >= LEVELS.reduce((total, level) => total + level.missions.length, 0),
+    "perfect-pile": progress.perfectRuns >= 1,
+    "master-one": LEVELS.some((level) => isLevelMastered(level, progress.levelRecords?.[level.id])),
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
@@ -50,6 +55,8 @@ export const achievementProgressText = (achievementId, progress) => {
     "long-haul": `${Math.min(Math.floor((progress.totalPlayTime ?? 0) / 60), 30)}/30 Minuten`,
     "spotless-five": `${Math.min(progress.flawlessRuns ?? 0, 5)}/5 fehlerfreie Läufe`,
     "all-stars": `${Math.min(completedMissions, missionTotal)}/${missionTotal} Sterne`,
+    "perfect-pile": `${Math.min(progress.perfectRuns ?? 0, 1)}/1 perfekter Lauf`,
+    "master-one": `${Math.min(LEVELS.filter((level) => isLevelMastered(level, progress.levelRecords?.[level.id])).length, 1)}/1 gemeistertes Level`,
   };
   return values[achievementId] ?? "";
 };

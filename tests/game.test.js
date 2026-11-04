@@ -910,6 +910,21 @@ test("locked achievements expose useful progress text", () => {
   assert.equal(achievementProgressText("campaign-complete", progress), "2/6 Level");
 });
 
+test("mastery achievements reward perfect and fully mastered runs", () => {
+  const level = LEVELS[0];
+  const progress = {
+    perfectRuns: 1,
+    achievements: [],
+    levelRecords: {
+      [level.id]: { medal: "Gold", bestFlies: level.flies.length, missions: level.missions.map(({ id }) => id) },
+    },
+  };
+  const ids = findNewAchievements(progress, { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 })
+    .map(({ id }) => id);
+  assert.ok(ids.includes("perfect-pile"));
+  assert.ok(ids.includes("master-one"));
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

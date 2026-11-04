@@ -329,6 +329,10 @@ test("campaign continuation prioritizes unfinished levels and then open missions
     levelRecords: { one: { missions: [] }, two: { missions: ["b"] } },
   }), { levelId: "one", reason: "missions" });
   assert.equal(campaignButtonLabel("missions"), "Offene Missionen spielen");
+  assert.deepEqual(chooseCampaignLevel([{ id: "one", missions: [], flies: [{}, {}] }], {
+    unlockedLevels: ["one"], levelRecords: { one: { missions: [], bestFlies: 1 } },
+  }), { levelId: "one", reason: "collection" });
+  assert.equal(campaignButtonLabel("collection"), "Fehlende Fliegen sammeln");
 });
 
 test("campaign progress counts uniquely completed levels", () => {

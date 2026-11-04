@@ -333,6 +333,10 @@ test("campaign continuation prioritizes unfinished levels and then open missions
     unlockedLevels: ["one"], levelRecords: { one: { missions: [], bestFlies: 1 } },
   }), { levelId: "one", reason: "collection" });
   assert.equal(campaignButtonLabel("collection"), "Fehlende Fliegen sammeln");
+  assert.deepEqual(chooseCampaignLevel([{ id: "one", missions: [], flies: [{}] }], {
+    unlockedLevels: ["one"], levelRecords: { one: { missions: [], bestFlies: 1, medal: "Silber" } },
+  }), { levelId: "one", reason: "gold" });
+  assert.equal(campaignButtonLabel("gold"), "Nächste Goldmedaille holen");
 });
 
 test("campaign progress counts uniquely completed levels", () => {

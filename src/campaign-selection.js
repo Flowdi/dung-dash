@@ -11,6 +11,8 @@ export const chooseCampaignLevel = (levels, progress) => {
     (progress.levelRecords?.[level.id]?.bestFlies ?? 0) < (level.flies?.length ?? 0)
   );
   if (missingFlies) return { levelId: missingFlies.id, reason: "collection" };
+  const missingGold = available.find(({ id }) => progress.levelRecords?.[id]?.medal !== "Gold");
+  if (missingGold) return { levelId: missingGold.id, reason: "gold" };
   return { levelId: available.at(-1)?.id ?? levels[0]?.id ?? null, reason: "complete" };
 };
 
@@ -18,5 +20,6 @@ export const campaignButtonLabel = (reason) => ({
   unfinished: "Kampagne fortsetzen",
   missions: "Offene Missionen spielen",
   collection: "Fehlende Fliegen sammeln",
+  gold: "Nächste Goldmedaille holen",
   complete: "Lieblingslevel wiederholen",
 }[reason] ?? "Kampagne spielen");

@@ -81,8 +81,9 @@ test("level mastery requires gold, every mission and every fly", () => {
   assert.equal(isLevelMastered(level, record), true);
   assert.equal(isLevelMastered(level, { ...record, bestFlies: 1 }), false);
   assert.deepEqual(calculateMasteryProgress({ levelRecords: { test: record } }, [level]), {
-    masteredLevels: 1, totalLevels: 1,
+    masteredLevels: 1, totalLevels: 1, percent: 100,
   });
+  assert.deepEqual(calculateMasteryProgress({}, []), { masteredLevels: 0, totalLevels: 0, percent: 0 });
   assert.equal(levelMasteryLabel(level, record), "🏆 Level gemeistert");
 });
 

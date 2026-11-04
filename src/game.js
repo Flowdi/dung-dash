@@ -336,7 +336,7 @@ export class Game {
     const campaign = calculateCampaignProgress(progress, LEVELS);
     const mastery = calculateMasteryProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · ${mastery.masteredLevels} gemeistert`;
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · Meisterschaft ${mastery.percent}%`;
     this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],

@@ -48,7 +48,7 @@ import { buildMedalRequirements } from "./medal-guide.js";
 import { analyzeRun } from "./run-analysis.js";
 import { buildPauseHelp } from "./pause-help.js";
 import { calculateBestCollection } from "./collection-mastery.js";
-import { calculateMasteryProgress } from "./level-mastery.js";
+import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js";
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import {
   findReachedCheckpoint,
@@ -290,7 +290,7 @@ export class Game {
       this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
       return;
     }
-    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(([label, value]) =>
+    this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span class="mastery-status">${levelMasteryLabel(definition, record)}</span><div>${stats.map(([label, value]) =>
       `<p><span>${label}</span><strong>${value}</strong></p>`
     ).join("")}</div><small>${nextGoal}</small>`;
   }
@@ -336,7 +336,7 @@ export class Game {
     const campaign = calculateCampaignProgress(progress, LEVELS);
     const mastery = calculateMasteryProgress(progress, LEVELS);
     this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · ${mastery.masteredLevels} gemeistert`;
+    this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen · ${campaign.percent}% · Meisterschaft ${mastery.percent}%`;
     this.campaignProgressFill.style.width = `${campaign.percent}%`;
     const stats = [
       ["Läufe", progress.totalRuns],
@@ -376,7 +376,7 @@ export class Game {
       const title = this.document.createElement("strong");
       title.textContent = levelName;
       const score = this.document.createElement("span");
-      score.textContent = `${run.medal ?? "–"} · ${run.score} Punkte`;
+      score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte`;
       const details = this.document.createElement("span");
       const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
       details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected}${flyTotal} Fliegen · ${run.falls} Treffer`;
@@ -753,7 +753,7 @@ export class Game {
       ["Sammelquote", `${analysis.collectionPercent}%`],
       ["Beste Combo", `×${analysis.bestCombo}`],
       ...buildSpecialFlySummary(result.specialFlies),
-      ["Lauf", analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
+      ["Lauf", analysis.perfect ? "Perfekt 🏆" : analysis.flawless ? "Fehlerfrei ✓" : `${result.falls} Treffer`],
     ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
     const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord?.bestSplits);
     this.resultSplits.hidden = comparedSplits.length === 0;

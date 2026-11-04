@@ -58,7 +58,7 @@ import { compareProjectedScore } from "../src/score-pace.js";
 import { buildMedalRequirements } from "../src/medal-guide.js";
 import { calculateBestCollection } from "../src/collection-mastery.js";
 import { buildPauseHelp } from "../src/pause-help.js";
-import { calculateMasteryProgress, isLevelMastered } from "../src/level-mastery.js";
+import { calculateMasteryProgress, isLevelMastered, levelMasteryLabel } from "../src/level-mastery.js";
 import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 
@@ -81,8 +81,10 @@ test("level mastery requires gold, every mission and every fly", () => {
   assert.equal(isLevelMastered(level, record), true);
   assert.equal(isLevelMastered(level, { ...record, bestFlies: 1 }), false);
   assert.deepEqual(calculateMasteryProgress({ levelRecords: { test: record } }, [level]), {
-    masteredLevels: 1, totalLevels: 1,
+    masteredLevels: 1, totalLevels: 1, percent: 100,
   });
+  assert.deepEqual(calculateMasteryProgress({}, []), { masteredLevels: 0, totalLevels: 0, percent: 0 });
+  assert.equal(levelMasteryLabel(level, record), "🏆 Level gemeistert");
 });
 
 test("pause help lists shortcuts and only offers reachable checkpoint actions", () => {
@@ -207,10 +209,11 @@ test("platform previews group related mechanics and omit absent types", () => {
 test("run analysis summarizes collection, combo and clean play", () => {
   assert.deepEqual(analyzeRun({
     fliesCollected: 9, totalFlies: 12, bestCombo: 4, falls: 0,
-  }), { collectionPercent: 75, bestCombo: 4, flawless: true });
+  }), { collectionPercent: 75, bestCombo: 4, flawless: true, perfect: false });
+  assert.equal(analyzeRun({ fliesCollected: 12, totalFlies: 12, bestCombo: 4, falls: 0 }).perfect, true);
   assert.deepEqual(analyzeRun({
     fliesCollected: 0, totalFlies: 0, bestCombo: 0, falls: 2,
-  }), { collectionPercent: 100, bestCombo: 0, flawless: false });
+  }), { collectionPercent: 100, bestCombo: 0, flawless: false, perfect: false });
 });
 
 test("fly previews count every collectible type and explain its effect", () => {
@@ -298,16 +301,18 @@ test("run comparisons explain gains and losses against personal records", () => 
 });
 
 test("level goals guide players from first finish to missions and gold", () => {
-  const level = { missions: [
+  const level = { flies: [{}, {}, {}], missions: [
     { id: "flies", label: "Sammle alle Fliegen" },
     { id: "speed", label: "Schaffe das Zeitlimit" },
   ] };
   assert.equal(describeNextLevelGoal(level, null), "Erstes Ziel: Level abschließen");
   assert.equal(describeNextLevelGoal(level, { missions: ["flies"], medal: "Gold" }),
     "Nächstes Ziel: Schaffe das Zeitlimit");
-  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber" }),
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber", bestFlies: 2 }),
+    "Nächstes Ziel: alle 3 Fliegen sammeln");
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Silber", bestFlies: 3 }),
     "Nächstes Ziel: Goldmedaille holen");
-  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Gold" }),
+  assert.equal(describeNextLevelGoal(level, { missions: ["flies", "speed"], medal: "Gold", bestFlies: 3 }),
     "Alle Ziele dieses Levels erreicht");
 });
 
@@ -325,6 +330,14 @@ test("campaign continuation prioritizes unfinished levels and then open missions
     levelRecords: { one: { missions: [] }, two: { missions: ["b"] } },
   }), { levelId: "one", reason: "missions" });
   assert.equal(campaignButtonLabel("missions"), "Offene Missionen spielen");
+  assert.deepEqual(chooseCampaignLevel([{ id: "one", missions: [], flies: [{}, {}] }], {
+    unlockedLevels: ["one"], levelRecords: { one: { missions: [], bestFlies: 1 } },
+  }), { levelId: "one", reason: "collection" });
+  assert.equal(campaignButtonLabel("collection"), "Fehlende Fliegen sammeln");
+  assert.deepEqual(chooseCampaignLevel([{ id: "one", missions: [], flies: [{}] }], {
+    unlockedLevels: ["one"], levelRecords: { one: { missions: [], bestFlies: 1, medal: "Silber" } },
+  }), { levelId: "one", reason: "gold" });
+  assert.equal(campaignButtonLabel("gold"), "Nächste Goldmedaille holen");
 });
 
 test("campaign progress counts uniquely completed levels", () => {
@@ -649,6 +662,7 @@ test("progress store keeps personal records", () => {
     fliesCollected: 5,
     totalFlies: 0,
     falls: 0,
+    perfect: false,
   });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
@@ -894,6 +908,21 @@ test("locked achievements expose useful progress text", () => {
   assert.equal(achievementProgressText("fly-hunter", progress), "23/50 Fliegen");
   assert.equal(achievementProgressText("speed-runner", progress), "0/1 unter 60 Sekunden");
   assert.equal(achievementProgressText("campaign-complete", progress), "2/6 Level");
+});
+
+test("mastery achievements reward perfect and fully mastered runs", () => {
+  const level = LEVELS[0];
+  const progress = {
+    perfectRuns: 1,
+    achievements: [],
+    levelRecords: {
+      [level.id]: { medal: "Gold", bestFlies: level.flies.length, missions: level.missions.map(({ id }) => id) },
+    },
+  };
+  const ids = findNewAchievements(progress, { bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1 })
+    .map(({ id }) => id);
+  assert.ok(ids.includes("perfect-pile"));
+  assert.ok(ids.includes("master-one"));
 });
 
 test("progress store persists achievements only once", () => {

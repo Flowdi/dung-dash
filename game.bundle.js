@@ -1052,6 +1052,22 @@
     }
   };
 
+  // src/level-mastery.js
+  var isLevelMastered = (level, record) => {
+    var _a, _b;
+    return Boolean(record) && record.medal === "Gold" && new Set((_a = record.missions) != null ? _a : []).size >= level.missions.length && ((_b = record.bestFlies) != null ? _b : 0) >= level.flies.length;
+  };
+  var calculateMasteryProgress = (progress, levels) => {
+    const masteredLevels = levels.filter((level) => {
+      var _a;
+      return isLevelMastered(level, (_a = progress.levelRecords) == null ? void 0 : _a[level.id]);
+    }).length;
+    const totalLevels = levels.length;
+    const percent = totalLevels === 0 ? 0 : Math.round(masteredLevels / totalLevels * 100);
+    return { masteredLevels, totalLevels, percent };
+  };
+  var levelMasteryLabel = (level, record) => isLevelMastered(level, record) ? "\u{1F3C6} Level gemeistert" : "Meisterschaft noch offen";
+
   // src/achievements.js
   var ACHIEVEMENTS = Object.freeze([
     { id: "first-flush", name: "Erste Sp\xFClung", description: "Schlie\xDFe dein erstes Level ab." },
@@ -1063,7 +1079,9 @@
     { id: "campaign-complete", name: "K\xF6nig der Keramik", description: "Schlie\xDFe die gesamte Kampagne ab." },
     { id: "long-haul", name: "Dauersp\xFClung", description: "Spiele insgesamt 30 Minuten." },
     { id: "spotless-five", name: "Saubere Serie", description: "Schlie\xDFe f\xFCnf L\xE4ufe fehlerfrei ab." },
-    { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." }
+    { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." },
+    { id: "perfect-pile", name: "Makelloser Haufen", description: "Schaffe einen perfekten Lauf." },
+    { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollst\xE4ndig." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b;
@@ -1085,12 +1103,17 @@
       }),
       "long-haul": progress.totalPlayTime >= 30 * 60,
       "spotless-five": progress.flawlessRuns >= 5,
-      "all-stars": completedMissions >= LEVELS.reduce((total, level) => total + level.missions.length, 0)
+      "all-stars": completedMissions >= LEVELS.reduce((total, level) => total + level.missions.length, 0),
+      "perfect-pile": progress.perfectRuns >= 1,
+      "master-one": LEVELS.some((level) => {
+        var _a2;
+        return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
+      })
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1111,9 +1134,14 @@
       "campaign-complete": `${Math.min(completedLevels, LEVELS.length)}/${LEVELS.length} Level`,
       "long-haul": `${Math.min(Math.floor(((_h = progress.totalPlayTime) != null ? _h : 0) / 60), 30)}/30 Minuten`,
       "spotless-five": `${Math.min((_i = progress.flawlessRuns) != null ? _i : 0, 5)}/5 fehlerfreie L\xE4ufe`,
-      "all-stars": `${Math.min(completedMissions, missionTotal)}/${missionTotal} Sterne`
+      "all-stars": `${Math.min(completedMissions, missionTotal)}/${missionTotal} Sterne`,
+      "perfect-pile": `${Math.min((_j = progress.perfectRuns) != null ? _j : 0, 1)}/1 perfekter Lauf`,
+      "master-one": `${Math.min(LEVELS.filter((level) => {
+        var _a2;
+        return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
+      }).length, 1)}/1 gemeistertes Level`
     };
-    return (_j = values[achievementId]) != null ? _j : "";
+    return (_k = values[achievementId]) != null ? _k : "";
   };
 
   // src/perfect-run.js
@@ -1305,7 +1333,8 @@
           medal: result.medal,
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
           totalFlies: Math.max(0, Number(result.totalFlies) || 0),
-          falls: Math.max(0, Number(result.falls) || 0)
+          falls: Math.max(0, Number(result.falls) || 0),
+          perfect: isPerfectRun(result)
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
@@ -1499,6 +1528,18 @@
       }
     );
     if (missingStars) return { levelId: missingStars.id, reason: "missions" };
+    const missingFlies = available.find(
+      (level) => {
+        var _a2, _b2, _c2, _d2, _e2;
+        return ((_c2 = (_b2 = (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]) == null ? void 0 : _b2.bestFlies) != null ? _c2 : 0) < ((_e2 = (_d2 = level.flies) == null ? void 0 : _d2.length) != null ? _e2 : 0);
+      }
+    );
+    if (missingFlies) return { levelId: missingFlies.id, reason: "collection" };
+    const missingGold = available.find(({ id }) => {
+      var _a2, _b2;
+      return ((_b2 = (_a2 = progress.levelRecords) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.medal) !== "Gold";
+    });
+    if (missingGold) return { levelId: missingGold.id, reason: "gold" };
     return { levelId: (_e = (_d = (_b = available.at(-1)) == null ? void 0 : _b.id) != null ? _d : (_c = levels[0]) == null ? void 0 : _c.id) != null ? _e : null, reason: "complete" };
   };
   var campaignButtonLabel = (reason) => {
@@ -1506,17 +1547,22 @@
     return (_a = {
       unfinished: "Kampagne fortsetzen",
       missions: "Offene Missionen spielen",
+      collection: "Fehlende Fliegen sammeln",
+      gold: "N\xE4chste Goldmedaille holen",
       complete: "Lieblingslevel wiederholen"
     }[reason]) != null ? _a : "Kampagne spielen";
   };
 
   // src/level-goal.js
   var describeNextLevelGoal = (level, record) => {
-    var _a;
+    var _a, _b, _c;
     if (!record) return "Erstes Ziel: Level abschlie\xDFen";
     const completed = new Set((_a = record.missions) != null ? _a : []);
     const nextMission = level.missions.find(({ id }) => !completed.has(id));
     if (nextMission) return `N\xE4chstes Ziel: ${nextMission.label}`;
+    if (((_b = level.flies) == null ? void 0 : _b.length) && ((_c = record.bestFlies) != null ? _c : 0) < level.flies.length) {
+      return `N\xE4chstes Ziel: alle ${level.flies.length} Fliegen sammeln`;
+    }
     if (record.medal !== "Gold") return "N\xE4chstes Ziel: Goldmedaille holen";
     return "Alle Ziele dieses Levels erreicht";
   };
@@ -1739,7 +1785,8 @@
   var analyzeRun = (result) => ({
     collectionPercent: result.totalFlies === 0 ? 100 : Math.round(result.fliesCollected / result.totalFlies * 100),
     bestCombo: Math.max(0, Number(result.bestCombo) || 0),
-    flawless: result.falls === 0
+    flawless: result.falls === 0,
+    perfect: isPerfectRun(result)
   });
 
   // src/pause-help.js
@@ -1750,19 +1797,6 @@
     "F Vollbild",
     "H Fokusmodus"
   ].join(" \xB7 ");
-
-  // src/level-mastery.js
-  var isLevelMastered = (level, record) => {
-    var _a, _b;
-    return Boolean(record) && record.medal === "Gold" && new Set((_a = record.missions) != null ? _a : []).size >= level.missions.length && ((_b = record.bestFlies) != null ? _b : 0) >= level.flies.length;
-  };
-  var calculateMasteryProgress = (progress, levels) => {
-    const masteredLevels = levels.filter((level) => {
-      var _a;
-      return isLevelMastered(level, (_a = progress.levelRecords) == null ? void 0 : _a[level.id]);
-    }).length;
-    return { masteredLevels, totalLevels: levels.length };
-  };
 
   // src/special-fly-summary.js
   var buildSpecialFlySummary = (specialFlies = {}) => [
@@ -2114,7 +2148,7 @@
         this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span>Noch kein Abschluss</span><small>${nextGoal}</small>`;
         return;
       }
-      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><div>${stats.map(
+      this.levelRecordCard.innerHTML = `<strong>Dein Levelrekord</strong><span class="mastery-status">${levelMasteryLabel(definition, record)}</span><div>${stats.map(
         ([label, value]) => `<p><span>${label}</span><strong>${value}</strong></p>`
       ).join("")}</div><small>${nextGoal}</small>`;
     }
@@ -2159,7 +2193,7 @@
       const campaign = calculateCampaignProgress(progress, LEVELS);
       const mastery = calculateMasteryProgress(progress, LEVELS);
       this.campaignProgress.setAttribute("aria-valuenow", String(campaign.percent));
-      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}% \xB7 ${mastery.masteredLevels} gemeistert`;
+      this.campaignProgressLabel.textContent = `${campaign.completedLevels}/${campaign.totalLevels} Level abgeschlossen \xB7 ${campaign.percent}% \xB7 Meisterschaft ${mastery.percent}%`;
       this.campaignProgressFill.style.width = `${campaign.percent}%`;
       const stats = [
         ["L\xE4ufe", progress.totalRuns],
@@ -2201,7 +2235,7 @@
         const title = this.document.createElement("strong");
         title.textContent = levelName;
         const score = this.document.createElement("span");
-        score.textContent = `${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
+        score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");
         const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected}${flyTotal} Fliegen \xB7 ${run.falls} Treffer`;
@@ -2543,7 +2577,7 @@
         ["Sammelquote", `${analysis.collectionPercent}%`],
         ["Beste Combo", `\xD7${analysis.bestCombo}`],
         ...buildSpecialFlySummary(result.specialFlies),
-        ["Lauf", analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
+        ["Lauf", analysis.perfect ? "Perfekt \u{1F3C6}" : analysis.flawless ? "Fehlerfrei \u2713" : `${result.falls} Treffer`]
       ].map(([label, value]) => `<p class="${analysis.flawless && label === "Lauf" ? "flawless" : ""}"><span>${label}</span><strong>${value}</strong></p>`).join("");
       const comparedSplits = compareCheckpointSplits(result.checkpointSplits, previousRecord == null ? void 0 : previousRecord.bestSplits);
       this.resultSplits.hidden = comparedSplits.length === 0;

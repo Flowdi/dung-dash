@@ -349,6 +349,8 @@ export class Game {
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
       ["Perfekte Läufe", progress.perfectRuns],
+      ["Aktuelle Perfekt-Serie", `×${progress.currentPerfectStreak}`],
+      ["Beste Perfekt-Serie", `×${progress.bestPerfectStreak}`],
       ["Highscore", progress.bestScore],
       ["Ø Score", averages.score],
       ["Ø Treffer", averages.falls],

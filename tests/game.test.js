@@ -62,6 +62,12 @@ import { calculateMasteryProgress, isLevelMastered, levelMasteryLabel } from "..
 import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
+import { updatePerfectStreak } from "../src/perfect-streak.js";
+
+test("perfect streaks grow, preserve their best and reset on misses", () => {
+  assert.deepEqual(updatePerfectStreak(1, 1, true), { current: 2, best: 2 });
+  assert.deepEqual(updatePerfectStreak(2, 4, false), { current: 0, best: 4 });
+});
 
 test("run dates use a compact German history format", () => {
   assert.equal(formatRunDate("2026-11-07T12:30:00.000Z"), "07.11.2026, 13:30");

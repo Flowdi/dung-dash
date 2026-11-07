@@ -50,6 +50,7 @@ import { buildPauseHelp } from "./pause-help.js";
 import { calculateBestCollection } from "./collection-mastery.js";
 import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js";
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
+import { formatRunDate } from "./run-date.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -375,6 +376,8 @@ export class Game {
       const levelName = LEVELS.find(({ id }) => id === run.levelId)?.name ?? run.levelId;
       const title = this.document.createElement("strong");
       title.textContent = levelName;
+      const completedAt = formatRunDate(run.completedAt);
+      if (completedAt) title.textContent += ` · ${completedAt}`;
       const score = this.document.createElement("span");
       score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte`;
       const details = this.document.createElement("span");

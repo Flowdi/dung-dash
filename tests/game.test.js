@@ -61,6 +61,12 @@ import { buildPauseHelp } from "../src/pause-help.js";
 import { calculateMasteryProgress, isLevelMastered, levelMasteryLabel } from "../src/level-mastery.js";
 import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
+import { formatRunDate } from "../src/run-date.js";
+
+test("run dates use a compact German history format", () => {
+  assert.equal(formatRunDate("2026-11-07T12:30:00.000Z"), "07.11.2026, 13:30");
+  assert.equal(formatRunDate("invalid"), "");
+});
 
 test("result summaries normalize special fly counts", () => {
   assert.deepEqual(buildSpecialFlySummary({ gold: 2, time: 1 }), [

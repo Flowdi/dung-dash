@@ -938,6 +938,14 @@ test("mastery achievements reward perfect and fully mastered runs", () => {
   assert.ok(ids.includes("master-one"));
 });
 
+test("a three-run perfect streak unlocks its own achievement", () => {
+  const ids = findNewAchievements({ bestPerfectStreak: 3, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("perfect-three"));
+  assert.equal(achievementProgressText("perfect-three", { bestPerfectStreak: 2 }), "2/3 perfekte Läufe in Folge");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

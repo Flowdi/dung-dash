@@ -1081,7 +1081,8 @@
     { id: "spotless-five", name: "Saubere Serie", description: "Schlie\xDFe f\xFCnf L\xE4ufe fehlerfrei ab." },
     { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." },
     { id: "perfect-pile", name: "Makelloser Haufen", description: "Schaffe einen perfekten Lauf." },
-    { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollst\xE4ndig." }
+    { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollst\xE4ndig." },
+    { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte L\xE4ufe in Folge." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b;
@@ -1108,12 +1109,13 @@
       "master-one": LEVELS.some((level) => {
         var _a2;
         return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
-      })
+      }),
+      "perfect-three": progress.bestPerfectStreak >= 3
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1139,13 +1141,23 @@
       "master-one": `${Math.min(LEVELS.filter((level) => {
         var _a2;
         return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
-      }).length, 1)}/1 gemeistertes Level`
+      }).length, 1)}/1 gemeistertes Level`,
+      "perfect-three": `${Math.min((_k = progress.bestPerfectStreak) != null ? _k : 0, 3)}/3 perfekte L\xE4ufe in Folge`
     };
-    return (_k = values[achievementId]) != null ? _k : "";
+    return (_l = values[achievementId]) != null ? _l : "";
   };
 
   // src/perfect-run.js
   var isPerfectRun = (result) => result.totalFlies > 0 && result.fliesCollected === result.totalFlies && result.falls === 0;
+
+  // src/perfect-streak.js
+  var updatePerfectStreak = (current, best, perfect) => {
+    const nextCurrent = perfect ? Math.max(0, Number(current) || 0) + 1 : 0;
+    return {
+      current: nextCurrent,
+      best: Math.max(Math.max(0, Number(best) || 0), nextCurrent)
+    };
+  };
 
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
@@ -1161,6 +1173,8 @@
     bestCombo: 0,
     flawlessRuns: 0,
     perfectRuns: 0,
+    currentPerfectStreak: 0,
+    bestPerfectStreak: 0,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1220,6 +1234,8 @@
     base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
     base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
     base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
+    base.currentPerfectStreak = Math.max(0, Number(base.currentPerfectStreak) || 0);
+    base.bestPerfectStreak = Math.max(base.currentPerfectStreak, Number(base.bestPerfectStreak) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1232,8 +1248,9 @@
     return base;
   };
   var ProgressStore = class {
-    constructor(storage) {
+    constructor(storage, now = () => Date.now()) {
       this.storage = storage;
+      this.now = now;
     }
     load() {
       var _a, _b;
@@ -1310,6 +1327,8 @@
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
       const isNewBestTime = (previousLevelRecord == null ? void 0 : previousLevelRecord.bestTime) == null || result.elapsedSeconds < previousLevelRecord.bestTime;
       const isNewBestScore = result.score > ((_b = previousLevelRecord == null ? void 0 : previousLevelRecord.bestScore) != null ? _b : 0);
+      const perfect = isPerfectRun(result);
+      const perfectStreak = updatePerfectStreak(progress.currentPerfectStreak, progress.bestPerfectStreak, perfect);
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1325,8 +1344,11 @@
         totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
         bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
         flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
-        perfectRuns: progress.perfectRuns + (isPerfectRun(result) ? 1 : 0),
+        perfectRuns: progress.perfectRuns + (perfect ? 1 : 0),
+        currentPerfectStreak: perfectStreak.current,
+        bestPerfectStreak: perfectStreak.best,
         recentRuns: [{
+          completedAt: new Date(this.now()).toISOString(),
           levelId,
           score: Math.max(0, Number(result.score) || 0),
           elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),
@@ -1334,7 +1356,7 @@
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
           totalFlies: Math.max(0, Number(result.totalFlies) || 0),
           falls: Math.max(0, Number(result.falls) || 0),
-          perfect: isPerfectRun(result)
+          perfect
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
@@ -1804,6 +1826,20 @@
     ["Zeitfliegen", Math.max(0, Number(specialFlies.time) || 0)]
   ];
 
+  // src/run-date.js
+  var RUN_DATE_FORMAT = new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Berlin"
+  });
+  var formatRunDate = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : RUN_DATE_FORMAT.format(date);
+  };
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -2205,6 +2241,8 @@
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
         ["Perfekte L\xE4ufe", progress.perfectRuns],
+        ["Aktuelle Perfekt-Serie", `\xD7${progress.currentPerfectStreak}`],
+        ["Beste Perfekt-Serie", `\xD7${progress.bestPerfectStreak}`],
         ["Highscore", progress.bestScore],
         ["\xD8 Score", averages.score],
         ["\xD8 Treffer", averages.falls],
@@ -2234,6 +2272,8 @@
         const levelName = (_b2 = (_a2 = LEVELS.find(({ id }) => id === run.levelId)) == null ? void 0 : _a2.name) != null ? _b2 : run.levelId;
         const title = this.document.createElement("strong");
         title.textContent = levelName;
+        const completedAt = formatRunDate(run.completedAt);
+        if (completedAt) title.textContent += ` \xB7 ${completedAt}`;
         const score = this.document.createElement("span");
         score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
         const details = this.document.createElement("span");

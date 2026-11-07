@@ -86,8 +86,9 @@ export const normalizeProgress = (saved) => {
 };
 
 export class ProgressStore {
-  constructor(storage) {
+  constructor(storage, now = () => Date.now()) {
     this.storage = storage;
+    this.now = now;
   }
 
   load() {
@@ -189,6 +190,7 @@ export class ProgressStore {
       flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
       perfectRuns: progress.perfectRuns + (isPerfectRun(result) ? 1 : 0),
       recentRuns: [{
+        completedAt: new Date(this.now()).toISOString(),
         levelId,
         score: Math.max(0, Number(result.score) || 0),
         elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),

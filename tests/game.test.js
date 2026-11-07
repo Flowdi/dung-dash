@@ -634,7 +634,7 @@ test("progress store keeps personal records", () => {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
   };
-  const store = new ProgressStore(storage);
+  const store = new ProgressStore(storage, () => Date.UTC(2026, 10, 7, 12, 30));
   store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, bestCombo: 2, medal: "Bronze" });
   const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, bestCombo: 4, medal: "Gold" });
   assert.equal(progress.bestScore, 1500);
@@ -655,6 +655,7 @@ test("progress store keeps personal records", () => {
   assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
   assert.equal(flawless.recentRuns.length, 3);
   assert.deepEqual(flawless.recentRuns[0], {
+    completedAt: "2026-11-07T12:30:00.000Z",
     levelId: "bathroom-run",
     score: 900,
     elapsedSeconds: 70,

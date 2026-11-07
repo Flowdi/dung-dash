@@ -1,6 +1,7 @@
 import { ACHIEVEMENTS, findNewAchievements } from "./achievements.js";
 import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
+import { updatePerfectStreak } from "./perfect-streak.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -16,6 +17,8 @@ const emptyProgress = () => ({
   bestCombo: 0,
   flawlessRuns: 0,
   perfectRuns: 0,
+  currentPerfectStreak: 0,
+  bestPerfectStreak: 0,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -69,6 +72,8 @@ export const normalizeProgress = (saved) => {
   base.bestCombo = Math.max(0, Number(base.bestCombo) || 0);
   base.flawlessRuns = Math.max(0, Number(base.flawlessRuns) || 0);
   base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
+  base.currentPerfectStreak = Math.max(0, Number(base.currentPerfectStreak) || 0);
+  base.bestPerfectStreak = Math.max(base.currentPerfectStreak, Number(base.bestPerfectStreak) || 0);
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -86,8 +91,9 @@ export const normalizeProgress = (saved) => {
 };
 
 export class ProgressStore {
-  constructor(storage) {
+  constructor(storage, now = () => Date.now()) {
     this.storage = storage;
+    this.now = now;
   }
 
   load() {
@@ -172,6 +178,8 @@ export class ProgressStore {
     const previousLevelRecord = progress.levelRecords?.[levelId];
     const isNewBestTime = previousLevelRecord?.bestTime == null || result.elapsedSeconds < previousLevelRecord.bestTime;
     const isNewBestScore = result.score > (previousLevelRecord?.bestScore ?? 0);
+    const perfect = isPerfectRun(result);
+    const perfectStreak = updatePerfectStreak(progress.currentPerfectStreak, progress.bestPerfectStreak, perfect);
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -187,8 +195,11 @@ export class ProgressStore {
       totalFalls: progress.totalFalls + Math.max(0, Number(result.falls) || 0),
       bestCombo: Math.max(progress.bestCombo, Number(result.bestCombo) || 0),
       flawlessRuns: progress.flawlessRuns + (result.falls === 0 ? 1 : 0),
-      perfectRuns: progress.perfectRuns + (isPerfectRun(result) ? 1 : 0),
+      perfectRuns: progress.perfectRuns + (perfect ? 1 : 0),
+      currentPerfectStreak: perfectStreak.current,
+      bestPerfectStreak: perfectStreak.best,
       recentRuns: [{
+        completedAt: new Date(this.now()).toISOString(),
         levelId,
         score: Math.max(0, Number(result.score) || 0),
         elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),
@@ -196,7 +207,7 @@ export class ProgressStore {
         fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
         totalFlies: Math.max(0, Number(result.totalFlies) || 0),
         falls: Math.max(0, Number(result.falls) || 0),
-        perfect: isPerfectRun(result),
+        perfect,
       }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,

@@ -61,6 +61,18 @@ import { buildPauseHelp } from "../src/pause-help.js";
 import { calculateMasteryProgress, isLevelMastered, levelMasteryLabel } from "../src/level-mastery.js";
 import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
+import { formatRunDate } from "../src/run-date.js";
+import { updatePerfectStreak } from "../src/perfect-streak.js";
+
+test("perfect streaks grow, preserve their best and reset on misses", () => {
+  assert.deepEqual(updatePerfectStreak(1, 1, true), { current: 2, best: 2 });
+  assert.deepEqual(updatePerfectStreak(2, 4, false), { current: 0, best: 4 });
+});
+
+test("run dates use a compact German history format", () => {
+  assert.equal(formatRunDate("2026-11-07T12:30:00.000Z"), "07.11.2026, 13:30");
+  assert.equal(formatRunDate("invalid"), "");
+});
 
 test("result summaries normalize special fly counts", () => {
   assert.deepEqual(buildSpecialFlySummary({ gold: 2, time: 1 }), [
@@ -634,7 +646,7 @@ test("progress store keeps personal records", () => {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
   };
-  const store = new ProgressStore(storage);
+  const store = new ProgressStore(storage, () => Date.UTC(2026, 10, 7, 12, 30));
   store.record({ score: 1000, elapsedSeconds: 90, fliesCollected: 10, falls: 2, bestCombo: 2, medal: "Bronze" });
   const progress = store.record({ score: 1500, elapsedSeconds: 80, fliesCollected: 20, falls: 1, bestCombo: 4, medal: "Gold" });
   assert.equal(progress.bestScore, 1500);
@@ -655,6 +667,7 @@ test("progress store keeps personal records", () => {
   assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
   assert.equal(flawless.recentRuns.length, 3);
   assert.deepEqual(flawless.recentRuns[0], {
+    completedAt: "2026-11-07T12:30:00.000Z",
     levelId: "bathroom-run",
     score: 900,
     elapsedSeconds: 70,
@@ -923,6 +936,14 @@ test("mastery achievements reward perfect and fully mastered runs", () => {
     .map(({ id }) => id);
   assert.ok(ids.includes("perfect-pile"));
   assert.ok(ids.includes("master-one"));
+});
+
+test("a three-run perfect streak unlocks its own achievement", () => {
+  const ids = findNewAchievements({ bestPerfectStreak: 3, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("perfect-three"));
+  assert.equal(achievementProgressText("perfect-three", { bestPerfectStreak: 2 }), "2/3 perfekte Läufe in Folge");
 });
 
 test("progress store persists achievements only once", () => {

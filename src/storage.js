@@ -19,6 +19,8 @@ const emptyProgress = () => ({
   perfectRuns: 0,
   currentPerfectStreak: 0,
   bestPerfectStreak: 0,
+  scoreRecords: 0,
+  timeRecords: 0,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -74,6 +76,8 @@ export const normalizeProgress = (saved) => {
   base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
   base.currentPerfectStreak = Math.max(0, Number(base.currentPerfectStreak) || 0);
   base.bestPerfectStreak = Math.max(base.currentPerfectStreak, Number(base.bestPerfectStreak) || 0);
+  base.scoreRecords = Math.max(0, Number(base.scoreRecords) || 0);
+  base.timeRecords = Math.max(0, Number(base.timeRecords) || 0);
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -198,6 +202,8 @@ export class ProgressStore {
       perfectRuns: progress.perfectRuns + (perfect ? 1 : 0),
       currentPerfectStreak: perfectStreak.current,
       bestPerfectStreak: perfectStreak.best,
+      scoreRecords: progress.scoreRecords + (isNewBestScore ? 1 : 0),
+      timeRecords: progress.timeRecords + (isNewBestTime ? 1 : 0),
       recentRuns: [{
         completedAt: new Date(this.now()).toISOString(),
         levelId,

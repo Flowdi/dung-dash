@@ -352,6 +352,8 @@ export class Game {
       ["Perfekte Läufe", progress.perfectRuns],
       ["Aktuelle Perfekt-Serie", `×${progress.currentPerfectStreak}`],
       ["Beste Perfekt-Serie", `×${progress.bestPerfectStreak}`],
+      ["Score-Rekorde", progress.scoreRecords],
+      ["Zeit-Rekorde", progress.timeRecords],
       ["Highscore", progress.bestScore],
       ["Ø Score", averages.score],
       ["Ø Treffer", averages.falls],

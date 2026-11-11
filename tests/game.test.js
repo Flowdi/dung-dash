@@ -673,6 +673,8 @@ test("progress store keeps personal records", () => {
   assert.equal(flawless.flawlessRuns, 1);
   assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
   assert.equal(flawless.recentRuns.length, 3);
+  assert.equal(flawless.scoreRecords, 2);
+  assert.equal(flawless.timeRecords, 3);
   assert.deepEqual(flawless.recentRuns[0], {
     completedAt: "2026-11-07T12:30:00.000Z",
     levelId: "bathroom-run",

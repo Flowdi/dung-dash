@@ -15,6 +15,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "perfect-pile", name: "Makelloser Haufen", description: "Schaffe einen perfekten Lauf." },
   { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollständig." },
   { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte Läufe in Folge." },
+  { id: "record-chaser", name: "Rekordjäger", description: "Stelle zehn persönliche Rekorde auf." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -35,6 +36,7 @@ export const findNewAchievements = (progress, result) => {
     "perfect-pile": progress.perfectRuns >= 1,
     "master-one": LEVELS.some((level) => isLevelMastered(level, progress.levelRecords?.[level.id])),
     "perfect-three": progress.bestPerfectStreak >= 3,
+    "record-chaser": (progress.scoreRecords ?? 0) + (progress.timeRecords ?? 0) >= 10,
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
@@ -60,6 +62,7 @@ export const achievementProgressText = (achievementId, progress) => {
     "perfect-pile": `${Math.min(progress.perfectRuns ?? 0, 1)}/1 perfekter Lauf`,
     "master-one": `${Math.min(LEVELS.filter((level) => isLevelMastered(level, progress.levelRecords?.[level.id])).length, 1)}/1 gemeistertes Level`,
     "perfect-three": `${Math.min(progress.bestPerfectStreak ?? 0, 3)}/3 perfekte Läufe in Folge`,
+    "record-chaser": `${Math.min((progress.scoreRecords ?? 0) + (progress.timeRecords ?? 0), 10)}/10 persönliche Rekorde`,
   };
   return values[achievementId] ?? "";
 };

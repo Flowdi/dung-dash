@@ -1082,10 +1082,11 @@
     { id: "all-stars", name: "Sternenhimmel", description: "Schlie\xDFe alle Level-Missionen ab." },
     { id: "perfect-pile", name: "Makelloser Haufen", description: "Schaffe einen perfekten Lauf." },
     { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollst\xE4ndig." },
-    { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte L\xE4ufe in Folge." }
+    { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte L\xE4ufe in Folge." },
+    { id: "record-chaser", name: "Rekordj\xE4ger", description: "Stelle zehn pers\xF6nliche Rekorde auf." }
   ]);
   var findNewAchievements = (progress, result) => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     const unlocked = new Set((_a = progress.achievements) != null ? _a : []);
     const completedMissions = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((total, record) => {
       var _a2;
@@ -1110,12 +1111,13 @@
         var _a2;
         return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
       }),
-      "perfect-three": progress.bestPerfectStreak >= 3
+      "perfect-three": progress.bestPerfectStreak >= 3,
+      "record-chaser": ((_c = progress.scoreRecords) != null ? _c : 0) + ((_d = progress.timeRecords) != null ? _d : 0) >= 10
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1142,9 +1144,10 @@
         var _a2;
         return isLevelMastered(level, (_a2 = progress.levelRecords) == null ? void 0 : _a2[level.id]);
       }).length, 1)}/1 gemeistertes Level`,
-      "perfect-three": `${Math.min((_k = progress.bestPerfectStreak) != null ? _k : 0, 3)}/3 perfekte L\xE4ufe in Folge`
+      "perfect-three": `${Math.min((_k = progress.bestPerfectStreak) != null ? _k : 0, 3)}/3 perfekte L\xE4ufe in Folge`,
+      "record-chaser": `${Math.min(((_l = progress.scoreRecords) != null ? _l : 0) + ((_m = progress.timeRecords) != null ? _m : 0), 10)}/10 pers\xF6nliche Rekorde`
     };
-    return (_l = values[achievementId]) != null ? _l : "";
+    return (_n = values[achievementId]) != null ? _n : "";
   };
 
   // src/perfect-run.js
@@ -1175,6 +1178,8 @@
     perfectRuns: 0,
     currentPerfectStreak: 0,
     bestPerfectStreak: 0,
+    scoreRecords: 0,
+    timeRecords: 0,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1236,6 +1241,8 @@
     base.perfectRuns = Math.max(0, Number(base.perfectRuns) || 0);
     base.currentPerfectStreak = Math.max(0, Number(base.currentPerfectStreak) || 0);
     base.bestPerfectStreak = Math.max(base.currentPerfectStreak, Number(base.bestPerfectStreak) || 0);
+    base.scoreRecords = Math.max(0, Number(base.scoreRecords) || 0);
+    base.timeRecords = Math.max(0, Number(base.timeRecords) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1347,6 +1354,8 @@
         perfectRuns: progress.perfectRuns + (perfect ? 1 : 0),
         currentPerfectStreak: perfectStreak.current,
         bestPerfectStreak: perfectStreak.best,
+        scoreRecords: progress.scoreRecords + (isNewBestScore ? 1 : 0),
+        timeRecords: progress.timeRecords + (isNewBestTime ? 1 : 0),
         recentRuns: [{
           completedAt: new Date(this.now()).toISOString(),
           levelId,
@@ -1356,7 +1365,8 @@
           fliesCollected: Math.max(0, Number(result.fliesCollected) || 0),
           totalFlies: Math.max(0, Number(result.totalFlies) || 0),
           falls: Math.max(0, Number(result.falls) || 0),
-          perfect
+          perfect,
+          recordFlags: { score: isNewBestScore, time: isNewBestTime }
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
@@ -1840,6 +1850,12 @@
     return Number.isNaN(date.getTime()) ? "" : RUN_DATE_FORMAT.format(date);
   };
 
+  // src/record-badges.js
+  var buildRecordBadges = (flags = {}) => [
+    ...flags.score ? ["Score-PB"] : [],
+    ...flags.time ? ["Zeit-PB"] : []
+  ];
+
   // src/physics.js
   var overlaps = (first, second) => first.position.x < second.position.x + second.width && first.position.x + first.width > second.position.x && first.position.y < second.position.y + second.height && first.position.y + first.height > second.position.y;
   var rangesOverlap = (firstStart, firstEnd, secondStart, secondEnd) => firstEnd > secondStart && firstStart < secondEnd;
@@ -2243,6 +2259,8 @@
         ["Perfekte L\xE4ufe", progress.perfectRuns],
         ["Aktuelle Perfekt-Serie", `\xD7${progress.currentPerfectStreak}`],
         ["Beste Perfekt-Serie", `\xD7${progress.bestPerfectStreak}`],
+        ["Score-Rekorde", progress.scoreRecords],
+        ["Zeit-Rekorde", progress.timeRecords],
         ["Highscore", progress.bestScore],
         ["\xD8 Score", averages.score],
         ["\xD8 Treffer", averages.falls],
@@ -2275,7 +2293,8 @@
         const completedAt = formatRunDate(run.completedAt);
         if (completedAt) title.textContent += ` \xB7 ${completedAt}`;
         const score = this.document.createElement("span");
-        score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte`;
+        const recordBadges = buildRecordBadges(run.recordFlags);
+        score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte` + (recordBadges.length ? ` \xB7 \u{1F3C5} ${recordBadges.join(" + ")}` : "");
         const details = this.document.createElement("span");
         const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected}${flyTotal} Fliegen \xB7 ${run.falls} Treffer`;

@@ -956,6 +956,15 @@ test("a three-run perfect streak unlocks its own achievement", () => {
   assert.equal(achievementProgressText("perfect-three", { bestPerfectStreak: 2 }), "2/3 perfekte Läufe in Folge");
 });
 
+test("ten score and time improvements unlock the record achievement", () => {
+  const ids = findNewAchievements({ scoreRecords: 6, timeRecords: 4, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("record-chaser"));
+  assert.equal(achievementProgressText("record-chaser", { scoreRecords: 3, timeRecords: 2 }),
+    "5/10 persönliche Rekorde");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

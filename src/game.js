@@ -51,6 +51,7 @@ import { calculateBestCollection } from "./collection-mastery.js";
 import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js";
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
+import { buildRecordBadges } from "./record-badges.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -381,7 +382,9 @@ export class Game {
       const completedAt = formatRunDate(run.completedAt);
       if (completedAt) title.textContent += ` · ${completedAt}`;
       const score = this.document.createElement("span");
-      score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte`;
+      const recordBadges = buildRecordBadges(run.recordFlags);
+      score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte` +
+        (recordBadges.length ? ` · 🏅 ${recordBadges.join(" + ")}` : "");
       const details = this.document.createElement("span");
       const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
       details.textContent = `${formatTime(run.elapsedSeconds)} · ${run.fliesCollected}${flyTotal} Fliegen · ${run.falls} Treffer`;

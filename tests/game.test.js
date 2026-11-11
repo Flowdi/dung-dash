@@ -63,6 +63,13 @@ import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
+import { buildRecordBadges } from "../src/record-badges.js";
+
+test("run history describes score and time records independently", () => {
+  assert.deepEqual(buildRecordBadges({ score: true, time: true }), ["Score-PB", "Zeit-PB"]);
+  assert.deepEqual(buildRecordBadges({ score: false, time: true }), ["Zeit-PB"]);
+  assert.deepEqual(buildRecordBadges(), []);
+});
 
 test("perfect streaks grow, preserve their best and reset on misses", () => {
   assert.deepEqual(updatePerfectStreak(1, 1, true), { current: 2, best: 2 });

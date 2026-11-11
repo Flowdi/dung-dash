@@ -676,6 +676,7 @@ test("progress store keeps personal records", () => {
     totalFlies: 0,
     falls: 0,
     perfect: false,
+    recordFlags: { score: false, time: true },
   });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });

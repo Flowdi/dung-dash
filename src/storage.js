@@ -208,6 +208,7 @@ export class ProgressStore {
         totalFlies: Math.max(0, Number(result.totalFlies) || 0),
         falls: Math.max(0, Number(result.falls) || 0),
         perfect,
+        recordFlags: { score: isNewBestScore, time: isNewBestTime },
       }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,

@@ -63,6 +63,13 @@ import { isPerfectRun } from "../src/perfect-run.js";
 import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
+import { buildRecordBadges } from "../src/record-badges.js";
+
+test("run history describes score and time records independently", () => {
+  assert.deepEqual(buildRecordBadges({ score: true, time: true }), ["Score-PB", "Zeit-PB"]);
+  assert.deepEqual(buildRecordBadges({ score: false, time: true }), ["Zeit-PB"]);
+  assert.deepEqual(buildRecordBadges(), []);
+});
 
 test("perfect streaks grow, preserve their best and reset on misses", () => {
   assert.deepEqual(updatePerfectStreak(1, 1, true), { current: 2, best: 2 });
@@ -666,6 +673,8 @@ test("progress store keeps personal records", () => {
   assert.equal(flawless.flawlessRuns, 1);
   assert.equal(flawless.levelRecords["bathroom-run"].flawlessRuns, 1);
   assert.equal(flawless.recentRuns.length, 3);
+  assert.equal(flawless.scoreRecords, 2);
+  assert.equal(flawless.timeRecords, 3);
   assert.deepEqual(flawless.recentRuns[0], {
     completedAt: "2026-11-07T12:30:00.000Z",
     levelId: "bathroom-run",
@@ -676,6 +685,7 @@ test("progress store keeps personal records", () => {
     totalFlies: 0,
     falls: 0,
     perfect: false,
+    recordFlags: { score: false, time: true },
   });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
@@ -944,6 +954,15 @@ test("a three-run perfect streak unlocks its own achievement", () => {
   }).map(({ id }) => id);
   assert.ok(ids.includes("perfect-three"));
   assert.equal(achievementProgressText("perfect-three", { bestPerfectStreak: 2 }), "2/3 perfekte Läufe in Folge");
+});
+
+test("ten score and time improvements unlock the record achievement", () => {
+  const ids = findNewAchievements({ scoreRecords: 6, timeRecords: 4, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("record-chaser"));
+  assert.equal(achievementProgressText("record-chaser", { scoreRecords: 3, timeRecords: 2 }),
+    "5/10 persönliche Rekorde");
 });
 
 test("progress store persists achievements only once", () => {

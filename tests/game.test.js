@@ -64,6 +64,14 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
+import { playDateKey, updatePlayActivity } from "../src/play-activity.js";
+
+test("career activity counts each Berlin calendar day once", () => {
+  const timestamp = Date.UTC(2026, 10, 13, 12);
+  assert.equal(playDateKey(timestamp), "2026-11-13");
+  assert.deepEqual(updatePlayActivity(4, "2026-11-13", timestamp), { totalDays: 4, lastDate: "2026-11-13" });
+  assert.deepEqual(updatePlayActivity(4, "2026-11-12", timestamp), { totalDays: 5, lastDate: "2026-11-13" });
+});
 
 test("run history describes score and time records independently", () => {
   assert.deepEqual(buildRecordBadges({ score: true, time: true }), ["Score-PB", "Zeit-PB"]);

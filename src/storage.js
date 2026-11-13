@@ -2,6 +2,7 @@ import { ACHIEVEMENTS, findNewAchievements } from "./achievements.js";
 import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
+import { updatePlayActivity } from "./play-activity.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -21,6 +22,8 @@ const emptyProgress = () => ({
   bestPerfectStreak: 0,
   scoreRecords: 0,
   timeRecords: 0,
+  activeDays: 0,
+  lastActiveDate: null,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -78,6 +81,8 @@ export const normalizeProgress = (saved) => {
   base.bestPerfectStreak = Math.max(base.currentPerfectStreak, Number(base.bestPerfectStreak) || 0);
   base.scoreRecords = Math.max(0, Number(base.scoreRecords) || 0);
   base.timeRecords = Math.max(0, Number(base.timeRecords) || 0);
+  base.activeDays = Math.max(0, Number(base.activeDays) || 0);
+  base.lastActiveDate = typeof source.lastActiveDate === "string" ? source.lastActiveDate : null;
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -182,8 +187,10 @@ export class ProgressStore {
     const previousLevelRecord = progress.levelRecords?.[levelId];
     const isNewBestTime = previousLevelRecord?.bestTime == null || result.elapsedSeconds < previousLevelRecord.bestTime;
     const isNewBestScore = result.score > (previousLevelRecord?.bestScore ?? 0);
+    const completedAt = this.now();
     const perfect = isPerfectRun(result);
     const perfectStreak = updatePerfectStreak(progress.currentPerfectStreak, progress.bestPerfectStreak, perfect);
+    const activity = updatePlayActivity(progress.activeDays, progress.lastActiveDate, completedAt);
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -204,8 +211,10 @@ export class ProgressStore {
       bestPerfectStreak: perfectStreak.best,
       scoreRecords: progress.scoreRecords + (isNewBestScore ? 1 : 0),
       timeRecords: progress.timeRecords + (isNewBestTime ? 1 : 0),
+      activeDays: activity.totalDays,
+      lastActiveDate: activity.lastDate,
       recentRuns: [{
-        completedAt: new Date(this.now()).toISOString(),
+        completedAt: new Date(completedAt).toISOString(),
         levelId,
         score: Math.max(0, Number(result.score) || 0),
         elapsedSeconds: Math.max(0, Number(result.elapsedSeconds) || 0),

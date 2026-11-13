@@ -15,3 +15,8 @@ export const updatePlayActivity = (totalDays, lastDate, timestamp) => {
     lastDate: currentDate,
   };
 };
+
+export const formatActivityDate = (dateKey) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey ?? "");
+  return match ? `${match[3]}.${match[2]}.${match[1]}` : "–";
+};

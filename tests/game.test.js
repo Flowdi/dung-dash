@@ -64,6 +64,16 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
+import { formatActivityDate, playDateKey, updatePlayActivity } from "../src/play-activity.js";
+
+test("career activity counts each Berlin calendar day once", () => {
+  const timestamp = Date.UTC(2026, 10, 13, 12);
+  assert.equal(playDateKey(timestamp), "2026-11-13");
+  assert.deepEqual(updatePlayActivity(4, "2026-11-13", timestamp), { totalDays: 4, lastDate: "2026-11-13" });
+  assert.deepEqual(updatePlayActivity(4, "2026-11-12", timestamp), { totalDays: 5, lastDate: "2026-11-13" });
+  assert.equal(formatActivityDate("2026-11-13"), "13.11.2026");
+  assert.equal(formatActivityDate(null), "–");
+});
 
 test("run history describes score and time records independently", () => {
   assert.deepEqual(buildRecordBadges({ score: true, time: true }), ["Score-PB", "Zeit-PB"]);
@@ -963,6 +973,14 @@ test("ten score and time improvements unlock the record achievement", () => {
   assert.ok(ids.includes("record-chaser"));
   assert.equal(achievementProgressText("record-chaser", { scoreRecords: 3, timeRecords: 2 }),
     "5/10 persönliche Rekorde");
+});
+
+test("seven distinct play days unlock the regular achievement", () => {
+  const ids = findNewAchievements({ activeDays: 7, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("week-regular"));
+  assert.equal(achievementProgressText("week-regular", { activeDays: 4 }), "4/7 aktive Tage");
 });
 
 test("progress store persists achievements only once", () => {

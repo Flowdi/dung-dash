@@ -52,6 +52,7 @@ import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js"
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
 import { buildRecordBadges } from "./record-badges.js";
+import { formatActivityDate } from "./play-activity.js";
 import {
   findReachedCheckpoint,
   resolveBlockadeCollisions,
@@ -346,6 +347,8 @@ export class Game {
       ["Goldfliegen", progress.specialFlies.gold],
       ["Zeitfliegen", progress.specialFlies.time],
       ["Spielzeit", formatTime(progress.totalPlayTime)],
+      ["Aktive Tage", progress.activeDays],
+      ["Zuletzt gespielt", formatActivityDate(progress.lastActiveDate)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],

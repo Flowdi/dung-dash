@@ -975,6 +975,14 @@ test("ten score and time improvements unlock the record achievement", () => {
     "5/10 persönliche Rekorde");
 });
 
+test("seven distinct play days unlock the regular achievement", () => {
+  const ids = findNewAchievements({ activeDays: 7, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("week-regular"));
+  assert.equal(achievementProgressText("week-regular", { activeDays: 4 }), "4/7 aktive Tage");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

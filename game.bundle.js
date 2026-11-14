@@ -1084,7 +1084,8 @@
     { id: "master-one", name: "Level-Legende", description: "Meistere ein Level vollst\xE4ndig." },
     { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte L\xE4ufe in Folge." },
     { id: "record-chaser", name: "Rekordj\xE4ger", description: "Stelle zehn pers\xF6nliche Rekorde auf." },
-    { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." }
+    { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." },
+    { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an f\xFCnf Tagen in Folge." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b, _c, _d;
@@ -1114,12 +1115,13 @@
       }),
       "perfect-three": progress.bestPerfectStreak >= 3,
       "record-chaser": ((_c = progress.scoreRecords) != null ? _c : 0) + ((_d = progress.timeRecords) != null ? _d : 0) >= 10,
-      "week-regular": progress.activeDays >= 7
+      "week-regular": progress.activeDays >= 7,
+      "five-day-streak": progress.bestActivityStreak >= 5
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1148,9 +1150,10 @@
       }).length, 1)}/1 gemeistertes Level`,
       "perfect-three": `${Math.min((_k = progress.bestPerfectStreak) != null ? _k : 0, 3)}/3 perfekte L\xE4ufe in Folge`,
       "record-chaser": `${Math.min(((_l = progress.scoreRecords) != null ? _l : 0) + ((_m = progress.timeRecords) != null ? _m : 0), 10)}/10 pers\xF6nliche Rekorde`,
-      "week-regular": `${Math.min((_n = progress.activeDays) != null ? _n : 0, 7)}/7 aktive Tage`
+      "week-regular": `${Math.min((_n = progress.activeDays) != null ? _n : 0, 7)}/7 aktive Tage`,
+      "five-day-streak": `${Math.min((_o = progress.bestActivityStreak) != null ? _o : 0, 5)}/5 Tage in Folge`
     };
-    return (_o = values[achievementId]) != null ? _o : "";
+    return (_p = values[achievementId]) != null ? _p : "";
   };
 
   // src/perfect-run.js
@@ -1187,6 +1190,13 @@
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey != null ? dateKey : "");
     return match ? `${match[3]}.${match[2]}.${match[1]}` : "\u2013";
   };
+  var dayNumber = (dateKey) => Date.parse(`${dateKey}T00:00:00Z`) / 864e5;
+  var updateActivityStreak = (current, best, lastDate, currentDate) => {
+    const safeCurrent = Math.max(0, Number(current) || 0);
+    const difference = lastDate ? dayNumber(currentDate) - dayNumber(lastDate) : null;
+    const nextCurrent = difference === 0 ? safeCurrent : difference === 1 ? safeCurrent + 1 : 1;
+    return { current: nextCurrent, best: Math.max(Math.max(0, Number(best) || 0), nextCurrent) };
+  };
 
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
@@ -1208,6 +1218,8 @@
     timeRecords: 0,
     activeDays: 0,
     lastActiveDate: null,
+    currentActivityStreak: 0,
+    bestActivityStreak: 0,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1273,6 +1285,8 @@
     base.timeRecords = Math.max(0, Number(base.timeRecords) || 0);
     base.activeDays = Math.max(0, Number(base.activeDays) || 0);
     base.lastActiveDate = typeof source.lastActiveDate === "string" ? source.lastActiveDate : null;
+    base.currentActivityStreak = Math.max(0, Number(base.currentActivityStreak) || 0);
+    base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1368,6 +1382,12 @@
       const perfect = isPerfectRun(result);
       const perfectStreak = updatePerfectStreak(progress.currentPerfectStreak, progress.bestPerfectStreak, perfect);
       const activity = updatePlayActivity(progress.activeDays, progress.lastActiveDate, completedAt);
+      const activityStreak = updateActivityStreak(
+        progress.currentActivityStreak,
+        progress.bestActivityStreak,
+        progress.lastActiveDate,
+        activity.lastDate
+      );
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1390,6 +1410,8 @@
         timeRecords: progress.timeRecords + (isNewBestTime ? 1 : 0),
         activeDays: activity.totalDays,
         lastActiveDate: activity.lastDate,
+        currentActivityStreak: activityStreak.current,
+        bestActivityStreak: activityStreak.best,
         recentRuns: [{
           completedAt: new Date(completedAt).toISOString(),
           levelId,
@@ -2289,6 +2311,8 @@
         ["Spielzeit", formatTime(progress.totalPlayTime)],
         ["Aktive Tage", progress.activeDays],
         ["Zuletzt gespielt", formatActivityDate(progress.lastActiveDate)],
+        ["Aktuelle Tagesserie", `${progress.currentActivityStreak} Tage`],
+        ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],

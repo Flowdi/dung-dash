@@ -989,6 +989,14 @@ test("seven distinct play days unlock the regular achievement", () => {
   assert.equal(achievementProgressText("week-regular", { activeDays: 4 }), "4/7 aktive Tage");
 });
 
+test("a five-day activity streak unlocks its milestone", () => {
+  const ids = findNewAchievements({ bestActivityStreak: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("five-day-streak"));
+  assert.equal(achievementProgressText("five-day-streak", { bestActivityStreak: 3 }), "3/5 Tage in Folge");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

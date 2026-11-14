@@ -2,7 +2,7 @@ import { ACHIEVEMENTS, findNewAchievements } from "./achievements.js";
 import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
-import { updatePlayActivity } from "./play-activity.js";
+import { updateActivityStreak, updatePlayActivity } from "./play-activity.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -24,6 +24,8 @@ const emptyProgress = () => ({
   timeRecords: 0,
   activeDays: 0,
   lastActiveDate: null,
+  currentActivityStreak: 0,
+  bestActivityStreak: 0,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -83,6 +85,8 @@ export const normalizeProgress = (saved) => {
   base.timeRecords = Math.max(0, Number(base.timeRecords) || 0);
   base.activeDays = Math.max(0, Number(base.activeDays) || 0);
   base.lastActiveDate = typeof source.lastActiveDate === "string" ? source.lastActiveDate : null;
+  base.currentActivityStreak = Math.max(0, Number(base.currentActivityStreak) || 0);
+  base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -191,6 +195,9 @@ export class ProgressStore {
     const perfect = isPerfectRun(result);
     const perfectStreak = updatePerfectStreak(progress.currentPerfectStreak, progress.bestPerfectStreak, perfect);
     const activity = updatePlayActivity(progress.activeDays, progress.lastActiveDate, completedAt);
+    const activityStreak = updateActivityStreak(
+      progress.currentActivityStreak, progress.bestActivityStreak, progress.lastActiveDate, activity.lastDate
+    );
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -213,6 +220,8 @@ export class ProgressStore {
       timeRecords: progress.timeRecords + (isNewBestTime ? 1 : 0),
       activeDays: activity.totalDays,
       lastActiveDate: activity.lastDate,
+      currentActivityStreak: activityStreak.current,
+      bestActivityStreak: activityStreak.best,
       recentRuns: [{
         completedAt: new Date(completedAt).toISOString(),
         levelId,

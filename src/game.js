@@ -349,6 +349,8 @@ export class Game {
       ["Spielzeit", formatTime(progress.totalPlayTime)],
       ["Aktive Tage", progress.activeDays],
       ["Zuletzt gespielt", formatActivityDate(progress.lastActiveDate)],
+      ["Aktuelle Tagesserie", `${progress.currentActivityStreak} Tage`],
+      ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],

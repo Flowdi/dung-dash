@@ -101,6 +101,12 @@ test("start screen exposes career stats and achievements", async () => {
   assert.match(html, /id="large-hud-toggle"/);
 });
 
+test("career stats expose current and best daily streaks", async () => {
+  const bundle = await readFile(new URL("../game.bundle.js", import.meta.url), "utf8");
+  assert.match(bundle, /Aktuelle Tagesserie/);
+  assert.match(bundle, /Beste Tagesserie/);
+});
+
 test("start screen exposes persistent level missions", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /id="mission-stars"/);

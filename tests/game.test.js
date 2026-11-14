@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
-import { formatActivityDate, playDateKey, updatePlayActivity } from "../src/play-activity.js";
+import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 
 test("career activity counts each Berlin calendar day once", () => {
   const timestamp = Date.UTC(2026, 10, 13, 12);
@@ -73,6 +73,12 @@ test("career activity counts each Berlin calendar day once", () => {
   assert.deepEqual(updatePlayActivity(4, "2026-11-12", timestamp), { totalDays: 5, lastDate: "2026-11-13" });
   assert.equal(formatActivityDate("2026-11-13"), "13.11.2026");
   assert.equal(formatActivityDate(null), "–");
+});
+
+test("activity streaks ignore duplicate days and reset after gaps", () => {
+  assert.deepEqual(updateActivityStreak(3, 4, "2026-11-13", "2026-11-13"), { current: 3, best: 4 });
+  assert.deepEqual(updateActivityStreak(3, 4, "2026-11-13", "2026-11-14"), { current: 4, best: 4 });
+  assert.deepEqual(updateActivityStreak(4, 4, "2026-11-14", "2026-11-16"), { current: 1, best: 4 });
 });
 
 test("run history describes score and time records independently", () => {
@@ -981,6 +987,14 @@ test("seven distinct play days unlock the regular achievement", () => {
   }).map(({ id }) => id);
   assert.ok(ids.includes("week-regular"));
   assert.equal(achievementProgressText("week-regular", { activeDays: 4 }), "4/7 aktive Tage");
+});
+
+test("a five-day activity streak unlocks its milestone", () => {
+  const ids = findNewAchievements({ bestActivityStreak: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("five-day-streak"));
+  assert.equal(achievementProgressText("five-day-streak", { bestActivityStreak: 3 }), "3/5 Tage in Folge");
 });
 
 test("progress store persists achievements only once", () => {

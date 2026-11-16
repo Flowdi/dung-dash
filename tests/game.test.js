@@ -64,6 +64,15 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
+import { chooseDailyLevel } from "../src/daily-level.js";
+
+test("daily levels are stable and only use unlocked choices", () => {
+  const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
+  const first = chooseDailyLevel(levels, ["one", "three"], "2026-11-16");
+  assert.equal(first, chooseDailyLevel(levels, ["one", "three"], "2026-11-16"));
+  assert.ok(["one", "three"].includes(first));
+  assert.equal(chooseDailyLevel(levels, [], "2026-11-16"), null);
+});
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 
 test("career activity counts each Berlin calendar day once", () => {

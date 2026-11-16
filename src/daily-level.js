@@ -7,3 +7,8 @@ export const chooseDailyLevel = (levels, unlockedLevelIds, dateKey) => {
   if (available.length === 0) return null;
   return available[hashDate(dateKey) % available.length].id;
 };
+
+export const updateDailyCompletions = (count, lastDate, completedDate) => ({
+  count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
+  lastDate: completedDate || lastDate || null,
+});

@@ -410,7 +410,7 @@ export class Game {
       if (completedAt) title.textContent += ` · ${completedAt}`;
       const score = this.document.createElement("span");
       const recordBadges = buildRecordBadges(run.recordFlags);
-      score.textContent = `${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte` +
+      score.textContent = `${run.daily ? "📅 Tageslevel · " : ""}${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte` +
         (recordBadges.length ? ` · 🏅 ${recordBadges.join(" + ")}` : "");
       const details = this.document.createElement("span");
       const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
@@ -703,7 +703,9 @@ export class Game {
     const previousRecord = this.progressStore.load().levelRecords?.[this.level.id];
     const completedBefore = new Set(previousRecord?.missions ?? []);
     const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
-    const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
+    const progress = this.progressStore.record(
+      result, this.level.id, nextLevelId, missionsCompletedThisRun, this.activeDailyDate
+    );
     this.runScoreElement.textContent = String(result.score);
     this.showMessage(
       `${result.medal}-Medaille!`,

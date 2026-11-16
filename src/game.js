@@ -371,6 +371,8 @@ export class Game {
       ["Zuletzt gespielt", formatActivityDate(progress.lastActiveDate)],
       ["Aktuelle Tagesserie", `${progress.currentActivityStreak} Tage`],
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
+      ["Tageslevel", progress.dailyCompletions],
+      ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
@@ -468,6 +470,7 @@ export class Game {
   replayHistoryLevel(levelId) {
     const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
     if (!replayLevelId) return;
+    this.activeDailyDate = null;
     this.selectedLevelId = replayLevelId;
     this.progressStore.selectLevel(replayLevelId);
     this.levelSelect.value = replayLevelId;
@@ -810,6 +813,7 @@ export class Game {
 
   startNextLevel() {
     if (!this.nextLevelId) return;
+    this.activeDailyDate = null;
     this.selectedLevelId = this.nextLevelId;
     this.progressStore.selectLevel(this.selectedLevelId);
     this.reset();

@@ -18,6 +18,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "record-chaser", name: "Rekordjäger", description: "Stelle zehn persönliche Rekorde auf." },
   { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." },
   { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an fünf Tagen in Folge." },
+  { id: "daily-five", name: "Tagesordnung", description: "Schließe fünf verschiedene Tageslevel ab." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -41,6 +42,7 @@ export const findNewAchievements = (progress, result) => {
     "record-chaser": (progress.scoreRecords ?? 0) + (progress.timeRecords ?? 0) >= 10,
     "week-regular": progress.activeDays >= 7,
     "five-day-streak": progress.bestActivityStreak >= 5,
+    "daily-five": progress.dailyCompletions >= 5,
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
@@ -69,6 +71,7 @@ export const achievementProgressText = (achievementId, progress) => {
     "record-chaser": `${Math.min((progress.scoreRecords ?? 0) + (progress.timeRecords ?? 0), 10)}/10 persönliche Rekorde`,
     "week-regular": `${Math.min(progress.activeDays ?? 0, 7)}/7 aktive Tage`,
     "five-day-streak": `${Math.min(progress.bestActivityStreak ?? 0, 5)}/5 Tage in Folge`,
+    "daily-five": `${Math.min(progress.dailyCompletions ?? 0, 5)}/5 Tageslevel`,
   };
   return values[achievementId] ?? "";
 };

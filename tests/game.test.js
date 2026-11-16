@@ -1016,6 +1016,14 @@ test("a five-day activity streak unlocks its milestone", () => {
   assert.equal(achievementProgressText("five-day-streak", { bestActivityStreak: 3 }), "3/5 Tage in Folge");
 });
 
+test("five daily completions unlock the daily challenge achievement", () => {
+  const ids = findNewAchievements({ dailyCompletions: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-five"));
+  assert.equal(achievementProgressText("daily-five", { dailyCompletions: 3 }), "3/5 Tageslevel");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

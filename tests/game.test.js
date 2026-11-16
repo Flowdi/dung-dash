@@ -64,6 +64,24 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
+import { chooseDailyLevel, updateDailyCompletions } from "../src/daily-level.js";
+
+test("daily levels are stable and only use unlocked choices", () => {
+  const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
+  const first = chooseDailyLevel(levels, ["one", "three"], "2026-11-16");
+  assert.equal(first, chooseDailyLevel(levels, ["one", "three"], "2026-11-16"));
+  assert.ok(["one", "three"].includes(first));
+  assert.equal(chooseDailyLevel(levels, [], "2026-11-16"), null);
+});
+
+test("daily completions count at most once per calendar day", () => {
+  assert.deepEqual(updateDailyCompletions(2, "2026-11-15", "2026-11-16"), {
+    count: 3, lastDate: "2026-11-16",
+  });
+  assert.deepEqual(updateDailyCompletions(3, "2026-11-16", "2026-11-16"), {
+    count: 3, lastDate: "2026-11-16",
+  });
+});
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 
 test("career activity counts each Berlin calendar day once", () => {
@@ -702,6 +720,7 @@ test("progress store keeps personal records", () => {
     falls: 0,
     perfect: false,
     recordFlags: { score: false, time: true },
+    daily: false,
   });
   assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
 });
@@ -995,6 +1014,14 @@ test("a five-day activity streak unlocks its milestone", () => {
   }).map(({ id }) => id);
   assert.ok(ids.includes("five-day-streak"));
   assert.equal(achievementProgressText("five-day-streak", { bestActivityStreak: 3 }), "3/5 Tage in Folge");
+});
+
+test("five daily completions unlock the daily challenge achievement", () => {
+  const ids = findNewAchievements({ dailyCompletions: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-five"));
+  assert.equal(achievementProgressText("daily-five", { dailyCompletions: 3 }), "3/5 Tageslevel");
 });
 
 test("progress store persists achievements only once", () => {

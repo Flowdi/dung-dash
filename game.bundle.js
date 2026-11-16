@@ -1085,7 +1085,8 @@
     { id: "perfect-three", name: "Dreifach sauber", description: "Schaffe drei perfekte L\xE4ufe in Folge." },
     { id: "record-chaser", name: "Rekordj\xE4ger", description: "Stelle zehn pers\xF6nliche Rekorde auf." },
     { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." },
-    { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an f\xFCnf Tagen in Folge." }
+    { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an f\xFCnf Tagen in Folge." },
+    { id: "daily-five", name: "Tagesordnung", description: "Schlie\xDFe f\xFCnf verschiedene Tageslevel ab." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b, _c, _d;
@@ -1116,12 +1117,13 @@
       "perfect-three": progress.bestPerfectStreak >= 3,
       "record-chaser": ((_c = progress.scoreRecords) != null ? _c : 0) + ((_d = progress.timeRecords) != null ? _d : 0) >= 10,
       "week-regular": progress.activeDays >= 7,
-      "five-day-streak": progress.bestActivityStreak >= 5
+      "five-day-streak": progress.bestActivityStreak >= 5,
+      "daily-five": progress.dailyCompletions >= 5
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1151,9 +1153,10 @@
       "perfect-three": `${Math.min((_k = progress.bestPerfectStreak) != null ? _k : 0, 3)}/3 perfekte L\xE4ufe in Folge`,
       "record-chaser": `${Math.min(((_l = progress.scoreRecords) != null ? _l : 0) + ((_m = progress.timeRecords) != null ? _m : 0), 10)}/10 pers\xF6nliche Rekorde`,
       "week-regular": `${Math.min((_n = progress.activeDays) != null ? _n : 0, 7)}/7 aktive Tage`,
-      "five-day-streak": `${Math.min((_o = progress.bestActivityStreak) != null ? _o : 0, 5)}/5 Tage in Folge`
+      "five-day-streak": `${Math.min((_o = progress.bestActivityStreak) != null ? _o : 0, 5)}/5 Tage in Folge`,
+      "daily-five": `${Math.min((_p = progress.dailyCompletions) != null ? _p : 0, 5)}/5 Tageslevel`
     };
-    return (_p = values[achievementId]) != null ? _p : "";
+    return (_q = values[achievementId]) != null ? _q : "";
   };
 
   // src/perfect-run.js
@@ -1198,6 +1201,19 @@
     return { current: nextCurrent, best: Math.max(Math.max(0, Number(best) || 0), nextCurrent) };
   };
 
+  // src/daily-level.js
+  var hashDate = (dateKey) => [...String(dateKey)].reduce((hash, character) => Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0, 2166136261);
+  var chooseDailyLevel = (levels, unlockedLevelIds, dateKey) => {
+    const unlocked = new Set(unlockedLevelIds != null ? unlockedLevelIds : []);
+    const available = levels.filter(({ id }) => unlocked.has(id));
+    if (available.length === 0) return null;
+    return available[hashDate(dateKey) % available.length].id;
+  };
+  var updateDailyCompletions = (count, lastDate, completedDate) => ({
+    count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
+    lastDate: completedDate || lastDate || null
+  });
+
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
   var emptyProgress = () => ({
@@ -1220,6 +1236,8 @@
     lastActiveDate: null,
     currentActivityStreak: 0,
     bestActivityStreak: 0,
+    dailyCompletions: 0,
+    lastDailyDate: null,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1287,6 +1305,8 @@
     base.lastActiveDate = typeof source.lastActiveDate === "string" ? source.lastActiveDate : null;
     base.currentActivityStreak = Math.max(0, Number(base.currentActivityStreak) || 0);
     base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
+    base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
+    base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1372,7 +1392,7 @@
         preferences: { ...progress.preferences, focusMode: Boolean(enabled) }
       });
     }
-    record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
+    record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = [], dailyDate = null) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
       const progress = this.load();
       const previousLevelRecord = (_a = progress.levelRecords) == null ? void 0 : _a[levelId];
@@ -1388,6 +1408,7 @@
         progress.lastActiveDate,
         activity.lastDate
       );
+      const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1412,6 +1433,8 @@
         lastActiveDate: activity.lastDate,
         currentActivityStreak: activityStreak.current,
         bestActivityStreak: activityStreak.best,
+        dailyCompletions: daily.count,
+        lastDailyDate: daily.lastDate,
         recentRuns: [{
           completedAt: new Date(completedAt).toISOString(),
           levelId,
@@ -1422,7 +1445,8 @@
           totalFlies: Math.max(0, Number(result.totalFlies) || 0),
           falls: Math.max(0, Number(result.falls) || 0),
           perfect,
-          recordFlags: { score: isNewBestScore, time: isNewBestTime }
+          recordFlags: { score: isNewBestScore, time: isNewBestTime },
+          daily: Boolean(dailyDate)
         }, ...(_e = progress.recentRuns) != null ? _e : []].slice(0, 5),
         medals: {
           ...progress.medals,
@@ -2046,6 +2070,7 @@
       this.continueButton = documentObject.getElementById("continue-btn");
       this.levelSelect = documentObject.getElementById("level-select");
       this.randomLevelButton = documentObject.getElementById("random-level-btn");
+      this.dailyLevelButton = documentObject.getElementById("daily-level-btn");
       this.levelDescription = documentObject.getElementById("level-description");
       this.levelPreview = documentObject.getElementById("level-preview");
       this.flyPreview = documentObject.getElementById("fly-preview");
@@ -2118,6 +2143,7 @@
       this.nextLevelId = null;
       this.activeLevelRecord = null;
       this.lastRunSummary = "";
+      this.activeDailyDate = null;
       let storage = null;
       try {
         storage = windowObject.localStorage;
@@ -2144,7 +2170,10 @@
           onFocus: () => this.toggleFocusMode()
         }
       );
-      this.startButton.addEventListener("click", () => this.start());
+      this.startButton.addEventListener("click", () => {
+        this.activeDailyDate = null;
+        this.start();
+      });
       this.continueButton.addEventListener("click", () => this.continueCampaign());
       this.levelSelect.addEventListener("change", () => {
         this.selectedLevelId = this.levelSelect.value;
@@ -2182,6 +2211,7 @@
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
       });
       this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
+      this.dailyLevelButton.addEventListener("click", () => this.startDailyLevel());
       this.window.addEventListener("resize", () => this.resize());
       this.resize();
       this.renderLevelOptions();
@@ -2213,11 +2243,25 @@
       this.updateLevelDescription();
     }
     continueCampaign() {
+      this.activeDailyDate = null;
       const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
       if (!choice.levelId) return;
       this.selectedLevelId = choice.levelId;
       this.progressStore.selectLevel(choice.levelId);
       this.levelSelect.value = choice.levelId;
+      this.updateLevelDescription();
+      this.renderMissions();
+      this.start();
+    }
+    startDailyLevel() {
+      const progress = this.progressStore.load();
+      const dateKey = playDateKey(Date.now());
+      const levelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, dateKey);
+      if (!levelId) return;
+      this.activeDailyDate = dateKey;
+      this.selectedLevelId = levelId;
+      this.progressStore.selectLevel(levelId);
+      this.levelSelect.value = levelId;
       this.updateLevelDescription();
       this.renderMissions();
       this.start();
@@ -2313,6 +2357,8 @@
         ["Zuletzt gespielt", formatActivityDate(progress.lastActiveDate)],
         ["Aktuelle Tagesserie", `${progress.currentActivityStreak} Tage`],
         ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
+        ["Tageslevel", progress.dailyCompletions],
+        ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
@@ -2354,7 +2400,7 @@
         if (completedAt) title.textContent += ` \xB7 ${completedAt}`;
         const score = this.document.createElement("span");
         const recordBadges = buildRecordBadges(run.recordFlags);
-        score.textContent = `${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte` + (recordBadges.length ? ` \xB7 \u{1F3C5} ${recordBadges.join(" + ")}` : "");
+        score.textContent = `${run.daily ? "\u{1F4C5} Tageslevel \xB7 " : ""}${run.perfect ? "\u{1F3C6} Perfekt \xB7 " : ""}${(_c2 = run.medal) != null ? _c2 : "\u2013"} \xB7 ${run.score} Punkte` + (recordBadges.length ? ` \xB7 \u{1F3C5} ${recordBadges.join(" + ")}` : "");
         const details = this.document.createElement("span");
         const flyTotal = run.totalFlies ? `/${run.totalFlies}` : "";
         details.textContent = `${formatTime(run.elapsedSeconds)} \xB7 ${run.fliesCollected}${flyTotal} Fliegen \xB7 ${run.falls} Treffer`;
@@ -2403,6 +2449,7 @@
     replayHistoryLevel(levelId) {
       const replayLevelId = resolveReplayLevel(LEVELS, this.progressStore.load(), levelId);
       if (!replayLevelId) return;
+      this.activeDailyDate = null;
       this.selectedLevelId = replayLevelId;
       this.progressStore.selectLevel(replayLevelId);
       this.levelSelect.value = replayLevelId;
@@ -2624,7 +2671,13 @@
       const previousRecord = (_c = this.progressStore.load().levelRecords) == null ? void 0 : _c[this.level.id];
       const completedBefore = new Set((_d = previousRecord == null ? void 0 : previousRecord.missions) != null ? _d : []);
       const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
-      const progress = this.progressStore.record(result, this.level.id, nextLevelId, missionsCompletedThisRun);
+      const progress = this.progressStore.record(
+        result,
+        this.level.id,
+        nextLevelId,
+        missionsCompletedThisRun,
+        this.activeDailyDate
+      );
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
@@ -2712,6 +2765,7 @@
     }
     startNextLevel() {
       if (!this.nextLevelId) return;
+      this.activeDailyDate = null;
       this.selectedLevelId = this.nextLevelId;
       this.progressStore.selectLevel(this.selectedLevelId);
       this.reset();

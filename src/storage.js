@@ -3,6 +3,7 @@ import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
 import { updateActivityStreak, updatePlayActivity } from "./play-activity.js";
+import { updateDailyCompletions } from "./daily-level.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -26,6 +27,8 @@ const emptyProgress = () => ({
   lastActiveDate: null,
   currentActivityStreak: 0,
   bestActivityStreak: 0,
+  dailyCompletions: 0,
+  lastDailyDate: null,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -87,6 +90,8 @@ export const normalizeProgress = (saved) => {
   base.lastActiveDate = typeof source.lastActiveDate === "string" ? source.lastActiveDate : null;
   base.currentActivityStreak = Math.max(0, Number(base.currentActivityStreak) || 0);
   base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
+  base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
+  base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -186,7 +191,7 @@ export class ProgressStore {
     });
   }
 
-  record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = []) {
+  record(result, levelId = "bathroom-run", nextLevelId = null, completedMissions = [], dailyDate = null) {
     const progress = this.load();
     const previousLevelRecord = progress.levelRecords?.[levelId];
     const isNewBestTime = previousLevelRecord?.bestTime == null || result.elapsedSeconds < previousLevelRecord.bestTime;
@@ -198,6 +203,7 @@ export class ProgressStore {
     const activityStreak = updateActivityStreak(
       progress.currentActivityStreak, progress.bestActivityStreak, progress.lastActiveDate, activity.lastDate
     );
+    const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -222,6 +228,8 @@ export class ProgressStore {
       lastActiveDate: activity.lastDate,
       currentActivityStreak: activityStreak.current,
       bestActivityStreak: activityStreak.best,
+      dailyCompletions: daily.count,
+      lastDailyDate: daily.lastDate,
       recentRuns: [{
         completedAt: new Date(completedAt).toISOString(),
         levelId,
@@ -233,6 +241,7 @@ export class ProgressStore {
         falls: Math.max(0, Number(result.falls) || 0),
         perfect,
         recordFlags: { score: isNewBestScore, time: isNewBestTime },
+        daily: Boolean(dailyDate),
       }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,

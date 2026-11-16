@@ -52,6 +52,8 @@ import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js"
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
 import { buildRecordBadges } from "./record-badges.js";
+import { chooseDailyLevel } from "./daily-level.js";
+import { playDateKey } from "./play-activity.js";
 import { formatActivityDate } from "./play-activity.js";
 import {
   findReachedCheckpoint,
@@ -76,6 +78,7 @@ export class Game {
     this.continueButton = documentObject.getElementById("continue-btn");
     this.levelSelect = documentObject.getElementById("level-select");
     this.randomLevelButton = documentObject.getElementById("random-level-btn");
+    this.dailyLevelButton = documentObject.getElementById("daily-level-btn");
     this.levelDescription = documentObject.getElementById("level-description");
     this.levelPreview = documentObject.getElementById("level-preview");
     this.flyPreview = documentObject.getElementById("fly-preview");
@@ -150,6 +153,7 @@ export class Game {
     this.nextLevelId = null;
     this.activeLevelRecord = null;
     this.lastRunSummary = "";
+    this.activeDailyDate = null;
     let storage = null;
     try {
       storage = windowObject.localStorage;
@@ -177,7 +181,7 @@ export class Game {
         onFocus: () => this.toggleFocusMode(),
       }
     );
-    this.startButton.addEventListener("click", () => this.start());
+    this.startButton.addEventListener("click", () => { this.activeDailyDate = null; this.start(); });
     this.continueButton.addEventListener("click", () => this.continueCampaign());
     this.levelSelect.addEventListener("change", () => {
       this.selectedLevelId = this.levelSelect.value;
@@ -215,6 +219,7 @@ export class Game {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
     });
     this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
+    this.dailyLevelButton.addEventListener("click", () => this.startDailyLevel());
     this.window.addEventListener("resize", () => this.resize());
     this.resize();
     this.renderLevelOptions();
@@ -250,11 +255,26 @@ export class Game {
   }
 
   continueCampaign() {
+    this.activeDailyDate = null;
     const choice = chooseCampaignLevel(LEVELS, this.progressStore.load());
     if (!choice.levelId) return;
     this.selectedLevelId = choice.levelId;
     this.progressStore.selectLevel(choice.levelId);
     this.levelSelect.value = choice.levelId;
+    this.updateLevelDescription();
+    this.renderMissions();
+    this.start();
+  }
+
+  startDailyLevel() {
+    const progress = this.progressStore.load();
+    const dateKey = playDateKey(Date.now());
+    const levelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, dateKey);
+    if (!levelId) return;
+    this.activeDailyDate = dateKey;
+    this.selectedLevelId = levelId;
+    this.progressStore.selectLevel(levelId);
+    this.levelSelect.value = levelId;
     this.updateLevelDescription();
     this.renderMissions();
     this.start();

@@ -12,3 +12,6 @@ export const updateDailyCompletions = (count, lastDate, completedDate) => ({
   count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
   lastDate: completedDate || lastDate || null,
 });
+
+export const dailyLevelButtonLabel = (levelName, completed) =>
+  `${completed ? "✓ " : ""}Tageslevel: ${levelName ?? "nicht verfügbar"}`;

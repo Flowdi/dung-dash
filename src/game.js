@@ -52,7 +52,7 @@ import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js"
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
 import { buildRecordBadges } from "./record-badges.js";
-import { chooseDailyLevel } from "./daily-level.js";
+import { chooseDailyLevel, dailyLevelButtonLabel } from "./daily-level.js";
 import { playDateKey } from "./play-activity.js";
 import { formatActivityDate } from "./play-activity.js";
 import {
@@ -251,6 +251,11 @@ export class Game {
     this.levelSelect.value = this.selectedLevelId;
     const campaignChoice = chooseCampaignLevel(LEVELS, progress);
     this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
+    const today = playDateKey(Date.now());
+    const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
+    const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
+    this.dailyLevelButton.textContent = dailyLevelButtonLabel(dailyLevel?.name, progress.lastDailyDate === today);
+    this.dailyLevelButton.disabled = !dailyLevelId;
     this.updateLevelDescription();
   }
 

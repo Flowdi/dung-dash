@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
-import { chooseDailyLevel, updateDailyCompletions } from "../src/daily-level.js";
+import { chooseDailyLevel, dailyLevelButtonLabel, updateDailyCompletions } from "../src/daily-level.js";
 
 test("daily levels are stable and only use unlocked choices", () => {
   const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
@@ -81,6 +81,11 @@ test("daily completions count at most once per calendar day", () => {
   assert.deepEqual(updateDailyCompletions(3, "2026-11-16", "2026-11-16"), {
     count: 3, lastDate: "2026-11-16",
   });
+});
+
+test("daily level labels preview the level and its completion", () => {
+  assert.equal(dailyLevelButtonLabel("Royal Flush", false), "Tageslevel: Royal Flush");
+  assert.equal(dailyLevelButtonLabel("Royal Flush", true), "✓ Tageslevel: Royal Flush");
 });
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 

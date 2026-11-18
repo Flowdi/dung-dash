@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
-import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions } from "../src/daily-level.js";
+import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updatePerfectDailyCompletions } from "../src/daily-level.js";
 
 test("daily levels are stable and only use unlocked choices", () => {
   const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
@@ -92,6 +92,18 @@ test("daily completion text distinguishes first and repeated finishes", () => {
   assert.equal(dailyCompletionText("2026-11-18", "2026-11-17"), " · Tageslevel abgeschlossen!");
   assert.equal(dailyCompletionText("2026-11-18", "2026-11-18"), " · Tageslevel erneut geschafft");
   assert.equal(dailyCompletionText(null, "2026-11-18"), "");
+});
+
+test("perfect daily completions only count once per date", () => {
+  assert.deepEqual(updatePerfectDailyCompletions(1, "2026-11-17", "2026-11-18", true), {
+    count: 2, lastDate: "2026-11-18",
+  });
+  assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-18", true), {
+    count: 2, lastDate: "2026-11-18",
+  });
+  assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-19", false), {
+    count: 2, lastDate: "2026-11-18",
+  });
 });
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 

@@ -378,6 +378,7 @@ export class Game {
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
+      ["Perfekte Tageslevel", progress.perfectDailyCompletions],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],

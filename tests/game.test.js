@@ -1047,6 +1047,15 @@ test("five daily completions unlock the daily challenge achievement", () => {
   assert.equal(achievementProgressText("daily-five", { dailyCompletions: 3 }), "3/5 Tageslevel");
 });
 
+test("three perfect daily levels unlock their achievement", () => {
+  const ids = findNewAchievements({ perfectDailyCompletions: 3, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-perfect-three"));
+  assert.equal(achievementProgressText("daily-perfect-three", { perfectDailyCompletions: 2 }),
+    "2/3 perfekte Tageslevel");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

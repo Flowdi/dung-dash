@@ -52,7 +52,7 @@ import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js"
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
 import { buildRecordBadges } from "./record-badges.js";
-import { chooseDailyLevel } from "./daily-level.js";
+import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel } from "./daily-level.js";
 import { playDateKey } from "./play-activity.js";
 import { formatActivityDate } from "./play-activity.js";
 import {
@@ -251,6 +251,11 @@ export class Game {
     this.levelSelect.value = this.selectedLevelId;
     const campaignChoice = chooseCampaignLevel(LEVELS, progress);
     this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
+    const today = playDateKey(Date.now());
+    const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
+    const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
+    this.dailyLevelButton.textContent = dailyLevelButtonLabel(dailyLevel?.name, progress.lastDailyDate === today);
+    this.dailyLevelButton.disabled = !dailyLevelId;
     this.updateLevelDescription();
   }
 
@@ -373,6 +378,7 @@ export class Game {
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
+      ["Perfekte Tageslevel", progress.perfectDailyCompletions],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
@@ -703,7 +709,8 @@ export class Game {
     const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
     const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
     const nextLevelId = LEVELS[levelIndex + 1]?.id ?? null;
-    const previousRecord = this.progressStore.load().levelRecords?.[this.level.id];
+    const previousProgress = this.progressStore.load();
+    const previousRecord = previousProgress.levelRecords?.[this.level.id];
     const completedBefore = new Set(previousRecord?.missions ?? []);
     const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
     const progress = this.progressStore.record(
@@ -716,6 +723,7 @@ export class Game {
         `Treffer: ${result.falls} · Rekord: ${progress.bestScore}` +
         (progress.recordFlags.levelScore ? " · Neuer Level-Highscore!" : "") +
         (progress.recordFlags.levelTime ? " · Neue Level-Bestzeit!" : "") +
+        dailyCompletionText(this.activeDailyDate, previousProgress.lastDailyDate) +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`
           : ""),

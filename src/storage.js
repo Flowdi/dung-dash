@@ -3,7 +3,7 @@ import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
 import { updateActivityStreak, updatePlayActivity } from "./play-activity.js";
-import { updateDailyCompletions } from "./daily-level.js";
+import { updateDailyCompletions, updatePerfectDailyCompletions } from "./daily-level.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -29,6 +29,8 @@ const emptyProgress = () => ({
   bestActivityStreak: 0,
   dailyCompletions: 0,
   lastDailyDate: null,
+  perfectDailyCompletions: 0,
+  lastPerfectDailyDate: null,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -92,6 +94,8 @@ export const normalizeProgress = (saved) => {
   base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
   base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
   base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
+  base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
+  base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -204,6 +208,9 @@ export class ProgressStore {
       progress.currentActivityStreak, progress.bestActivityStreak, progress.lastActiveDate, activity.lastDate
     );
     const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
+    const perfectDaily = updatePerfectDailyCompletions(
+      progress.perfectDailyCompletions, progress.lastPerfectDailyDate, dailyDate, perfect
+    );
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -230,6 +237,8 @@ export class ProgressStore {
       bestActivityStreak: activityStreak.best,
       dailyCompletions: daily.count,
       lastDailyDate: daily.lastDate,
+      perfectDailyCompletions: perfectDaily.count,
+      lastPerfectDailyDate: perfectDaily.lastDate,
       recentRuns: [{
         completedAt: new Date(completedAt).toISOString(),
         levelId,

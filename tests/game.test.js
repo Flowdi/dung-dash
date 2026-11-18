@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
-import { chooseDailyLevel, updateDailyCompletions } from "../src/daily-level.js";
+import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updatePerfectDailyCompletions } from "../src/daily-level.js";
 
 test("daily levels are stable and only use unlocked choices", () => {
   const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
@@ -80,6 +80,29 @@ test("daily completions count at most once per calendar day", () => {
   });
   assert.deepEqual(updateDailyCompletions(3, "2026-11-16", "2026-11-16"), {
     count: 3, lastDate: "2026-11-16",
+  });
+});
+
+test("daily level labels preview the level and its completion", () => {
+  assert.equal(dailyLevelButtonLabel("Royal Flush", false), "Tageslevel: Royal Flush");
+  assert.equal(dailyLevelButtonLabel("Royal Flush", true), "✓ Tageslevel: Royal Flush");
+});
+
+test("daily completion text distinguishes first and repeated finishes", () => {
+  assert.equal(dailyCompletionText("2026-11-18", "2026-11-17"), " · Tageslevel abgeschlossen!");
+  assert.equal(dailyCompletionText("2026-11-18", "2026-11-18"), " · Tageslevel erneut geschafft");
+  assert.equal(dailyCompletionText(null, "2026-11-18"), "");
+});
+
+test("perfect daily completions only count once per date", () => {
+  assert.deepEqual(updatePerfectDailyCompletions(1, "2026-11-17", "2026-11-18", true), {
+    count: 2, lastDate: "2026-11-18",
+  });
+  assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-18", true), {
+    count: 2, lastDate: "2026-11-18",
+  });
+  assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-19", false), {
+    count: 2, lastDate: "2026-11-18",
   });
 });
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
@@ -1022,6 +1045,15 @@ test("five daily completions unlock the daily challenge achievement", () => {
   }).map(({ id }) => id);
   assert.ok(ids.includes("daily-five"));
   assert.equal(achievementProgressText("daily-five", { dailyCompletions: 3 }), "3/5 Tageslevel");
+});
+
+test("three perfect daily levels unlock their achievement", () => {
+  const ids = findNewAchievements({ perfectDailyCompletions: 3, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-perfect-three"));
+  assert.equal(achievementProgressText("daily-perfect-three", { perfectDailyCompletions: 2 }),
+    "2/3 perfekte Tageslevel");
 });
 
 test("progress store persists achievements only once", () => {

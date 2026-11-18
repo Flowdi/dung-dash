@@ -1086,7 +1086,8 @@
     { id: "record-chaser", name: "Rekordj\xE4ger", description: "Stelle zehn pers\xF6nliche Rekorde auf." },
     { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." },
     { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an f\xFCnf Tagen in Folge." },
-    { id: "daily-five", name: "Tagesordnung", description: "Schlie\xDFe f\xFCnf verschiedene Tageslevel ab." }
+    { id: "daily-five", name: "Tagesordnung", description: "Schlie\xDFe f\xFCnf verschiedene Tageslevel ab." },
+    { id: "daily-perfect-three", name: "Perfekter Alltag", description: "Schaffe drei Tageslevel perfekt." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b, _c, _d;
@@ -1118,12 +1119,13 @@
       "record-chaser": ((_c = progress.scoreRecords) != null ? _c : 0) + ((_d = progress.timeRecords) != null ? _d : 0) >= 10,
       "week-regular": progress.activeDays >= 7,
       "five-day-streak": progress.bestActivityStreak >= 5,
-      "daily-five": progress.dailyCompletions >= 5
+      "daily-five": progress.dailyCompletions >= 5,
+      "daily-perfect-three": progress.perfectDailyCompletions >= 3
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1154,9 +1156,10 @@
       "record-chaser": `${Math.min(((_l = progress.scoreRecords) != null ? _l : 0) + ((_m = progress.timeRecords) != null ? _m : 0), 10)}/10 pers\xF6nliche Rekorde`,
       "week-regular": `${Math.min((_n = progress.activeDays) != null ? _n : 0, 7)}/7 aktive Tage`,
       "five-day-streak": `${Math.min((_o = progress.bestActivityStreak) != null ? _o : 0, 5)}/5 Tage in Folge`,
-      "daily-five": `${Math.min((_p = progress.dailyCompletions) != null ? _p : 0, 5)}/5 Tageslevel`
+      "daily-five": `${Math.min((_p = progress.dailyCompletions) != null ? _p : 0, 5)}/5 Tageslevel`,
+      "daily-perfect-three": `${Math.min((_q = progress.perfectDailyCompletions) != null ? _q : 0, 3)}/3 perfekte Tageslevel`
     };
-    return (_q = values[achievementId]) != null ? _q : "";
+    return (_r = values[achievementId]) != null ? _r : "";
   };
 
   // src/perfect-run.js
@@ -1213,6 +1216,15 @@
     count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
     lastDate: completedDate || lastDate || null
   });
+  var dailyLevelButtonLabel = (levelName, completed) => `${completed ? "\u2713 " : ""}Tageslevel: ${levelName != null ? levelName : "nicht verf\xFCgbar"}`;
+  var dailyCompletionText = (dailyDate, previousDate) => {
+    if (!dailyDate) return "";
+    return dailyDate === previousDate ? " \xB7 Tageslevel erneut geschafft" : " \xB7 Tageslevel abgeschlossen!";
+  };
+  var updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfect) => ({
+    count: Math.max(0, Number(count) || 0) + (perfect && dailyDate && dailyDate !== lastDate ? 1 : 0),
+    lastDate: perfect && dailyDate ? dailyDate : lastDate != null ? lastDate : null
+  });
 
   // src/storage.js
   var STORAGE_KEY = "dung-dash-progress-v1";
@@ -1238,6 +1250,8 @@
     bestActivityStreak: 0,
     dailyCompletions: 0,
     lastDailyDate: null,
+    perfectDailyCompletions: 0,
+    lastPerfectDailyDate: null,
     recentRuns: [],
     preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
     medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -1307,6 +1321,8 @@
     base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
     base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
     base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
+    base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
+    base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
       reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
@@ -1409,6 +1425,12 @@
         activity.lastDate
       );
       const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
+      const perfectDaily = updatePerfectDailyCompletions(
+        progress.perfectDailyCompletions,
+        progress.lastPerfectDailyDate,
+        dailyDate,
+        perfect
+      );
       const next = {
         ...progress,
         bestScore: Math.max(progress.bestScore, result.score),
@@ -1435,6 +1457,8 @@
         bestActivityStreak: activityStreak.best,
         dailyCompletions: daily.count,
         lastDailyDate: daily.lastDate,
+        perfectDailyCompletions: perfectDaily.count,
+        lastPerfectDailyDate: perfectDaily.lastDate,
         recentRuns: [{
           completedAt: new Date(completedAt).toISOString(),
           levelId,
@@ -2240,6 +2264,11 @@
       this.levelSelect.value = this.selectedLevelId;
       const campaignChoice = chooseCampaignLevel(LEVELS, progress);
       this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
+      const today = playDateKey(Date.now());
+      const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
+      const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
+      this.dailyLevelButton.textContent = dailyLevelButtonLabel(dailyLevel == null ? void 0 : dailyLevel.name, progress.lastDailyDate === today);
+      this.dailyLevelButton.disabled = !dailyLevelId;
       this.updateLevelDescription();
     }
     continueCampaign() {
@@ -2359,6 +2388,7 @@
         ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
         ["Tageslevel", progress.dailyCompletions],
         ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
+        ["Perfekte Tageslevel", progress.perfectDailyCompletions],
         ["Treffer", progress.totalFalls],
         ["Beste Combo", `\xD7${progress.bestCombo}`],
         ["Fehlerfrei", progress.flawlessRuns],
@@ -2668,7 +2698,8 @@
       const missionsCompletedThisRun = completedMissionIds(this.level.missions, result);
       const levelIndex = LEVELS.findIndex((level) => level.id === this.level.id);
       const nextLevelId = (_b = (_a = LEVELS[levelIndex + 1]) == null ? void 0 : _a.id) != null ? _b : null;
-      const previousRecord = (_c = this.progressStore.load().levelRecords) == null ? void 0 : _c[this.level.id];
+      const previousProgress = this.progressStore.load();
+      const previousRecord = (_c = previousProgress.levelRecords) == null ? void 0 : _c[this.level.id];
       const completedBefore = new Set((_d = previousRecord == null ? void 0 : previousRecord.missions) != null ? _d : []);
       const newMissions = missionResults.filter(({ id, completed }) => completed && !completedBefore.has(id));
       const progress = this.progressStore.record(
@@ -2681,7 +2712,7 @@
       this.runScoreElement.textContent = String(result.score);
       this.showMessage(
         `${result.medal}-Medaille!`,
-        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.recordFlags.levelScore ? " \xB7 Neuer Level-Highscore!" : "") + (progress.recordFlags.levelTime ? " \xB7 Neue Level-Bestzeit!" : "") + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
+        `Zeit: ${formatTime(result.elapsedSeconds)} \xB7 Fliegen: ${result.fliesCollected}/${result.totalFlies} \xB7 Treffer: ${result.falls} \xB7 Rekord: ${progress.bestScore}` + (progress.recordFlags.levelScore ? " \xB7 Neuer Level-Highscore!" : "") + (progress.recordFlags.levelTime ? " \xB7 Neue Level-Bestzeit!" : "") + dailyCompletionText(this.activeDailyDate, previousProgress.lastDailyDate) + (progress.newAchievements.length ? ` \xB7 Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}` : ""),
         false
       );
       this.renderRunResult(result, missionResults, newMissions, previousRecord);

@@ -19,6 +19,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "week-regular", name: "Stammgast", description: "Spiele an sieben verschiedenen Tagen." },
   { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an fünf Tagen in Folge." },
   { id: "daily-five", name: "Tagesordnung", description: "Schließe fünf verschiedene Tageslevel ab." },
+  { id: "daily-perfect-three", name: "Perfekter Alltag", description: "Schaffe drei Tageslevel perfekt." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -43,6 +44,7 @@ export const findNewAchievements = (progress, result) => {
     "week-regular": progress.activeDays >= 7,
     "five-day-streak": progress.bestActivityStreak >= 5,
     "daily-five": progress.dailyCompletions >= 5,
+    "daily-perfect-three": progress.perfectDailyCompletions >= 3,
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
@@ -72,6 +74,7 @@ export const achievementProgressText = (achievementId, progress) => {
     "week-regular": `${Math.min(progress.activeDays ?? 0, 7)}/7 aktive Tage`,
     "five-day-streak": `${Math.min(progress.bestActivityStreak ?? 0, 5)}/5 Tage in Folge`,
     "daily-five": `${Math.min(progress.dailyCompletions ?? 0, 5)}/5 Tageslevel`,
+    "daily-perfect-three": `${Math.min(progress.perfectDailyCompletions ?? 0, 3)}/3 perfekte Tageslevel`,
   };
   return values[achievementId] ?? "";
 };

@@ -51,7 +51,7 @@ import { calculateBestCollection } from "./collection-mastery.js";
 import { calculateMasteryProgress, levelMasteryLabel } from "./level-mastery.js";
 import { buildSpecialFlySummary } from "./special-fly-summary.js";
 import { formatRunDate } from "./run-date.js";
-import { buildRecordBadges } from "./record-badges.js";
+import { buildDailyRecordBadges, buildRecordBadges } from "./record-badges.js";
 import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel } from "./daily-level.js";
 import { playDateKey } from "./play-activity.js";
 import { formatActivityDate } from "./play-activity.js";
@@ -379,6 +379,8 @@ export class Game {
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
       ["Perfekte Tageslevel", progress.perfectDailyCompletions],
+      ["Tageslevel-Highscore", progress.bestDailyScore],
+      ["Tageslevel-Bestzeit", progress.bestDailyTime == null ? "–" : formatTime(progress.bestDailyTime)],
       ["Treffer", progress.totalFalls],
       ["Beste Combo", `×${progress.bestCombo}`],
       ["Fehlerfrei", progress.flawlessRuns],
@@ -418,6 +420,7 @@ export class Game {
       if (completedAt) title.textContent += ` · ${completedAt}`;
       const score = this.document.createElement("span");
       const recordBadges = buildRecordBadges(run.recordFlags);
+      recordBadges.push(...buildDailyRecordBadges(run.dailyRecordFlags));
       score.textContent = `${run.daily ? "📅 Tageslevel · " : ""}${run.perfect ? "🏆 Perfekt · " : ""}${run.medal ?? "–"} · ${run.score} Punkte` +
         (recordBadges.length ? ` · 🏅 ${recordBadges.join(" + ")}` : "");
       const details = this.document.createElement("span");
@@ -723,6 +726,8 @@ export class Game {
         `Treffer: ${result.falls} · Rekord: ${progress.bestScore}` +
         (progress.recordFlags.levelScore ? " · Neuer Level-Highscore!" : "") +
         (progress.recordFlags.levelTime ? " · Neue Level-Bestzeit!" : "") +
+        (progress.recordFlags.dailyScore ? " · Neuer Tageslevel-Highscore!" : "") +
+        (progress.recordFlags.dailyTime ? " · Neue Tageslevel-Bestzeit!" : "") +
         dailyCompletionText(this.activeDailyDate, previousProgress.lastDailyDate) +
         (progress.newAchievements.length
           ? ` · Neu: ${progress.newAchievements.map(({ name }) => name).join(", ")}`

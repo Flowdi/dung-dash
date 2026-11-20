@@ -65,6 +65,17 @@ import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildRecordBadges } from "../src/record-badges.js";
 import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updatePerfectDailyCompletions } from "../src/daily-level.js";
+import { updateDailyRecords } from "../src/daily-records.js";
+
+test("daily records improve independently from regular level records", () => {
+  const first = updateDailyRecords({}, { score: 5000, elapsedSeconds: 80 }, true);
+  assert.deepEqual(first.flags, { score: true, time: true });
+  const slower = updateDailyRecords({ bestDailyScore: 5000, bestDailyTime: 80, dailyScoreRecords: 1, dailyTimeRecords: 1 },
+    { score: 4500, elapsedSeconds: 90 }, true);
+  assert.deepEqual(slower.flags, { score: false, time: false });
+  assert.deepEqual(updateDailyRecords({}, { score: 5000, elapsedSeconds: 80 }, false).flags,
+    { score: false, time: false });
+});
 
 test("daily levels are stable and only use unlocked choices", () => {
   const levels = [{ id: "one" }, { id: "two" }, { id: "three" }];
@@ -744,8 +755,9 @@ test("progress store keeps personal records", () => {
     perfect: false,
     recordFlags: { score: false, time: true },
     daily: false,
+    dailyRecordFlags: { score: false, time: false },
   });
-  assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true });
+  assert.deepEqual(progress.recordFlags, { levelScore: true, levelTime: true, dailyScore: false, dailyTime: false });
 });
 
 test("slower lower-scoring runs do not claim new level records", () => {
@@ -758,7 +770,7 @@ test("slower lower-scoring runs do not claim new level records", () => {
   const base = { fliesCollected: 1, medal: "Bronze", bestCombo: 1, falls: 0 };
   store.record({ ...base, score: 2000, elapsedSeconds: 40 });
   const result = store.record({ ...base, score: 1000, elapsedSeconds: 50 });
-  assert.deepEqual(result.recordFlags, { levelScore: false, levelTime: false });
+  assert.deepEqual(result.recordFlags, { levelScore: false, levelTime: false, dailyScore: false, dailyTime: false });
 });
 
 test("progress can be cleared back to a fresh campaign", () => {

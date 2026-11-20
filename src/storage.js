@@ -4,6 +4,7 @@ import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
 import { updateActivityStreak, updatePlayActivity } from "./play-activity.js";
 import { updateDailyCompletions, updatePerfectDailyCompletions } from "./daily-level.js";
+import { updateDailyRecords } from "./daily-records.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
 
@@ -31,6 +32,10 @@ const emptyProgress = () => ({
   lastDailyDate: null,
   perfectDailyCompletions: 0,
   lastPerfectDailyDate: null,
+  bestDailyScore: 0,
+  bestDailyTime: null,
+  dailyScoreRecords: 0,
+  dailyTimeRecords: 0,
   recentRuns: [],
   preferences: { reducedMotion: false, highContrast: false, largeHud: false, focusMode: false },
   medals: { Bronze: 0, Silber: 0, Gold: 0 },
@@ -96,6 +101,10 @@ export const normalizeProgress = (saved) => {
   base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
   base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
   base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
+  base.bestDailyScore = Math.max(0, Number(base.bestDailyScore) || 0);
+  base.bestDailyTime = source.bestDailyTime == null ? null : Math.max(0, Number(source.bestDailyTime) || 0);
+  base.dailyScoreRecords = Math.max(0, Number(base.dailyScoreRecords) || 0);
+  base.dailyTimeRecords = Math.max(0, Number(base.dailyTimeRecords) || 0);
   base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : [])
     .filter((run) => run && LEVEL_ORDER.includes(run.levelId))
     .slice(0, 5);
@@ -211,6 +220,7 @@ export class ProgressStore {
     const perfectDaily = updatePerfectDailyCompletions(
       progress.perfectDailyCompletions, progress.lastPerfectDailyDate, dailyDate, perfect
     );
+    const dailyRecords = updateDailyRecords(progress, result, Boolean(dailyDate));
     const next = {
       ...progress,
       bestScore: Math.max(progress.bestScore, result.score),
@@ -239,6 +249,10 @@ export class ProgressStore {
       lastDailyDate: daily.lastDate,
       perfectDailyCompletions: perfectDaily.count,
       lastPerfectDailyDate: perfectDaily.lastDate,
+      bestDailyScore: dailyRecords.bestScore,
+      bestDailyTime: dailyRecords.bestTime,
+      dailyScoreRecords: dailyRecords.scoreRecords,
+      dailyTimeRecords: dailyRecords.timeRecords,
       recentRuns: [{
         completedAt: new Date(completedAt).toISOString(),
         levelId,
@@ -251,6 +265,7 @@ export class ProgressStore {
         perfect,
         recordFlags: { score: isNewBestScore, time: isNewBestTime },
         daily: Boolean(dailyDate),
+        dailyRecordFlags: dailyRecords.flags,
       }, ...(progress.recentRuns ?? [])].slice(0, 5),
       medals: {
         ...progress.medals,
@@ -292,7 +307,12 @@ export class ProgressStore {
     return {
       ...next,
       newAchievements,
-      recordFlags: { levelScore: isNewBestScore, levelTime: isNewBestTime },
+      recordFlags: {
+        levelScore: isNewBestScore,
+        levelTime: isNewBestTime,
+        dailyScore: dailyRecords.flags.score,
+        dailyTime: dailyRecords.flags.time,
+      },
     };
   }
 

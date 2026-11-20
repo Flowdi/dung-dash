@@ -1069,6 +1069,15 @@ test("three perfect daily levels unlock their achievement", () => {
     "2/3 perfekte Tageslevel");
 });
 
+test("ten daily record improvements unlock the daily record achievement", () => {
+  const ids = findNewAchievements({ dailyScoreRecords: 6, dailyTimeRecords: 4, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-record-ten"));
+  assert.equal(achievementProgressText("daily-record-ten", { dailyScoreRecords: 3, dailyTimeRecords: 2 }),
+    "5/10 Tageslevel-Rekorde");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

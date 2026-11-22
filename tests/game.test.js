@@ -97,6 +97,7 @@ test("daily completions count at most once per calendar day", () => {
 test("daily level labels preview the level and its completion", () => {
   assert.equal(dailyLevelButtonLabel("Royal Flush", false), "Tageslevel: Royal Flush");
   assert.equal(dailyLevelButtonLabel("Royal Flush", true), "✓ Tageslevel: Royal Flush");
+  assert.equal(dailyLevelButtonLabel("Royal Flush", true, 3), "✓ Tageslevel: Royal Flush · Serie 3");
 });
 
 test("daily completion text distinguishes first and repeated finishes", () => {

@@ -254,7 +254,9 @@ export class Game {
     const today = playDateKey(Date.now());
     const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
     const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
-    this.dailyLevelButton.textContent = dailyLevelButtonLabel(dailyLevel?.name, progress.lastDailyDate === today);
+    this.dailyLevelButton.textContent = dailyLevelButtonLabel(
+      dailyLevel?.name, progress.lastDailyDate === today, progress.currentDailyStreak
+    );
     this.dailyLevelButton.disabled = !dailyLevelId;
     this.updateLevelDescription();
   }
@@ -378,6 +380,8 @@ export class Game {
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
+      ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+      ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
       ["Perfekte Tageslevel", progress.perfectDailyCompletions],
       ["Tageslevel-Highscore", progress.bestDailyScore],
       ["Tageslevel-Bestzeit", progress.bestDailyTime == null ? "–" : formatTime(progress.bestDailyTime)],

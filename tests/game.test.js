@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildDailyRecordBadges, buildRecordBadges } from "../src/record-badges.js";
-import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updatePerfectDailyCompletions } from "../src/daily-level.js";
+import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updateDailyCompletionStreak, updatePerfectDailyCompletions } from "../src/daily-level.js";
 import { updateDailyRecords } from "../src/daily-records.js";
 
 test("daily records improve independently from regular level records", () => {
@@ -97,6 +97,7 @@ test("daily completions count at most once per calendar day", () => {
 test("daily level labels preview the level and its completion", () => {
   assert.equal(dailyLevelButtonLabel("Royal Flush", false), "Tageslevel: Royal Flush");
   assert.equal(dailyLevelButtonLabel("Royal Flush", true), "✓ Tageslevel: Royal Flush");
+  assert.equal(dailyLevelButtonLabel("Royal Flush", true, 3), "✓ Tageslevel: Royal Flush · Serie 3");
 });
 
 test("daily completion text distinguishes first and repeated finishes", () => {
@@ -115,6 +116,12 @@ test("perfect daily completions only count once per date", () => {
   assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-19", false), {
     count: 2, lastDate: "2026-11-18",
   });
+});
+
+test("daily completion streaks grow once per day and reset after gaps", () => {
+  assert.deepEqual(updateDailyCompletionStreak(2, 3, "2026-11-21", "2026-11-22"), { current: 3, best: 3 });
+  assert.deepEqual(updateDailyCompletionStreak(3, 3, "2026-11-22", "2026-11-22"), { current: 3, best: 3 });
+  assert.deepEqual(updateDailyCompletionStreak(3, 3, "2026-11-22", "2026-11-24"), { current: 1, best: 3 });
 });
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 
@@ -1076,6 +1083,15 @@ test("ten daily record improvements unlock the daily record achievement", () => 
   assert.ok(ids.includes("daily-record-ten"));
   assert.equal(achievementProgressText("daily-record-ten", { dailyScoreRecords: 3, dailyTimeRecords: 2 }),
     "5/10 Tageslevel-Rekorde");
+});
+
+test("five consecutive daily completions unlock their streak achievement", () => {
+  const ids = findNewAchievements({ bestDailyStreak: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-streak-five"));
+  assert.equal(achievementProgressText("daily-streak-five", { bestDailyStreak: 3 }),
+    "3/5 Tageslevel in Folge");
 });
 
 test("progress store persists achievements only once", () => {

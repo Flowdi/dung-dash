@@ -64,7 +64,7 @@ import { buildSpecialFlySummary } from "../src/special-fly-summary.js";
 import { formatRunDate } from "../src/run-date.js";
 import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildDailyRecordBadges, buildRecordBadges } from "../src/record-badges.js";
-import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updatePerfectDailyCompletions } from "../src/daily-level.js";
+import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updateDailyCompletionStreak, updatePerfectDailyCompletions } from "../src/daily-level.js";
 import { updateDailyRecords } from "../src/daily-records.js";
 
 test("daily records improve independently from regular level records", () => {
@@ -115,6 +115,12 @@ test("perfect daily completions only count once per date", () => {
   assert.deepEqual(updatePerfectDailyCompletions(2, "2026-11-18", "2026-11-19", false), {
     count: 2, lastDate: "2026-11-18",
   });
+});
+
+test("daily completion streaks grow once per day and reset after gaps", () => {
+  assert.deepEqual(updateDailyCompletionStreak(2, 3, "2026-11-21", "2026-11-22"), { current: 3, best: 3 });
+  assert.deepEqual(updateDailyCompletionStreak(3, 3, "2026-11-22", "2026-11-22"), { current: 3, best: 3 });
+  assert.deepEqual(updateDailyCompletionStreak(3, 3, "2026-11-22", "2026-11-24"), { current: 1, best: 3 });
 });
 import { formatActivityDate, playDateKey, updateActivityStreak, updatePlayActivity } from "../src/play-activity.js";
 

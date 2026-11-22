@@ -3,7 +3,7 @@ import { LEVELS } from "./levels.js";
 import { isPerfectRun } from "./perfect-run.js";
 import { updatePerfectStreak } from "./perfect-streak.js";
 import { updateActivityStreak, updatePlayActivity } from "./play-activity.js";
-import { updateDailyCompletions, updatePerfectDailyCompletions } from "./daily-level.js";
+import { updateDailyCompletions, updateDailyCompletionStreak, updatePerfectDailyCompletions } from "./daily-level.js";
 import { updateDailyRecords } from "./daily-records.js";
 
 const STORAGE_KEY = "dung-dash-progress-v1";
@@ -30,6 +30,8 @@ const emptyProgress = () => ({
   bestActivityStreak: 0,
   dailyCompletions: 0,
   lastDailyDate: null,
+  currentDailyStreak: 0,
+  bestDailyStreak: 0,
   perfectDailyCompletions: 0,
   lastPerfectDailyDate: null,
   bestDailyScore: 0,
@@ -99,6 +101,8 @@ export const normalizeProgress = (saved) => {
   base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
   base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
   base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
+  base.currentDailyStreak = Math.max(0, Number(base.currentDailyStreak) || 0);
+  base.bestDailyStreak = Math.max(base.currentDailyStreak, Number(base.bestDailyStreak) || 0);
   base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
   base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
   base.bestDailyScore = Math.max(0, Number(base.bestDailyScore) || 0);
@@ -217,6 +221,9 @@ export class ProgressStore {
       progress.currentActivityStreak, progress.bestActivityStreak, progress.lastActiveDate, activity.lastDate
     );
     const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
+    const dailyStreak = updateDailyCompletionStreak(
+      progress.currentDailyStreak, progress.bestDailyStreak, progress.lastDailyDate, dailyDate
+    );
     const perfectDaily = updatePerfectDailyCompletions(
       progress.perfectDailyCompletions, progress.lastPerfectDailyDate, dailyDate, perfect
     );
@@ -247,6 +254,8 @@ export class ProgressStore {
       bestActivityStreak: activityStreak.best,
       dailyCompletions: daily.count,
       lastDailyDate: daily.lastDate,
+      currentDailyStreak: dailyStreak.current,
+      bestDailyStreak: dailyStreak.best,
       perfectDailyCompletions: perfectDaily.count,
       lastPerfectDailyDate: perfectDaily.lastDate,
       bestDailyScore: dailyRecords.bestScore,

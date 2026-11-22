@@ -1088,7 +1088,8 @@
     { id: "five-day-streak", name: "Nicht zu stoppen", description: "Spiele an f\xFCnf Tagen in Folge." },
     { id: "daily-five", name: "Tagesordnung", description: "Schlie\xDFe f\xFCnf verschiedene Tageslevel ab." },
     { id: "daily-perfect-three", name: "Perfekter Alltag", description: "Schaffe drei Tageslevel perfekt." },
-    { id: "daily-record-ten", name: "Tagesrekordler", description: "Stelle zehn Tageslevel-Rekorde auf." }
+    { id: "daily-record-ten", name: "Tagesrekordler", description: "Stelle zehn Tageslevel-Rekorde auf." },
+    { id: "daily-streak-five", name: "T\xE4gliche Pflicht", description: "Schlie\xDFe f\xFCnf Tageslevel in Folge ab." }
   ]);
   var findNewAchievements = (progress, result) => {
     var _a, _b, _c, _d, _e, _f;
@@ -1122,12 +1123,13 @@
       "five-day-streak": progress.bestActivityStreak >= 5,
       "daily-five": progress.dailyCompletions >= 5,
       "daily-perfect-three": progress.perfectDailyCompletions >= 3,
-      "daily-record-ten": ((_e = progress.dailyScoreRecords) != null ? _e : 0) + ((_f = progress.dailyTimeRecords) != null ? _f : 0) >= 10
+      "daily-record-ten": ((_e = progress.dailyScoreRecords) != null ? _e : 0) + ((_f = progress.dailyTimeRecords) != null ? _f : 0) >= 10,
+      "daily-streak-five": progress.bestDailyStreak >= 5
     };
     return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
   };
   var achievementProgressText = (achievementId, progress) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
     const completedLevels = Object.keys((_a = progress.levelRecords) != null ? _a : {}).length;
     const fastestTime = Object.values((_b = progress.levelRecords) != null ? _b : {}).reduce((fastest, record) => {
       var _a2;
@@ -1160,9 +1162,10 @@
       "five-day-streak": `${Math.min((_o = progress.bestActivityStreak) != null ? _o : 0, 5)}/5 Tage in Folge`,
       "daily-five": `${Math.min((_p = progress.dailyCompletions) != null ? _p : 0, 5)}/5 Tageslevel`,
       "daily-perfect-three": `${Math.min((_q = progress.perfectDailyCompletions) != null ? _q : 0, 3)}/3 perfekte Tageslevel`,
-      "daily-record-ten": `${Math.min(((_r = progress.dailyScoreRecords) != null ? _r : 0) + ((_s = progress.dailyTimeRecords) != null ? _s : 0), 10)}/10 Tageslevel-Rekorde`
+      "daily-record-ten": `${Math.min(((_r = progress.dailyScoreRecords) != null ? _r : 0) + ((_s = progress.dailyTimeRecords) != null ? _s : 0), 10)}/10 Tageslevel-Rekorde`,
+      "daily-streak-five": `${Math.min((_t = progress.bestDailyStreak) != null ? _t : 0, 5)}/5 Tageslevel in Folge`
     };
-    return (_t = values[achievementId]) != null ? _t : "";
+    return (_u = values[achievementId]) != null ? _u : "";
   };
 
   // src/perfect-run.js
@@ -1219,7 +1222,7 @@
     count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
     lastDate: completedDate || lastDate || null
   });
-  var dailyLevelButtonLabel = (levelName, completed) => `${completed ? "\u2713 " : ""}Tageslevel: ${levelName != null ? levelName : "nicht verf\xFCgbar"}`;
+  var dailyLevelButtonLabel = (levelName, completed, streak = 0) => `${completed ? "\u2713 " : ""}Tageslevel: ${levelName != null ? levelName : "nicht verf\xFCgbar"}` + (streak > 0 ? ` \xB7 Serie ${streak}` : "");
   var dailyCompletionText = (dailyDate, previousDate) => {
     if (!dailyDate) return "";
     return dailyDate === previousDate ? " \xB7 Tageslevel erneut geschafft" : " \xB7 Tageslevel abgeschlossen!";
@@ -1228,6 +1231,15 @@
     count: Math.max(0, Number(count) || 0) + (perfect && dailyDate && dailyDate !== lastDate ? 1 : 0),
     lastDate: perfect && dailyDate ? dailyDate : lastDate != null ? lastDate : null
   });
+  var dateDistance = (from, to) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 864e5;
+  var updateDailyCompletionStreak = (current, best, lastDate, dailyDate) => {
+    const safeCurrent = Math.max(0, Number(current) || 0);
+    const safeBest = Math.max(safeCurrent, Number(best) || 0);
+    if (!dailyDate) return { current: safeCurrent, best: safeBest };
+    const distance = lastDate ? dateDistance(lastDate, dailyDate) : null;
+    const nextCurrent = distance === 0 ? safeCurrent : distance === 1 ? safeCurrent + 1 : 1;
+    return { current: nextCurrent, best: Math.max(safeBest, nextCurrent) };
+  };
 
   // src/daily-records.js
   var updateDailyRecords = (progress, result, isDaily) => {
@@ -1276,6 +1288,8 @@
     bestActivityStreak: 0,
     dailyCompletions: 0,
     lastDailyDate: null,
+    currentDailyStreak: 0,
+    bestDailyStreak: 0,
     perfectDailyCompletions: 0,
     lastPerfectDailyDate: null,
     bestDailyScore: 0,
@@ -1351,6 +1365,8 @@
     base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
     base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
     base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
+    base.currentDailyStreak = Math.max(0, Number(base.currentDailyStreak) || 0);
+    base.bestDailyStreak = Math.max(base.currentDailyStreak, Number(base.bestDailyStreak) || 0);
     base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
     base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
     base.bestDailyScore = Math.max(0, Number(base.bestDailyScore) || 0);
@@ -1459,6 +1475,12 @@
         activity.lastDate
       );
       const daily = updateDailyCompletions(progress.dailyCompletions, progress.lastDailyDate, dailyDate);
+      const dailyStreak = updateDailyCompletionStreak(
+        progress.currentDailyStreak,
+        progress.bestDailyStreak,
+        progress.lastDailyDate,
+        dailyDate
+      );
       const perfectDaily = updatePerfectDailyCompletions(
         progress.perfectDailyCompletions,
         progress.lastPerfectDailyDate,
@@ -1492,6 +1514,8 @@
         bestActivityStreak: activityStreak.best,
         dailyCompletions: daily.count,
         lastDailyDate: daily.lastDate,
+        currentDailyStreak: dailyStreak.current,
+        bestDailyStreak: dailyStreak.best,
         perfectDailyCompletions: perfectDaily.count,
         lastPerfectDailyDate: perfectDaily.lastDate,
         bestDailyScore: dailyRecords.bestScore,
@@ -2316,7 +2340,11 @@
       const today = playDateKey(Date.now());
       const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
       const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
-      this.dailyLevelButton.textContent = dailyLevelButtonLabel(dailyLevel == null ? void 0 : dailyLevel.name, progress.lastDailyDate === today);
+      this.dailyLevelButton.textContent = dailyLevelButtonLabel(
+        dailyLevel == null ? void 0 : dailyLevel.name,
+        progress.lastDailyDate === today,
+        progress.currentDailyStreak
+      );
       this.dailyLevelButton.disabled = !dailyLevelId;
       this.updateLevelDescription();
     }
@@ -2437,6 +2465,8 @@
         ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
         ["Tageslevel", progress.dailyCompletions],
         ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
+        ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+        ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
         ["Perfekte Tageslevel", progress.perfectDailyCompletions],
         ["Tageslevel-Highscore", progress.bestDailyScore],
         ["Tageslevel-Bestzeit", progress.bestDailyTime == null ? "\u2013" : formatTime(progress.bestDailyTime)],

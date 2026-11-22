@@ -1085,6 +1085,15 @@ test("ten daily record improvements unlock the daily record achievement", () => 
     "5/10 Tageslevel-Rekorde");
 });
 
+test("five consecutive daily completions unlock their streak achievement", () => {
+  const ids = findNewAchievements({ bestDailyStreak: 5, achievements: [] }, {
+    bestCombo: 0, medal: "Bronze", elapsedSeconds: 999, falls: 1,
+  }).map(({ id }) => id);
+  assert.ok(ids.includes("daily-streak-five"));
+  assert.equal(achievementProgressText("daily-streak-five", { bestDailyStreak: 3 }),
+    "3/5 Tageslevel in Folge");
+});
+
 test("progress store persists achievements only once", () => {
   const values = new Map();
   const storage = {

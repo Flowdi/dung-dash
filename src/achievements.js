@@ -21,6 +21,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: "daily-five", name: "Tagesordnung", description: "Schließe fünf verschiedene Tageslevel ab." },
   { id: "daily-perfect-three", name: "Perfekter Alltag", description: "Schaffe drei Tageslevel perfekt." },
   { id: "daily-record-ten", name: "Tagesrekordler", description: "Stelle zehn Tageslevel-Rekorde auf." },
+  { id: "daily-streak-five", name: "Tägliche Pflicht", description: "Schließe fünf Tageslevel in Folge ab." },
 ]);
 
 export const findNewAchievements = (progress, result) => {
@@ -47,6 +48,7 @@ export const findNewAchievements = (progress, result) => {
     "daily-five": progress.dailyCompletions >= 5,
     "daily-perfect-three": progress.perfectDailyCompletions >= 3,
     "daily-record-ten": (progress.dailyScoreRecords ?? 0) + (progress.dailyTimeRecords ?? 0) >= 10,
+    "daily-streak-five": progress.bestDailyStreak >= 5,
   };
   return ACHIEVEMENTS.filter(({ id }) => qualifies[id] && !unlocked.has(id));
 };
@@ -78,6 +80,7 @@ export const achievementProgressText = (achievementId, progress) => {
     "daily-five": `${Math.min(progress.dailyCompletions ?? 0, 5)}/5 Tageslevel`,
     "daily-perfect-three": `${Math.min(progress.perfectDailyCompletions ?? 0, 3)}/3 perfekte Tageslevel`,
     "daily-record-ten": `${Math.min((progress.dailyScoreRecords ?? 0) + (progress.dailyTimeRecords ?? 0), 10)}/10 Tageslevel-Rekorde`,
+    "daily-streak-five": `${Math.min(progress.bestDailyStreak ?? 0, 5)}/5 Tageslevel in Folge`,
   };
   return values[achievementId] ?? "";
 };

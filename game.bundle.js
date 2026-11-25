@@ -1232,6 +1232,10 @@
     lastDate: perfect && dailyDate ? dailyDate : lastDate != null ? lastDate : null
   });
   var dateDistance = (from, to) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 864e5;
+  var visibleDailyStreak = (current, lastDate, today) => {
+    const distance = dateDistance(lastDate, today);
+    return distance === 0 || distance === 1 ? current : 0;
+  };
   var updateDailyCompletionStreak = (current, best, lastDate, dailyDate) => {
     const safeCurrent = Math.max(0, Number(current) || 0);
     const safeBest = Math.max(safeCurrent, Number(best) || 0);
@@ -2343,7 +2347,7 @@
       this.dailyLevelButton.textContent = dailyLevelButtonLabel(
         dailyLevel == null ? void 0 : dailyLevel.name,
         progress.lastDailyDate === today,
-        progress.currentDailyStreak
+        visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, today)
       );
       this.dailyLevelButton.disabled = !dailyLevelId;
       this.updateLevelDescription();
@@ -2465,7 +2469,7 @@
         ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
         ["Tageslevel", progress.dailyCompletions],
         ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
-        ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+        ["Aktuelle Tageslevel-Serie", `${visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, playDateKey(Date.now()))} Tage`],
         ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
         ["Perfekte Tageslevel", progress.perfectDailyCompletions],
         ["Tageslevel-Highscore", progress.bestDailyScore],

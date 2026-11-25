@@ -30,6 +30,11 @@ export const updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfec
 const dateDistance = (from, to) =>
   (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000;
 
+export const visibleDailyStreak = (current, lastDate, today) => {
+  const distance = dateDistance(lastDate, today);
+  return distance === 0 || distance === 1 ? current : 0;
+};
+
 export const updateDailyCompletionStreak = (current, best, lastDate, dailyDate) => {
   const safeCurrent = Math.max(0, Number(current) || 0);
   const safeBest = Math.max(safeCurrent, Number(best) || 0);

@@ -54,6 +54,7 @@ import { formatRunDate } from "./run-date.js";
 import { buildDailyRecordBadges, buildRecordBadges } from "./record-badges.js";
 import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel } from "./daily-level.js";
 import { playDateKey } from "./play-activity.js";
+import { visibleDailyStreak } from "./daily-level.js";
 import { formatActivityDate } from "./play-activity.js";
 import {
   findReachedCheckpoint,
@@ -255,7 +256,8 @@ export class Game {
     const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
     const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
     this.dailyLevelButton.textContent = dailyLevelButtonLabel(
-      dailyLevel?.name, progress.lastDailyDate === today, progress.currentDailyStreak
+      dailyLevel?.name, progress.lastDailyDate === today,
+      visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, today)
     );
     this.dailyLevelButton.disabled = !dailyLevelId;
     this.updateLevelDescription();
@@ -380,7 +382,7 @@ export class Game {
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
-      ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+      ["Aktuelle Tageslevel-Serie", `${visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, playDateKey(Date.now()))} Tage`],
       ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
       ["Perfekte Tageslevel", progress.perfectDailyCompletions],
       ["Tageslevel-Highscore", progress.bestDailyScore],

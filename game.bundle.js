@@ -1218,19 +1218,20 @@
     if (available.length === 0) return null;
     return available[hashDate(dateKey) % available.length].id;
   };
-  var updateDailyCompletions = (count, lastDate, completedDate) => ({
-    count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
-    lastDate: completedDate || lastDate || null
-  });
+  var updateDailyCompletions = (count, lastDate, completedDate) => {
+    const advanced = Boolean(completedDate && (!lastDate || completedDate > lastDate));
+    return {
+      count: Math.max(0, Number(count) || 0) + Number(advanced),
+      lastDate: advanced ? completedDate : lastDate != null ? lastDate : null
+    };
+  };
   var dailyLevelButtonLabel = (levelName, completed, streak = 0) => `${completed ? "\u2713 " : ""}Tageslevel: ${levelName != null ? levelName : "nicht verf\xFCgbar"}` + (streak > 0 ? ` \xB7 Serie ${streak}` : "");
   var dailyCompletionText = (dailyDate, previousDate) => {
     if (!dailyDate) return "";
+    if (previousDate && dailyDate < previousDate) return " \xB7 \xC4lteres Tageslevel geschafft (ohne Serienwertung)";
     return dailyDate === previousDate ? " \xB7 Tageslevel erneut geschafft" : " \xB7 Tageslevel abgeschlossen!";
   };
-  var updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfect) => ({
-    count: Math.max(0, Number(count) || 0) + (perfect && dailyDate && dailyDate !== lastDate ? 1 : 0),
-    lastDate: perfect && dailyDate ? dailyDate : lastDate != null ? lastDate : null
-  });
+  var updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfect) => updateDailyCompletions(count, lastDate, perfect ? dailyDate : null);
   var dateDistance = (from, to) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 864e5;
   var visibleDailyStreak = (current, lastDate, today) => {
     const distance = dateDistance(lastDate, today);
@@ -1241,7 +1242,7 @@
     const safeBest = Math.max(safeCurrent, Number(best) || 0);
     if (!dailyDate) return { current: safeCurrent, best: safeBest };
     const distance = lastDate ? dateDistance(lastDate, dailyDate) : null;
-    const nextCurrent = distance === 0 ? safeCurrent : distance === 1 ? safeCurrent + 1 : 1;
+    const nextCurrent = distance !== null && distance <= 0 ? safeCurrent : distance === 1 ? safeCurrent + 1 : 1;
     return { current: nextCurrent, best: Math.max(safeBest, nextCurrent) };
   };
 

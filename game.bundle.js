@@ -1328,7 +1328,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1370,7 +1370,7 @@
     base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
     base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
     base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
-    base.currentDailyStreak = Math.max(0, Number(base.currentDailyStreak) || 0);
+    base.currentDailyStreak = Math.max(0, Number((_f = source.currentDailyStreak) != null ? _f : base.lastDailyDate ? 1 : 0) || 0);
     base.bestDailyStreak = Math.max(base.currentDailyStreak, Number(base.bestDailyStreak) || 0);
     base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
     base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
@@ -1380,10 +1380,10 @@
     base.dailyTimeRecords = Math.max(0, Number(base.dailyTimeRecords) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
-      reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
-      highContrast: ((_g = source.preferences) == null ? void 0 : _g.highContrast) === true,
-      largeHud: ((_h = source.preferences) == null ? void 0 : _h.largeHud) === true,
-      focusMode: ((_i = source.preferences) == null ? void 0 : _i.focusMode) === true
+      reducedMotion: ((_g = source.preferences) == null ? void 0 : _g.reducedMotion) === true,
+      highContrast: ((_h = source.preferences) == null ? void 0 : _h.highContrast) === true,
+      largeHud: ((_i = source.preferences) == null ? void 0 : _i.largeHud) === true,
+      focusMode: ((_j = source.preferences) == null ? void 0 : _j.focusMode) === true
     };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];

@@ -75,6 +75,14 @@ test("older daily finishes leave the newest completion and streak intact", () =>
   assert.equal(visibleDailyStreak(3, "2026-11-25", "2026-11-27"), 0);
 });
 
+test("legacy daily saves carry forward their last known completion day", () => {
+  const progress = normalizeProgress({ dailyCompletions: 8, lastDailyDate: "2026-11-24" });
+  assert.equal(progress.currentDailyStreak, 1);
+  assert.equal(progress.bestDailyStreak, 1);
+  assert.equal(progress.dailyCompletions, 8);
+  assert.equal(normalizeProgress({}).currentDailyStreak, 0);
+});
+
 test("daily records improve independently from regular level records", () => {
   const first = updateDailyRecords({}, { score: 5000, elapsedSeconds: 80 }, true);
   assert.deepEqual(first.flags, { score: true, time: true });

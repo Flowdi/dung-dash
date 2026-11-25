@@ -54,6 +54,7 @@ import { formatRunDate } from "./run-date.js";
 import { buildDailyRecordBadges, buildRecordBadges } from "./record-badges.js";
 import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel } from "./daily-level.js";
 import { playDateKey } from "./play-activity.js";
+import { visibleDailyStreak } from "./daily-level.js";
 import { formatActivityDate } from "./play-activity.js";
 import {
   findReachedCheckpoint,
@@ -217,7 +218,9 @@ export class Game {
     this.focusModeToggle.addEventListener("change", () => this.setFocusMode(this.focusModeToggle.checked));
     this.document.addEventListener?.("visibilitychange", () => {
       if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
+      if (!this.document.hidden) this.refreshDailyMenu();
     });
+    this.window.setInterval(() => this.refreshDailyMenu(), 15_000);
     this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
     this.dailyLevelButton.addEventListener("click", () => this.startDailyLevel());
     this.window.addEventListener("resize", () => this.resize());
@@ -251,14 +254,27 @@ export class Game {
     this.levelSelect.value = this.selectedLevelId;
     const campaignChoice = chooseCampaignLevel(LEVELS, progress);
     this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
+    this.renderDailyButton(progress, playDateKey(Date.now()));
+    this.updateLevelDescription();
+  }
+
+  refreshDailyMenu() {
+    if (this.state !== GameState.READY || this.document.hidden) return;
     const today = playDateKey(Date.now());
+    if (this.dailyMenuDate === today) return;
+    this.renderDailyButton(this.progressStore.load(), today);
+    this.renderProgress();
+  }
+
+  renderDailyButton(progress, today) {
+    this.dailyMenuDate = today;
     const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
     const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
     this.dailyLevelButton.textContent = dailyLevelButtonLabel(
-      dailyLevel?.name, progress.lastDailyDate === today, progress.currentDailyStreak
+      dailyLevel?.name, progress.lastDailyDate === today,
+      visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, today)
     );
     this.dailyLevelButton.disabled = !dailyLevelId;
-    this.updateLevelDescription();
   }
 
   continueCampaign() {
@@ -380,7 +396,7 @@ export class Game {
       ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
       ["Tageslevel", progress.dailyCompletions],
       ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
-      ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+      ["Aktuelle Tageslevel-Serie", `${visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, playDateKey(Date.now()))} Tage`],
       ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
       ["Perfekte Tageslevel", progress.perfectDailyCompletions],
       ["Tageslevel-Highscore", progress.bestDailyScore],

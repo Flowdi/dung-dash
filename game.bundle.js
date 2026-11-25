@@ -1218,26 +1218,31 @@
     if (available.length === 0) return null;
     return available[hashDate(dateKey) % available.length].id;
   };
-  var updateDailyCompletions = (count, lastDate, completedDate) => ({
-    count: Math.max(0, Number(count) || 0) + (completedDate && completedDate !== lastDate ? 1 : 0),
-    lastDate: completedDate || lastDate || null
-  });
+  var updateDailyCompletions = (count, lastDate, completedDate) => {
+    const advanced = Boolean(completedDate && (!lastDate || completedDate > lastDate));
+    return {
+      count: Math.max(0, Number(count) || 0) + Number(advanced),
+      lastDate: advanced ? completedDate : lastDate != null ? lastDate : null
+    };
+  };
   var dailyLevelButtonLabel = (levelName, completed, streak = 0) => `${completed ? "\u2713 " : ""}Tageslevel: ${levelName != null ? levelName : "nicht verf\xFCgbar"}` + (streak > 0 ? ` \xB7 Serie ${streak}` : "");
   var dailyCompletionText = (dailyDate, previousDate) => {
     if (!dailyDate) return "";
+    if (previousDate && dailyDate < previousDate) return " \xB7 \xC4lteres Tageslevel geschafft (ohne Serienwertung)";
     return dailyDate === previousDate ? " \xB7 Tageslevel erneut geschafft" : " \xB7 Tageslevel abgeschlossen!";
   };
-  var updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfect) => ({
-    count: Math.max(0, Number(count) || 0) + (perfect && dailyDate && dailyDate !== lastDate ? 1 : 0),
-    lastDate: perfect && dailyDate ? dailyDate : lastDate != null ? lastDate : null
-  });
+  var updatePerfectDailyCompletions = (count, lastDate, dailyDate, perfect) => updateDailyCompletions(count, lastDate, perfect ? dailyDate : null);
   var dateDistance = (from, to) => (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 864e5;
+  var visibleDailyStreak = (current, lastDate, today) => {
+    const distance = dateDistance(lastDate, today);
+    return distance === 0 || distance === 1 ? current : 0;
+  };
   var updateDailyCompletionStreak = (current, best, lastDate, dailyDate) => {
     const safeCurrent = Math.max(0, Number(current) || 0);
     const safeBest = Math.max(safeCurrent, Number(best) || 0);
     if (!dailyDate) return { current: safeCurrent, best: safeBest };
     const distance = lastDate ? dateDistance(lastDate, dailyDate) : null;
-    const nextCurrent = distance === 0 ? safeCurrent : distance === 1 ? safeCurrent + 1 : 1;
+    const nextCurrent = distance !== null && distance <= 0 ? safeCurrent : distance === 1 ? safeCurrent + 1 : 1;
     return { current: nextCurrent, best: Math.max(safeBest, nextCurrent) };
   };
 
@@ -1323,7 +1328,7 @@
     }, 0);
   };
   var normalizeProgress = (saved) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
     const levelRecords = Object.fromEntries(Object.entries((_a = source.levelRecords) != null ? _a : {}).filter(([levelId, record]) => LEVEL_ORDER.includes(levelId) && record && typeof record === "object"));
     const base = {
@@ -1365,7 +1370,7 @@
     base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
     base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
     base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
-    base.currentDailyStreak = Math.max(0, Number(base.currentDailyStreak) || 0);
+    base.currentDailyStreak = Math.max(0, Number((_f = source.currentDailyStreak) != null ? _f : base.lastDailyDate ? 1 : 0) || 0);
     base.bestDailyStreak = Math.max(base.currentDailyStreak, Number(base.bestDailyStreak) || 0);
     base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
     base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;
@@ -1375,10 +1380,10 @@
     base.dailyTimeRecords = Math.max(0, Number(base.dailyTimeRecords) || 0);
     base.recentRuns = (Array.isArray(source.recentRuns) ? source.recentRuns : []).filter((run) => run && LEVEL_ORDER.includes(run.levelId)).slice(0, 5);
     base.preferences = {
-      reducedMotion: ((_f = source.preferences) == null ? void 0 : _f.reducedMotion) === true,
-      highContrast: ((_g = source.preferences) == null ? void 0 : _g.highContrast) === true,
-      largeHud: ((_h = source.preferences) == null ? void 0 : _h.largeHud) === true,
-      focusMode: ((_i = source.preferences) == null ? void 0 : _i.focusMode) === true
+      reducedMotion: ((_g = source.preferences) == null ? void 0 : _g.reducedMotion) === true,
+      highContrast: ((_h = source.preferences) == null ? void 0 : _h.highContrast) === true,
+      largeHud: ((_i = source.preferences) == null ? void 0 : _i.largeHud) === true,
+      focusMode: ((_j = source.preferences) == null ? void 0 : _j.focusMode) === true
     };
     base.unlockedLevels = migrateUnlockedLevels(base);
     base.selectedLevelId = base.unlockedLevels.includes(source.selectedLevelId) ? source.selectedLevelId : base.unlockedLevels[0];
@@ -2306,7 +2311,9 @@
       this.focusModeToggle.addEventListener("change", () => this.setFocusMode(this.focusModeToggle.checked));
       (_d = (_c = this.document).addEventListener) == null ? void 0 : _d.call(_c, "visibilitychange", () => {
         if (shouldPauseWhenHidden(this.state, this.document.hidden)) this.togglePause();
+        if (!this.document.hidden) this.refreshDailyMenu();
       });
+      this.window.setInterval(() => this.refreshDailyMenu(), 15e3);
       this.randomLevelButton.addEventListener("click", () => this.selectRandomLevel());
       this.dailyLevelButton.addEventListener("click", () => this.startDailyLevel());
       this.window.addEventListener("resize", () => this.resize());
@@ -2337,16 +2344,26 @@
       this.levelSelect.value = this.selectedLevelId;
       const campaignChoice = chooseCampaignLevel(LEVELS, progress);
       this.continueButton.textContent = campaignButtonLabel(campaignChoice.reason);
+      this.renderDailyButton(progress, playDateKey(Date.now()));
+      this.updateLevelDescription();
+    }
+    refreshDailyMenu() {
+      if (this.state !== GameState.READY || this.document.hidden) return;
       const today = playDateKey(Date.now());
+      if (this.dailyMenuDate === today) return;
+      this.renderDailyButton(this.progressStore.load(), today);
+      this.renderProgress();
+    }
+    renderDailyButton(progress, today) {
+      this.dailyMenuDate = today;
       const dailyLevelId = chooseDailyLevel(LEVELS, progress.unlockedLevels, today);
       const dailyLevel = LEVELS.find(({ id }) => id === dailyLevelId);
       this.dailyLevelButton.textContent = dailyLevelButtonLabel(
         dailyLevel == null ? void 0 : dailyLevel.name,
         progress.lastDailyDate === today,
-        progress.currentDailyStreak
+        visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, today)
       );
       this.dailyLevelButton.disabled = !dailyLevelId;
-      this.updateLevelDescription();
     }
     continueCampaign() {
       this.activeDailyDate = null;
@@ -2465,7 +2482,7 @@
         ["Beste Tagesserie", `${progress.bestActivityStreak} Tage`],
         ["Tageslevel", progress.dailyCompletions],
         ["Letztes Tageslevel", formatActivityDate(progress.lastDailyDate)],
-        ["Aktuelle Tageslevel-Serie", `${progress.currentDailyStreak} Tage`],
+        ["Aktuelle Tageslevel-Serie", `${visibleDailyStreak(progress.currentDailyStreak, progress.lastDailyDate, playDateKey(Date.now()))} Tage`],
         ["Beste Tageslevel-Serie", `${progress.bestDailyStreak} Tage`],
         ["Perfekte Tageslevel", progress.perfectDailyCompletions],
         ["Tageslevel-Highscore", progress.bestDailyScore],

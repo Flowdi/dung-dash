@@ -66,6 +66,22 @@ import { updatePerfectStreak } from "../src/perfect-streak.js";
 import { buildDailyRecordBadges, buildRecordBadges } from "../src/record-badges.js";
 import { chooseDailyLevel, dailyCompletionText, dailyLevelButtonLabel, updateDailyCompletions, updateDailyCompletionStreak, updatePerfectDailyCompletions } from "../src/daily-level.js";
 import { updateDailyRecords } from "../src/daily-records.js";
+import { visibleDailyStreak } from "../src/daily-level.js";
+
+test("older daily finishes leave the newest completion and streak intact", () => {
+  assert.deepEqual(updateDailyCompletions(5, "2026-11-25", "2026-11-24"), { count: 5, lastDate: "2026-11-25" });
+  assert.deepEqual(updateDailyCompletionStreak(3, 4, "2026-11-25", "2026-11-24"), { current: 3, best: 4 });
+  assert.equal(visibleDailyStreak(3, "2026-11-25", "2026-11-26"), 3);
+  assert.equal(visibleDailyStreak(3, "2026-11-25", "2026-11-27"), 0);
+});
+
+test("legacy daily saves carry forward their last known completion day", () => {
+  const progress = normalizeProgress({ dailyCompletions: 8, lastDailyDate: "2026-11-24" });
+  assert.equal(progress.currentDailyStreak, 1);
+  assert.equal(progress.bestDailyStreak, 1);
+  assert.equal(progress.dailyCompletions, 8);
+  assert.equal(normalizeProgress({}).currentDailyStreak, 0);
+});
 
 test("daily records improve independently from regular level records", () => {
   const first = updateDailyRecords({}, { score: 5000, elapsedSeconds: 80 }, true);

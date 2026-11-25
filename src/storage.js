@@ -101,7 +101,8 @@ export const normalizeProgress = (saved) => {
   base.bestActivityStreak = Math.max(base.currentActivityStreak, Number(base.bestActivityStreak) || 0);
   base.dailyCompletions = Math.max(0, Number(base.dailyCompletions) || 0);
   base.lastDailyDate = typeof source.lastDailyDate === "string" ? source.lastDailyDate : null;
-  base.currentDailyStreak = Math.max(0, Number(base.currentDailyStreak) || 0);
+  // Older saves know the last completed date, but not the length of its streak.
+  base.currentDailyStreak = Math.max(0, Number(source.currentDailyStreak ?? (base.lastDailyDate ? 1 : 0)) || 0);
   base.bestDailyStreak = Math.max(base.currentDailyStreak, Number(base.bestDailyStreak) || 0);
   base.perfectDailyCompletions = Math.max(0, Number(base.perfectDailyCompletions) || 0);
   base.lastPerfectDailyDate = typeof source.lastPerfectDailyDate === "string" ? source.lastPerfectDailyDate : null;

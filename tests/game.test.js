@@ -665,6 +665,33 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
+test("time display carries rounded seconds into the next minute", () => {
+  assert.equal(formatTime(59.94), "00:59.9");
+  assert.equal(formatTime(59.96), "01:00.0");
+  assert.equal(formatTime(119.96), "02:00.0");
+  assert.equal(formatTime(undefined), "00:00.0");
+});
+
+test("game shortcuts leave menu keys, browser shortcuts and button activation alone", () => {
+  const listeners = new Map();
+  const input = new InputController();
+  let playing = false;
+  let prevented = 0;
+  input.bind({ addEventListener: (type, fn) => listeners.set(type, fn) }, [], {
+    shouldHandleKeyboard: () => playing,
+  });
+  const press = (key, extra) => listeners.get("keydown")({ key, preventDefault: () => prevented++, ...extra });
+  press("ArrowLeft");
+  playing = true;
+  press("w", { ctrlKey: true });
+  press(" ", { target: { closest: (selector) => selector.includes("button") } });
+  assert.equal(prevented, 0);
+  assert.equal(input.left, false);
+  assert.equal(input.hasBufferedJump, false);
+  press("ArrowLeft");
+  assert.equal(input.left, true);
+});
+
 test("P, Escape, R, C, F and H expose game controls without repeating", () => {
   const listeners = new Map();
   const windowObject = {

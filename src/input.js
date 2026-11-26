@@ -31,8 +31,12 @@ export class InputController {
 
   bind(windowObject, touchControls = [], {
     onPause = () => {}, onRestart = () => {}, onFullscreen = () => {}, onCheckpoint = () => {}, onFocus = () => {},
+    shouldHandleKeyboard = () => true,
   } = {}) {
     windowObject.addEventListener("keydown", (event) => {
+      if (!shouldHandleKeyboard() || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+      if (event.target?.isContentEditable || event.target?.closest?.("input, select, textarea")) return;
+      if (event.key === " " && event.target?.closest?.("button, a, summary")) return;
       const key = event.key.toLowerCase();
       if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key) || ["a", "d", "w"].includes(key)) {
         event.preventDefault();

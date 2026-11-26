@@ -180,6 +180,7 @@ export class Game {
         onFullscreen: () => this.toggleFullscreen(),
         onCheckpoint: () => this.retryCheckpoint(),
         onFocus: () => this.toggleFocusMode(),
+        shouldHandleKeyboard: () => this.state === GameState.PLAYING || this.state === GameState.PAUSED,
       }
     );
     this.startButton.addEventListener("click", () => { this.activeDailyDate = null; this.start(); });

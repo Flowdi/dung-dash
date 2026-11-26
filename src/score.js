@@ -6,9 +6,10 @@ const TIME_BONUS_PER_SECOND = 40;
 export const COMBO_WINDOW = 4;
 
 export const formatTime = (seconds) => {
-  const safeSeconds = Math.max(0, seconds);
-  const minutes = Math.floor(safeSeconds / 60);
-  const remainder = safeSeconds - minutes * 60;
+  const numeric = Number(seconds);
+  const tenths = Number.isFinite(numeric) ? Math.round(Math.max(0, numeric) * 10) : 0;
+  const minutes = Math.floor(tenths / 600);
+  const remainder = (tenths % 600) / 10;
   return `${String(minutes).padStart(2, "0")}:${remainder.toFixed(1).padStart(4, "0")}`;
 };
 

@@ -665,6 +665,13 @@ test("the game exposes a dedicated paused state", () => {
   assert.equal(GameState.PAUSED, "paused");
 });
 
+test("time display carries rounded seconds into the next minute", () => {
+  assert.equal(formatTime(59.94), "00:59.9");
+  assert.equal(formatTime(59.96), "01:00.0");
+  assert.equal(formatTime(119.96), "02:00.0");
+  assert.equal(formatTime(undefined), "00:00.0");
+});
+
 test("game shortcuts leave menu keys, browser shortcuts and button activation alone", () => {
   const listeners = new Map();
   const input = new InputController();

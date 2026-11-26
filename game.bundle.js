@@ -110,9 +110,14 @@
       onCheckpoint = () => {
       },
       onFocus = () => {
-      }
+      },
+      shouldHandleKeyboard = () => true
     } = {}) {
       windowObject.addEventListener("keydown", (event) => {
+        var _a, _b, _c, _d, _e;
+        if (!shouldHandleKeyboard() || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+        if (((_a = event.target) == null ? void 0 : _a.isContentEditable) || ((_c = (_b = event.target) == null ? void 0 : _b.closest) == null ? void 0 : _c.call(_b, "input, select, textarea"))) return;
+        if (event.key === " " && ((_e = (_d = event.target) == null ? void 0 : _d.closest) == null ? void 0 : _e.call(_d, "button, a, summary"))) return;
         const key = event.key.toLowerCase();
         if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Escape"].includes(event.key) || ["a", "d", "w"].includes(key)) {
           event.preventDefault();
@@ -2269,7 +2274,8 @@
           onRestart: () => this.restartCurrentLevel(),
           onFullscreen: () => this.toggleFullscreen(),
           onCheckpoint: () => this.retryCheckpoint(),
-          onFocus: () => this.toggleFocusMode()
+          onFocus: () => this.toggleFocusMode(),
+          shouldHandleKeyboard: () => this.state === GameState.PLAYING || this.state === GameState.PAUSED
         }
       );
       this.startButton.addEventListener("click", () => {
